@@ -1,0 +1,490 @@
+/* ==========================================================================
+   SLIDE 1 — DUNIA MAKIN TERHUBUNG
+   Peta: aset gambar asli (img/world-map.svg), BUKAN digambar ulang.
+   Transisi Slide 1 -> Slide 2: crossfade 2D (opacity only).
+   Tidak ada transform 3D, perspective, preserve-3d, will-change, atau
+   efek kamera.
+   ========================================================================== */
+
+.slide1-scene {
+	position: fixed;
+	inset: 0;
+	z-index: 80;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: radial-gradient(
+		120% 90% at 50% 30%,
+		#f0ead9 0%,
+		#e5ddcb 55%,
+		#d5cab5 100%
+	);
+	overflow: hidden;
+	transition: opacity 350ms ease;
+	opacity: 0;
+
+	/* Tidak ada transform 3D, transform-origin, transform-style,
+	   backface-visibility, atau will-change. */
+}
+
+.slide1-scene.is-active {
+	display: flex;
+	opacity: 1;
+}
+
+.slide1-scene.is-leaving {
+	opacity: 0;
+}
+
+/* Wall / latar belakang halus */
+.slide1-wall {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		180deg,
+		rgba(0, 0, 0, 0.02),
+		rgba(0, 0, 0, 0.05)
+	);
+	pointer-events: none;
+}
+
+/* Kontainer utama slide */
+.slide1-content {
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+	align-items: center;
+	width: min(100%, 1400px);
+	height: 100%;
+	max-height: 100%;
+	margin: 0 auto;
+	padding: clamp(16px, 4vmin, 48px);
+	padding-bottom: clamp(56px, 9vmin, 88px);
+	gap: clamp(16px, 4vmin, 48px);
+	box-sizing: border-box;
+	z-index: 2;
+	overflow: hidden;
+}
+
+@media (max-height: 480px) {
+	.slide1-content {
+		overflow-y: auto;
+		align-items: start;
+	}
+}
+
+/* Area peta */
+.slide1-map-area {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	max-height: min(70vh, 640px);
+	min-width: 0;
+	min-height: 220px;
+}
+
+/* Kertas peta */
+.map-paper {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(165deg, #f8f3e9 0%, #f1ebdc 55%, #e6dfcc 100%);
+	border-radius: 2px;
+	padding: clamp(10px, 2vmin, 22px);
+	transform: rotate(-1.1deg);
+	box-shadow:
+		0 22px 45px rgba(30, 20, 10, 0.35),
+		0 2px 0 rgba(255, 255, 255, 0.4) inset;
+}
+
+.map-paper::before,
+.map-paper::after {
+	content: "";
+	position: absolute;
+	width: 70px;
+	height: 26px;
+	background: rgba(230, 224, 200, 0.55);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+	z-index: 3;
+}
+.map-paper::before {
+	top: -10px;
+	left: 8%;
+	transform: rotate(-6deg);
+}
+.map-paper::after {
+	bottom: -10px;
+	right: 10%;
+	transform: rotate(5deg);
+}
+
+/* Gambar peta dunia */
+.world-map-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	filter: sepia(0.22) saturate(0.85) contrast(1.03) brightness(0.98);
+	-webkit-user-drag: none;
+	user-select: none;
+}
+
+/* Efek penuaan kertas */
+.map-paper__aging {
+	position: absolute;
+	inset: clamp(10px, 2vmin, 22px);
+	pointer-events: none;
+	background:
+		radial-gradient(
+			120% 90% at 15% 10%,
+			rgba(120, 90, 50, 0.08) 0%,
+			rgba(120, 90, 50, 0) 40%
+		),
+		radial-gradient(
+			90% 80% at 90% 95%,
+			rgba(80, 60, 30, 0.1) 0%,
+			rgba(80, 60, 30, 0) 45%
+		);
+	mix-blend-mode: multiply;
+	z-index: 2;
+}
+
+/* Kredit peta */
+.map-credit {
+	position: absolute;
+	left: clamp(10px, 2vmin, 22px);
+	bottom: clamp(4px, 1vmin, 10px);
+	font-family: "Jost", sans-serif;
+	font-size: 0.6rem;
+	letter-spacing: 0.04em;
+	color: rgba(58, 46, 30, 0.55);
+	z-index: 4;
+}
+
+/* Pin pada peta */
+.map-pin {
+	position: absolute;
+	transform: translate(-50%, -100%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	pointer-events: none;
+	z-index: 4;
+}
+
+.pin-dot {
+	width: 13px;
+	height: 13px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 30%, #e0736e, #7a1f1c 70%);
+	box-shadow:
+		0 2px 4px rgba(0, 0, 0, 0.5),
+		inset 0 1px 1px rgba(255, 255, 255, 0.4);
+	margin-bottom: 4px;
+}
+
+.pin-label {
+	font-family: "Jost", sans-serif;
+	font-size: clamp(0.55rem, 0.9vw, 0.75rem);
+	letter-spacing: 0.14em;
+	color: #3a2e1e;
+	background: rgba(245, 240, 230, 0.85);
+	padding: 2px 6px;
+	border-radius: 2px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+	white-space: nowrap;
+}
+
+/* Garis penghubung merah */
+.connection-line {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 3;
+	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+.connection-line path {
+	stroke: #8b3a3a;
+	stroke-width: 1.4;
+	stroke-linecap: round;
+	fill: none;
+}
+
+.connection-line .connection-pin {
+	fill: #7a1f1c;
+}
+
+/* Catatan forum */
+.forum-note {
+	position: absolute;
+	left: 50%;
+	top: 44%;
+	transform: translate(-50%, -50%) rotate(-2deg);
+	background: #fbf7ec;
+	border: 1px solid rgba(120, 100, 70, 0.25);
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+	padding: 8px 10px;
+	max-width: 150px;
+	z-index: 5;
+	pointer-events: none;
+}
+
+.forum-note__icon {
+	width: 20px;
+	height: 20px;
+	margin-bottom: 4px;
+	color: #5a4a3a;
+}
+
+.forum-note__text {
+	font-family: "Cormorant Garamond", serif;
+	font-style: italic;
+	font-size: 0.72rem;
+	line-height: 1.3;
+	color: #3a2e1e;
+	margin: 0;
+}
+
+/* Area teks slide */
+.slide1-text-area {
+	min-width: 0;
+	max-width: 100%;
+	color: #2b241c;
+	padding: 0.5rem 0;
+	overflow-wrap: break-word;
+}
+
+.slide1-title {
+	font-family: "Cormorant Garamond", serif;
+	font-weight: 500;
+	font-size: clamp(2.2rem, 5vw, 4rem);
+	line-height: 1.1;
+	letter-spacing: 0.01em;
+	margin: 0 0 0.5rem;
+	color: #1c1611;
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.slide1-subtitle {
+	font-family: "Jost", sans-serif;
+	font-weight: 300;
+	font-size: clamp(1rem, 2vw, 1.4rem);
+	letter-spacing: 0.12em;
+	color: #5a4a3a;
+	margin: 0 0 1.5rem;
+}
+
+.slide1-definition {
+	font-family: "Jost", sans-serif;
+	font-weight: 400;
+	font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+	line-height: 1.7;
+	color: #3a2e1e;
+	max-width: 90%;
+	margin: 0 0 0.9rem;
+}
+
+.slide1-factors {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 1.5rem 0;
+}
+
+.slide1-factors span {
+	font-family: "Jost", sans-serif;
+	font-size: 0.75rem;
+	letter-spacing: 0.15em;
+	padding: 4px 10px;
+	background: rgba(230, 220, 200, 0.6);
+	border: 1px solid rgba(150, 130, 100, 0.3);
+	border-radius: 2px;
+	color: #4a3a2a;
+}
+
+.slide1-hook {
+	font-family: "Cormorant Garamond", serif;
+	font-style: italic;
+	font-size: clamp(1rem, 1.8vw, 1.3rem);
+	color: #6b4a3a;
+	margin-top: 1rem;
+}
+
+/* Tombol NEXT */
+.slide1-next {
+	position: absolute;
+	bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(12px, 3vmin, 24px));
+	right: clamp(12px, 3vmin, 24px);
+	z-index: 10;
+	background: none;
+	border: none;
+	padding: 10px 18px;
+	font-family: "Jost", sans-serif;
+	font-weight: 400;
+	font-size: 0.9rem;
+	letter-spacing: 0.15em;
+	color: #3a2e1e;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	transition:
+		transform 0.2s,
+		color 0.2s;
+}
+
+.slide1-next:hover {
+	transform: translateX(4px);
+	color: #1c1611;
+}
+
+.slide1-next:active {
+	transform: scale(0.95);
+}
+
+/* Responsif */
+@media (max-width: 900px) {
+	.slide1-content {
+		grid-template-columns: 1fr;
+		grid-template-rows: minmax(180px, 38vh) auto;
+		padding-bottom: clamp(64px, 12vmin, 96px);
+		overflow-y: auto;
+	}
+	.slide1-map-area {
+		max-height: none;
+		height: 100%;
+		min-height: 180px;
+	}
+	.slide1-text-area {
+		text-align: center;
+		padding: 0.25rem 0 0.5rem;
+	}
+	.slide1-definition {
+		max-width: 100%;
+		margin-left: auto;
+		margin-right: auto;
+	}
+	.slide1-factors {
+		justify-content: center;
+	}
+}
+
+@media (max-width: 480px) {
+	.slide1-content {
+		grid-template-rows: minmax(140px, 32vh) auto;
+		padding: clamp(12px, 5vw, 20px);
+		padding-bottom: clamp(56px, 14vw, 84px);
+		gap: 1rem;
+	}
+	.map-paper {
+		padding: 8px;
+	}
+	.slide1-factors span {
+		font-size: 0.65rem;
+		padding: 3px 8px;
+	}
+	/* =========================================
+   PERFORMANCE TEST — hanya aktif jika <body class="perf-test">
+   ========================================= */
+	body.perf-test .world-map-img {
+		filter: none !important;
+	}
+
+	body.perf-test .map-paper__aging {
+		mix-blend-mode: normal !important;
+	}
+
+	body.perf-test .map-paper {
+		box-shadow: 0 2px 0 rgba(255, 255, 255, 0.4) inset !important;
+		/* mematikan bayangan luar besar, mempertahankan inset tipis jika tidak ingin hilang total */
+	}
+
+	body.perf-test .connection-line {
+		filter: none !important;
+	}
+
+	/* Opsional: matikan bayangan kecil lainnya di Slide 1 */
+	body.perf-test .forum-note {
+		box-shadow: none !important;
+	}
+
+	body.perf-test .pin-dot {
+		box-shadow: none !important;
+	}
+
+	body.perf-test .pin-label {
+		box-shadow: none !important;
+	}
+
+	body.perf-test .slide1-title {
+		text-shadow: none !important;
+	}
+	.forum-note {
+		max-width: 110px;
+		padding: 6px 8px;
+	}
+	.forum-note__text {
+		font-size: 0.65rem;
+	}
+	.pin-label {
+		font-size: 0.55rem;
+		padding: 1px 4px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.slide1-scene {
+		transition: none !important;
+	}
+	.slide1-scene.is-leaving {
+		opacity: 0;
+	}
+}
+/* =========================================
+   PERFORMANCE TEST — hanya aktif jika <body class="perf-test">
+   ========================================= */
+body.perf-test .world-map-img {
+	filter: none !important;
+}
+
+body.perf-test .map-paper__aging {
+	mix-blend-mode: normal !important;
+}
+
+body.perf-test .map-paper {
+	box-shadow: 0 2px 0 rgba(255, 255, 255, 0.4) inset !important;
+	/* mematikan bayangan luar besar, mempertahankan inset tipis jika tidak ingin hilang total */
+}
+
+body.perf-test .connection-line {
+	filter: none !important;
+}
+
+/* Opsional: matikan bayangan kecil lainnya di Slide 1 */
+body.perf-test .forum-note {
+	box-shadow: none !important;
+}
+
+body.perf-test .pin-dot {
+	box-shadow: none !important;
+}
+
+body.perf-test .pin-label {
+	box-shadow: none !important;
+}
+
+body.perf-test .slide1-title {
+	text-shadow: none !important;
+}
+/* =========================================
+   CATATAN PERFORMANCE:
+   will-change TIDAK dipasang permanen di sini lagi. Layer yang benar-benar
+   dianimasikan saat berganti slide adalah .paper-transition (lihat
+   css/present.css, class .is-sweeping), dan will-change di sana hanya
+   aktif selagi animasi berjalan. Memasang will-change permanen pada
+   SETIAP slide (termasuk yang sedang tidak aktif) memaksa browser
+   membuat compositor layer ekstra terus-menerus — mahal di 3840x2160.
+   ========================================= */

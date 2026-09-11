@@ -1,0 +1,1044 @@
+/* ==========================================================================
+   SLIDE 3 — "PERTUKARAN BUDAYA" (MEJA INVESTIGASI + TUMPUKAN KERTAS)
+
+   File baru, hanya dipakai oleh #slide3Scene di present.html. Tidak
+   menyentuh css/present.css, css/slide1.css, atau css/slide2*.css.
+
+   REVISI LANJUTAN (POLISH VISUAL):
+   - Background meja kini siap diganti foto tekstur meja asli lewat
+     <img class="s3-desk-bg__img"> dengan pola onerror yang sama seperti
+     ilustrasi budaya (fallback otomatis ke radial-gradient .s3-desk yang
+     sudah ada jika file belum tersedia).
+   - Judul "PERTUKARAN BUDAYA" kini berada di atas kertas fisik sendiri
+     (.s3-title-paper), sedikit miring & tidak simetris.
+   - "CULTURAL IMPERIALISM" kini juga berupa kertas catatan investigasi
+     terpisah (.s3-ci-paper), lengkap dengan nomor dokumen, garis putus
+     merah, dan paper clip kecil.
+   - Dekorasi meja ditambah (paper clip, binder clip, push pin ganda,
+     masking tape, sticky note, pensil, index card, label arsip) dengan
+     komposisi asimetris, semua pointer-events:none.
+   - Stamp foto kini punya label ARCHIVE / CULTURE / DOCUMENTED.
+
+   Arsitektur animasi (transform + opacity SAJA, sesuai batasan performa):
+   - .s3-paper: 3 lembar diposisikan absolute bertumpuk lewat atribut
+     data-role ("0" = atas/aktif, "1" = tengah, "2" = bawah), masing-masing
+     punya transform resting statis berbeda (translate + rotate + scale).
+     Perpindahan antar posisi memakai `transition: transform` saja.
+   - .s3-paper--exiting: SATU-SATUNYA animasi keyframe di file ini, dipakai
+     sementara pada kertas yang sedang digeser keluar dari deck.
+   - .s3-illust: crossfade opacity + translateY kecil saat gambar kanan
+     berganti mengikuti kertas aktif.
+   - Tidak ada canvas/WebGL/Three.js, tidak ada animasi filter/blur/
+     box-shadow/backdrop-filter, tidak ada layout animation (height/width/
+     top/left), tidak ada requestAnimationFrame/setInterval baru.
+   - Logic perpindahan paper (js/slide3.js) TIDAK diubah oleh revisi ini.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------
+   PANGGUNG — fallback warna meja kayu redup (dipakai selama foto tekstur
+   meja belum tersedia, atau jika gambar gagal dimuat). Tetap radial-
+   gradient statis, sama ringannya dengan slide lain.
+   --------------------------------------------------------------------- */
+.s3-desk {
+	background: radial-gradient(
+		130% 100% at 50% 22%,
+		#f2ead9 0%,
+		#e6dac0 42%,
+		#c9b998 74%,
+		#8f7a5c 100%
+	);
+	overflow: hidden;
+}
+
+/* Tekstur serat kayu sangat halus — dipakai HANYA sebagai fallback di
+   atas gradient dasar; ditutupi otomatis begitu foto meja asli tampil
+   (lihat .s3-desk-bg di bawah), karena keduanya position:absolute inset:0
+   dan .s3-desk-bg datang belakangan di DOM (menang stacking). */
+.s3-desk::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background: repeating-linear-gradient(
+		92deg,
+		rgba(70, 50, 25, 0.05) 0px,
+		rgba(70, 50, 25, 0.05) 1px,
+		transparent 1px,
+		transparent 9px
+	);
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+/* =====================================================================
+   BACKGROUND FOTO TEKSTUR MEJA
+   Siapkan agar mudah diganti: cukup timpa src img di HTML dengan foto
+   meja asli (mis. img/slide3/desk-texture.jpg). Jika file belum ada /
+   gagal dimuat, onerror menyembunyikan <img> sehingga gradient
+   .s3-desk (di atas) tetap tampil sebagai fallback — sama seperti pola
+   .s3-illust--missing yang sudah dipakai di ilustrasi budaya.
+   ===================================================================== */
+.s3-desk-bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.s3-desk-bg__img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+	display: block;
+}
+
+/* Vignette tipis statis di atas foto meja supaya kertas & teks tetap
+   kontras terhadap tekstur foto apa pun yang dipasang nanti. Satu layer
+   gradient, tidak dianimasikan. */
+.s3-desk-bg::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(
+		120% 95% at 50% 30%,
+		rgba(20, 14, 6, 0) 0%,
+		rgba(20, 14, 6, 0.06) 55%,
+		rgba(15, 10, 4, 0.22) 100%
+	);
+	pointer-events: none;
+}
+
+.s3-content {
+	position: relative;
+	z-index: 2;
+	width: min(100%, 1480px);
+	height: 100%;
+	max-height: 100%;
+	margin: 0 auto;
+	padding: clamp(20px, 4vmin, 52px) clamp(20px, 4vmin, 64px);
+	display: grid;
+	/* Baris: kertas judul / panggung (deck+foto) / kertas catatan CI */
+	grid-template-rows: auto 1fr auto;
+	gap: clamp(10px, 2.4vmin, 26px);
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+/* =====================================================================
+   KERTAS JUDUL — "PERTUKARAN BUDAYA"
+   Selembar kertas fisik terpisah dari paper deck, sedikit miring &
+   digeser dari center supaya terasa benar-benar diletakkan di meja,
+   bukan judul slide yang dipusatkan secara digital.
+   ===================================================================== */
+.s3-title-paper {
+	position: relative;
+	justify-self: center;
+	display: inline-block;
+	margin-inline: auto;
+	transform: rotate(-1.6deg) translate(clamp(-26px, -3vw, -10px), 0);
+	background: linear-gradient(165deg, #faf6ea 0%, #f2ebd8 55%, #e9dec2 100%);
+	padding: clamp(10px, 1.6vw, 18px) clamp(28px, 5vw, 56px);
+	border-radius: 2px;
+	box-shadow:
+		0 12px 24px rgba(25, 18, 10, 0.26),
+		0 1px 0 rgba(255, 255, 255, 0.55) inset;
+}
+
+/* Imperfeksi tekstur, sama prinsipnya dengan .s3-paper::before */
+.s3-title-paper::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(
+			110% 90% at 8% 10%,
+			rgba(120, 95, 55, 0.07) 0%,
+			transparent 45%
+		),
+		radial-gradient(
+			100% 80% at 96% 96%,
+			rgba(90, 70, 40, 0.09) 0%,
+			transparent 45%
+		);
+	mix-blend-mode: multiply;
+	pointer-events: none;
+}
+
+/* Bingkai tipis ganda (bukan airmail penuh) supaya kertas judul terasa
+   sebagai dokumen terpisah dari paper deck, meski dari keluarga visual
+   yang sama. */
+.s3-title-paper::after {
+	content: "";
+	position: absolute;
+	inset: 5px;
+	border: 1px solid rgba(60, 44, 26, 0.22);
+	pointer-events: none;
+}
+
+.s3-heading {
+	position: relative;
+	z-index: 1;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(1.6rem, 3.8vw, 2.7rem);
+	letter-spacing: 0.03em;
+	text-align: center;
+	color: #201a12;
+	margin: 0;
+}
+
+/* ---------------------------------------------------------------------
+   AREA UTAMA — deck kertas (kiri/besar) + ilustrasi foto (kanan/kecil)
+   --------------------------------------------------------------------- */
+.s3-stage {
+	position: relative; /* Ditambahkan untuk posisi absolute .s3-ci-paper */
+	display: grid;
+	grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+	align-items: center;
+	gap: clamp(20px, 5vw, 64px);
+	min-height: 0;
+}
+
+.s3-deck {
+	position: relative;
+	z-index: 2; /* Deck berada di bawah Cultural Imperialism paper */
+	justify-self: center;
+	width: min(100%, 420px);
+	height: clamp(230px, 38vh, 380px);
+	/* Deck digeser sedikit dari center kolomnya supaya komposisi
+	   keseluruhan panggung tidak simetris sempurna. */
+	transform: translateX(clamp(-14px, -1.6vw, -4px));
+}
+
+/* =====================================================================
+   KERTAS DECK — dengan border airmail diagonal merah/navy. Posisi
+   resting tiap lembar (data-role) sudah asimetris (offset + rotasi
+   berbeda); dipertahankan dari versi sebelumnya karena interaksi
+   shuffle bergantung pada nilai transform ini.
+   ===================================================================== */
+.s3-paper {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(165deg, #f8f3e7 0%, #f1ead9 55%, #e7dcc4 100%);
+	border-radius: 2px;
+	padding: clamp(22px, 3vw, 40px);
+	box-shadow:
+		0 20px 40px rgba(25, 18, 10, 0.32),
+		0 1px 0 rgba(255, 255, 255, 0.5) inset;
+	color: #2b2013;
+	overflow: hidden;
+	transform-origin: 50% 55%;
+	transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.s3-paper::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(
+			120% 90% at 10% 6%,
+			rgba(120, 95, 55, 0.08) 0%,
+			transparent 42%
+		),
+		radial-gradient(
+			100% 80% at 94% 98%,
+			rgba(90, 70, 40, 0.1) 0%,
+			transparent 45%
+		);
+	mix-blend-mode: multiply;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.s3-paper::after {
+	content: "";
+	position: absolute;
+	inset: 6px;
+	padding: 7px;
+	border-radius: 1px;
+	background: repeating-linear-gradient(
+		45deg,
+		#a63d2f 0px,
+		#a63d2f 7px,
+		#f5f0e6 7px,
+		#f5f0e6 14px,
+		#2c3a5e 14px,
+		#2c3a5e 21px,
+		#f5f0e6 21px,
+		#f5f0e6 28px
+	);
+	-webkit-mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+	z-index: 2;
+}
+
+/* Posisi resting asimetris tiap lembar di dalam deck (offset + rotasi
+   berbeda-beda, bukan tumpukan lurus). */
+.s3-paper[data-role="0"] {
+	transform: translate(0, 0) rotate(-0.6deg) scale(1);
+	z-index: 3;
+	opacity: 1;
+}
+
+.s3-paper[data-role="1"] {
+	transform: translate(18px, 22px) rotate(2.4deg) scale(0.97);
+	z-index: 2;
+	opacity: 0.92;
+}
+
+.s3-paper[data-role="2"] {
+	transform: translate(-14px, 36px) rotate(-3.1deg) scale(0.94);
+	z-index: 1;
+	opacity: 0.8;
+}
+
+.s3-paper--exiting {
+	animation: s3-paper-exit 620ms cubic-bezier(0.55, 0, 0.2, 1) both;
+	transition: none;
+	will-change: transform, opacity;
+	z-index: 5;
+	pointer-events: none;
+}
+
+@keyframes s3-paper-exit {
+	0% {
+		transform: translate(0, 0) rotate(-0.6deg);
+		opacity: 1;
+	}
+	55% {
+		transform: translate(4px, -68%) rotate(-2.6deg);
+		opacity: 1;
+	}
+	100% {
+		transform: translate(8px, -132%) rotate(-4.4deg);
+		opacity: 0;
+	}
+}
+
+.s3-paper__num {
+	display: block;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: 0.7rem;
+	letter-spacing: 0.26em;
+	color: #8a6a4a;
+	position: relative;
+	z-index: 3;
+}
+
+.s3-paper__title {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(1.05rem, 2.1vw, 1.55rem);
+	margin: 0.4rem 0 0.6rem;
+	color: #1c1611;
+	position: relative;
+	z-index: 3;
+}
+
+.s3-paper__body {
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: clamp(0.78rem, 1.15vw, 0.96rem);
+	line-height: 1.6;
+	color: #4a3a28;
+	margin: 0;
+	position: relative;
+	z-index: 3;
+}
+
+/* ---------------------------------------------------------------------
+   ILUSTRASI FOTO — <img> dengan bingkai polaroid + stempel arsip.
+   Sedikit diputar & digeser dari center kolomnya (asimetris).
+   --------------------------------------------------------------------- */
+.s3-illustration {
+	position: relative;
+	width: 100%;
+	max-width: 340px;
+	aspect-ratio: 1 / 1;
+	color: #5a4530;
+	transform: rotate(1.1deg) translate(clamp(6px, 1.4vw, 16px), 6px);
+}
+
+/* =====================================================================
+   WRAPPER FOTO ILUSTRASI (kolom kanan .s3-stage)
+   Wadah ini sebelumnya juga menampung kertas "CULTURAL IMPERIALISM" di
+   bawah foto; sejak revisi posisi terbaru kertas itu sudah dipindah
+   menjadi anak .s3-stage (lihat blok .s3-ci-paper di bawah), jadi wrapper
+   ini sekarang hanya membungkus .s3-illustration. Class & struktur flex
+   ini sengaja dipertahankan apa adanya (bukan dihapus) supaya markup
+   .s3-illustration tidak perlu disentuh sama sekali dan gap/centering
+   yang sudah ada tetap konsisten dengan versi sebelumnya.
+   ===================================================================== */
+.s3-illust-stack {
+	position: relative;
+	z-index: 6; /* Di atas Cultural Imperialism paper */
+	justify-self: center;
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-width: 360px;
+	gap: clamp(16px, 3vh, 30px);
+}
+
+.s3-illust {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transform: translateY(8px);
+	transition:
+		opacity 320ms ease,
+		transform 320ms ease;
+	background: #f8f3e7;
+	padding: 12px;
+	border-radius: 3px;
+	box-shadow:
+		0 6px 18px rgba(25, 18, 10, 0.22),
+		0 1px 0 rgba(255, 255, 255, 0.6) inset;
+	overflow: hidden;
+}
+
+.s3-illust.is-active {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.s3-illust img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	border-radius: 1px;
+}
+
+/* ---------------------------------------------------------------------
+   STEMPEL ARSIP — pojok kanan bawah tiap foto. Tiga variasi warna/label
+   ringan (ARCHIVE / CULTURE / DOCUMENTED) supaya tidak identik satu sama
+   lain, tetap terasa seperti cap tinta fisik, bukan badge UI.
+   --------------------------------------------------------------------- */
+.s3-stamp {
+	position: absolute;
+	bottom: 16px;
+	right: 16px;
+	width: 72px;
+	height: 72px;
+	border: 2px solid rgba(139, 58, 58, 0.5);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 500;
+	font-size: 0.5rem;
+	letter-spacing: 0.1em;
+	line-height: 1.3;
+	text-align: center;
+	text-transform: uppercase;
+	color: rgba(139, 58, 58, 0.62);
+	transform: rotate(-10deg);
+	opacity: 0.75;
+	pointer-events: none;
+	background: rgba(200, 175, 140, 0.08);
+	user-select: none;
+	z-index: 5;
+}
+
+.s3-stamp::before {
+	content: "";
+	position: absolute;
+	inset: 4px;
+	border: 1px solid rgba(139, 58, 58, 0.35);
+	border-radius: 50%;
+	pointer-events: none;
+}
+
+/* Variasi warna cap per foto — tetap kalem, hanya beda rona tinta. */
+.s3-stamp--2 {
+	border-color: rgba(44, 58, 94, 0.5);
+	color: rgba(44, 58, 94, 0.62);
+	transform: rotate(7deg);
+}
+.s3-stamp--2::before {
+	border-color: rgba(44, 58, 94, 0.35);
+}
+
+.s3-stamp--3 {
+	border-color: rgba(90, 70, 40, 0.55);
+	color: rgba(90, 70, 40, 0.68);
+	transform: rotate(-6deg);
+}
+.s3-stamp--3::before {
+	border-color: rgba(90, 70, 40, 0.38);
+}
+
+.s3-illust--missing {
+	background: linear-gradient(135deg, #e8dcc8 0%, #d5c5aa 100%);
+}
+
+.s3-illust--missing img {
+	display: none;
+}
+
+.s3-illust--missing::before {
+	content: attr(data-placeholder);
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: 0.72rem;
+	letter-spacing: 0.12em;
+	line-height: 1.5;
+	color: #7a6a52;
+	text-align: center;
+	padding: 20px;
+	z-index: 3;
+}
+
+/* =====================================================================
+   KERTAS CATATAN — "CULTURAL IMPERIALISM"
+   Selembar kertas investigasi terpisah, bukan teks mengambang. Dilengkapi
+   nomor dokumen, garis putus merah ala berkas investigasi, dan paper
+   clip kecil di sudut.
+
+   REVISI POSISI (v4): kertas ini SEKARANG diposisikan DI TENGAH ANTARA
+   deck dan ilustrasi (anak langsung .s3-stage). Ukurannya kecil
+   proporsional, sedikit overlap ke amplop dan foto, dengan rotasi kecil
+   agar tidak simetris. Layer: deck < CI paper < ilustrasi.
+   ===================================================================== */
+.s3-ci-paper {
+	position: absolute;
+	left: 55%; /* Digeser sedikit ke kanan (dari 50% menjadi 55%) */
+	top: 48%;
+	transform: translate(-50%, -50%) rotate(-4.5deg);
+	z-index: 5; /* di atas deck, di bawah ilustrasi stack */
+	width: clamp(140px, 16vw, 220px);
+	max-width: 220px;
+	pointer-events: none;
+	background: linear-gradient(160deg, #f9f4e8 0%, #f0e8d3 55%, #e6dabf 100%);
+	border-radius: 2px;
+	padding: clamp(8px, 1.6vw, 13px) clamp(10px, 2vw, 15px);
+	box-shadow:
+		0 10px 20px rgba(25, 18, 10, 0.3),
+		0 1px 0 rgba(255, 255, 255, 0.5) inset;
+	text-align: left;
+}
+
+.s3-ci-paper::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(
+			110% 90% at 6% 8%,
+			rgba(120, 95, 55, 0.07) 0%,
+			transparent 45%
+		),
+		radial-gradient(
+			100% 80% at 96% 96%,
+			rgba(90, 70, 40, 0.09) 0%,
+			transparent 45%
+		);
+	mix-blend-mode: multiply;
+	pointer-events: none;
+}
+
+.s3-ci-docnum {
+	position: relative;
+	z-index: 1;
+	display: block;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: 0.44rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: #8a6a4a;
+}
+
+.s3-ci-title {
+	position: relative;
+	z-index: 1;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 500;
+	font-size: clamp(0.6rem, 1.6vw, 0.74rem);
+	letter-spacing: 0.16em;
+	color: #6b4a3a;
+	margin: 0.25rem 0 0.35rem;
+}
+
+/* Garis putus merah ala jalur investigasi, menggantikan .s3-note__line
+   ganda sebelumnya. */
+.s3-ci-rule {
+	position: relative;
+	z-index: 1;
+	display: block;
+	width: 100%;
+	height: 1px;
+	margin-bottom: 0.4rem;
+	background: repeating-linear-gradient(
+		90deg,
+		rgba(166, 61, 47, 0.55) 0px,
+		rgba(166, 61, 47, 0.55) 6px,
+		transparent 6px,
+		transparent 11px
+	);
+}
+
+.s3-ci-body {
+	position: relative;
+	z-index: 1;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: clamp(0.56rem, 1.3vw, 0.66rem);
+	line-height: 1.45;
+	color: #3a2e1e;
+	margin: 0 0 0.35rem;
+}
+
+.s3-ci-summary {
+	position: relative;
+	z-index: 1;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-style: italic;
+	font-size: clamp(0.52rem, 1.15vw, 0.6rem);
+	line-height: 1.4;
+	color: #5a4a35;
+	margin: 0;
+}
+
+/* Paper clip kecil di sudut kertas catatan — dekorasi, tidak interaktif.
+   Ukurannya diperkecil mengikuti .s3-ci-paper yang kini jauh lebih
+   ringkas (secondary info di atas deck), supaya proporsinya tetap wajar. */
+.s3-ci-clip {
+	position: absolute;
+	top: -7px;
+	right: clamp(8px, 12%, 18px);
+	width: 10px;
+	height: 21px;
+	color: rgba(120, 120, 130, 0.75);
+	transform: rotate(-8deg);
+	z-index: 2;
+	pointer-events: none;
+}
+
+.s3-ci-clip svg {
+	width: 100%;
+	height: 100%;
+}
+
+/* ---------------------------------------------------------------------
+   DEKORASI MEJA — statis, kecil, tidak interaktif (pointer-events:none),
+   disebar asimetris di sekitar kertas supaya meja terasa benar-benar
+   dipakai, tanpa menutupi teks/tombol.
+   --------------------------------------------------------------------- */
+.s3-decor {
+	position: absolute;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.s3-decor--pin {
+	top: clamp(14px, 6vh, 40px);
+	left: clamp(16px, 5vw, 56px);
+	width: 13px;
+	height: 13px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 30%, #e0736e, #7a1f1c 70%);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Push pin kedua, warna biru, dekat kertas catatan — menyeimbangkan
+   komposisi tanpa membuatnya simetris dengan pin pertama. */
+.s3-decor--pin2 {
+	bottom: clamp(96px, 20vh, 168px);
+	right: clamp(30px, 8vw, 90px);
+	width: 11px;
+	height: 11px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 30%, #6f89c9, #223056 70%);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.s3-decor--redline {
+	top: clamp(30px, 9vh, 62px);
+	left: clamp(22px, 6vw, 62px);
+	width: clamp(60px, 12vw, 140px);
+	height: 1px;
+	background: rgba(139, 58, 58, 0.45);
+	transform: rotate(-7deg);
+	transform-origin: 0 0;
+}
+
+/* Benang merah kedua, menghubungkan area deck ke arah kertas catatan —
+   diletakkan jauh dari redline pertama supaya tidak simetris. */
+.s3-decor--thread {
+	bottom: clamp(120px, 24vh, 200px);
+	left: clamp(40px, 10vw, 120px);
+	width: clamp(48px, 10vw, 100px);
+	height: 1px;
+	background: rgba(139, 58, 58, 0.32);
+	transform: rotate(11deg);
+	transform-origin: 0 0;
+}
+
+.s3-decor--clipping {
+	bottom: clamp(70px, 14vh, 120px);
+	left: clamp(14px, 4vw, 44px);
+	width: 74px;
+	padding: 8px 9px;
+	background: #ece3ce;
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
+	transform: rotate(-4deg);
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.s3-decor--clipping span {
+	display: block;
+	height: 2px;
+	background: rgba(60, 48, 34, 0.35);
+}
+
+.s3-decor--clipping span:nth-child(2) {
+	width: 80%;
+}
+
+.s3-decor--clipping span:nth-child(3) {
+	width: 55%;
+}
+
+.s3-decor--paperclip {
+	top: clamp(18px, 7vh, 48px);
+	right: clamp(18px, 5vw, 56px);
+	width: 20px;
+	height: 40px;
+	color: rgba(140, 140, 150, 0.75);
+	transform: rotate(14deg);
+}
+
+.s3-decor--paperclip svg {
+	width: 100%;
+	height: 100%;
+}
+
+/* Binder clip kecil, seolah menjepit sudut kertas judul. */
+.s3-decor--binderclip {
+	top: clamp(-6px, -1vh, 2px);
+	left: 50%;
+	width: 26px;
+	height: 14px;
+	margin-left: clamp(-90px, -9vw, -50px);
+	background: linear-gradient(180deg, #3a3a3f 0%, #1c1c20 100%);
+	border-radius: 2px;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+	transform: rotate(-3deg);
+}
+
+.s3-decor--binderclip::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 100%;
+	width: 2px;
+	height: 8px;
+	background: #1c1c20;
+	transform: translateX(-50%);
+}
+
+/* Masking tape, seolah menempel di sudut kertas judul. */
+.s3-decor--tape {
+	top: clamp(2px, 1vh, 10px);
+	left: 50%;
+	width: 58px;
+	height: 20px;
+	margin-left: clamp(28px, 4vw, 60px);
+	background: rgba(224, 205, 160, 0.55);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+	transform: rotate(9deg);
+}
+
+/* Sticky note kecil di dekat paper deck, dengan dua garis "tulisan". */
+.s3-decor--sticky {
+	top: clamp(30px, 10vh, 70px);
+	right: clamp(60px, 18vw, 200px);
+	width: 46px;
+	height: 44px;
+	padding: 8px 7px;
+	background: #f3d989;
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+	transform: rotate(6deg);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 5px;
+}
+
+.s3-decor--sticky span {
+	display: block;
+	height: 2px;
+	background: rgba(70, 55, 20, 0.35);
+}
+
+.s3-decor--sticky span:nth-child(2) {
+	width: 65%;
+}
+
+/* Pensil tipis, statis, dekat sudut bawah panggung. */
+.s3-decor--pencil {
+	bottom: clamp(30px, 7vh, 60px);
+	left: clamp(70px, 16vw, 190px);
+	width: 5px;
+	height: 74px;
+	border-radius: 2px 2px 0 0;
+	background: linear-gradient(
+		180deg,
+		#d9a441 0%,
+		#d9a441 82%,
+		#caa06b 82%,
+		#e9c98d 100%
+	);
+	transform: rotate(-24deg);
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.s3-decor--pencil::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: 100%;
+	width: 0;
+	height: 0;
+	border-left: 2.5px solid transparent;
+	border-right: 2.5px solid transparent;
+	border-bottom: 7px solid #6b4a30;
+	transform: translateX(-50%);
+}
+
+/* Index card kecil, dekat kertas catatan. */
+.s3-decor--indexcard {
+	bottom: clamp(150px, 30vh, 240px);
+	right: clamp(18px, 5vw, 56px);
+	width: 58px;
+	height: 40px;
+	padding: 8px;
+	background: #f4efdd;
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+	transform: rotate(-5deg);
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.s3-decor--indexcard span {
+	display: block;
+	height: 1.5px;
+	background: rgba(80, 64, 40, 0.3);
+}
+
+.s3-decor--indexcard span:nth-child(2) {
+	width: 70%;
+}
+
+/* Label arsip kecil, seperti nomor berkas ditempel di meja. */
+.s3-decor--archivetag {
+	top: clamp(60px, 15vh, 120px);
+	left: clamp(20px, 6vw, 70px);
+	padding: 3px 8px;
+	background: #ece3ce;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
+	transform: rotate(3deg);
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: 0.58rem;
+	letter-spacing: 0.14em;
+	color: #6b563a;
+	text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------
+   KONTROL — GESER KERTAS (bukan next slide) dan NEXT (navigasi presentasi
+   yang sudah ada). Dipisah secara visual, bukan satu tombol.
+   --------------------------------------------------------------------- */
+.s3-controls {
+	position: absolute;
+	right: clamp(16px, 3vw, 40px);
+	bottom: clamp(14px, 3vh, 28px);
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	gap: clamp(6px, 1.5vw, 18px);
+}
+
+.s3-shuffle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: none;
+	border: none;
+	padding: 12px 16px;
+	min-height: 44px;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	font-size: 0.76rem;
+	letter-spacing: 0.18em;
+	color: #3a2e1e;
+	transition:
+		transform 0.2s,
+		opacity 0.2s,
+		color 0.2s;
+}
+
+.s3-shuffle__icon {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-size: 1.25rem;
+	line-height: 1;
+	color: #8b3a3a;
+}
+
+.s3-shuffle:hover {
+	transform: translateX(-3px);
+	color: #1c1611;
+}
+
+.s3-shuffle:active {
+	transform: scale(0.95);
+}
+
+.s3-shuffle:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.s3-next-slide {
+	min-height: 44px;
+}
+
+.s3-next-slide:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+/* ==========================================================================
+   RESPONSIF
+   ========================================================================== */
+@media (max-width: 860px) {
+	.s3-stage {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto auto;
+		row-gap: clamp(16px, 4vh, 32px);
+	}
+	.s3-deck {
+		transform: none;
+	}
+	.s3-illustration {
+		max-width: 240px;
+		transform: rotate(0.6deg) translate(0, 0);
+	}
+	.s3-illust-stack {
+		max-width: 240px;
+	}
+	.s3-title-paper {
+		transform: rotate(-1deg) translate(0, 0);
+	}
+	/* Posisi .s3-ci-paper tetap di tengah stage (top 48% dari stage).
+	   Karena stage sekarang berisi deck dan ilustrasi bertumpuk, kertas
+	   kecil akan berada di antara keduanya. Rotasi dikurangi sedikit
+	   agar tidak terlalu miring relatif terhadap konten yang mengecil. */
+	.s3-ci-paper {
+		transform: translate(-50%, -50%) rotate(-3deg);
+	}
+	.s3-decor--clipping,
+	.s3-decor--paperclip,
+	.s3-decor--tape,
+	.s3-decor--binderclip,
+	.s3-decor--pencil,
+	.s3-decor--indexcard,
+	.s3-decor--thread {
+		display: none; /* kurangi dekorasi di layar sempit */
+	}
+}
+
+@media (max-height: 560px) {
+	.s3-content {
+		gap: 6px;
+	}
+	.s3-deck {
+		height: clamp(180px, 46vh, 260px);
+	}
+}
+
+/* ==========================================================================
+   REDUCED MOTION — semua transisi/animasi di slide ini dimatikan; kertas
+   & ilustrasi tetap berpindah (lewat perubahan atribut/class instan di
+   js/slide3.js), hanya tanpa gerakan.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+	.s3-paper {
+		transition: none !important;
+	}
+	.s3-paper--exiting {
+		animation: none !important;
+	}
+	.s3-illust {
+		transition: none !important;
+	}
+	.s3-shuffle,
+	.generic-slide-next {
+		transition: none !important;
+	}
+}
+
+/* ==========================================================================
+   PERFORMANCE TEST — hanya aktif jika <body class="perf-test"> (lihat
+   present.html), sama seperti pola di css/slide1.css.
+   ========================================================================== */
+body.perf-test .s3-desk::before {
+	display: none !important;
+}
+
+body.perf-test .s3-desk-bg::after {
+	display: none !important;
+}
+
+body.perf-test .s3-paper {
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset !important;
+}
+
+body.perf-test .s3-paper::before {
+	mix-blend-mode: normal !important;
+	opacity: 0.5;
+}
+
+body.perf-test .s3-paper::after {
+	opacity: 1;
+}
+
+body.perf-test .s3-title-paper,
+body.perf-test .s3-ci-paper {
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset !important;
+}
+
+body.perf-test .s3-decor--clipping,
+body.perf-test .s3-decor--sticky,
+body.perf-test .s3-decor--indexcard,
+body.perf-test .s3-decor--binderclip,
+body.perf-test .s3-decor--pencil {
+	box-shadow: none !important;
+}
+
+body.perf-test .s3-illust {
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset !important;
+}

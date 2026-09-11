@@ -1,0 +1,232 @@
+/* ==========================================================================
+   TRANSISI 3 → 4 — CLOUD TRANSITION
+   File: css/transition-3-4.css
+   ========================================================================== */
+
+.cloud-transition-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	pointer-events: none;
+	visibility: hidden;
+}
+
+.cloud-transition-overlay.is-active {
+	visibility: visible;
+}
+
+.cloud-layer {
+	position: absolute;
+	inset: 0;
+}
+
+/* Pewarnaan layer awan untuk memberikan kedalaman/shading natural */
+.layer-back {
+	color: #d4d4d8;
+}
+.layer-mid {
+	color: #e4e4e7;
+}
+.layer-front {
+	color: #fafafa;
+}
+
+.cloud-half {
+	position: absolute;
+	top: -10vh;
+	bottom: -10vh;
+	width: 60vw;
+	background: transparent;
+	color: inherit;
+	will-change: transform;
+}
+
+/* Posisi awal sebelum masuk (tersembunyi di luar layar) */
+.cloud-half.left-half {
+	left: 0;
+	transform: translateX(-110vw);
+}
+.cloud-half.right-half {
+	right: 0;
+	transform: translateX(110vw);
+}
+
+/* Blok solid untuk memastikan background/slide benar-benar tertutup */
+.cloud-fill {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	background: currentColor;
+}
+.left-half .cloud-fill {
+	left: -20vw;
+	right: 0;
+}
+.right-half .cloud-fill {
+	left: 0;
+	right: -20vw;
+}
+
+/* Puff (bagian-bagian awan organik) */
+.puff {
+	position: absolute;
+	background: currentColor;
+	border-radius: 50%;
+}
+
+/* ---------------------------------------------------------------------
+   ANIMASI MASUK (ENTER)
+   --------------------------------------------------------------------- */
+
+@keyframes cloud-enter-tl {
+	0% {
+		transform: translate(-110vw, -10vh);
+	}
+	100% {
+		transform: translate(0, 0);
+	}
+}
+@keyframes cloud-enter-br {
+	0% {
+		transform: translate(110vw, 10vh);
+	}
+	100% {
+		transform: translate(0, 0);
+	}
+}
+@keyframes cloud-enter-bl {
+	0% {
+		transform: translate(-110vw, 10vh);
+	}
+	100% {
+		transform: translate(0, 0);
+	}
+}
+@keyframes cloud-enter-tr {
+	0% {
+		transform: translate(110vw, -10vh);
+	}
+	100% {
+		transform: translate(0, 0);
+	}
+}
+@keyframes cloud-enter-l {
+	0% {
+		transform: translate(-110vw, 0);
+	}
+	100% {
+		transform: translate(0, 0);
+	}
+}
+@keyframes cloud-enter-r {
+	0% {
+		transform: translate(110vw, 0);
+	}
+	100% {
+		transform: translate(0, 0);
+	}
+}
+
+.is-entering .layer-back .left-half {
+	animation: cloud-enter-tl 850ms cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+.is-entering .layer-back .right-half {
+	animation: cloud-enter-br 850ms cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+
+.is-entering .layer-mid .left-half {
+	animation: cloud-enter-bl 950ms cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+.is-entering .layer-mid .right-half {
+	animation: cloud-enter-tr 950ms cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+
+.is-entering .layer-front .left-half {
+	animation: cloud-enter-l 1050ms cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+.is-entering .layer-front .right-half {
+	animation: cloud-enter-r 1050ms cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+
+/* ---------------------------------------------------------------------
+   ANIMASI KELUAR (EXIT)
+   --------------------------------------------------------------------- */
+
+@keyframes cloud-exit-tl {
+	0% {
+		transform: translate(0, 0);
+	}
+	100% {
+		transform: translate(-110vw, -5vh);
+	}
+}
+@keyframes cloud-exit-br {
+	0% {
+		transform: translate(0, 0);
+	}
+	100% {
+		transform: translate(110vw, 5vh);
+	}
+}
+@keyframes cloud-exit-bl {
+	0% {
+		transform: translate(0, 0);
+	}
+	100% {
+		transform: translate(-110vw, 5vh);
+	}
+}
+@keyframes cloud-exit-tr {
+	0% {
+		transform: translate(0, 0);
+	}
+	100% {
+		transform: translate(110vw, -5vh);
+	}
+}
+@keyframes cloud-exit-l {
+	0% {
+		transform: translate(0, 0);
+	}
+	100% {
+		transform: translate(-110vw, 0);
+	}
+}
+@keyframes cloud-exit-r {
+	0% {
+		transform: translate(0, 0);
+	}
+	100% {
+		transform: translate(110vw, 0);
+	}
+}
+
+.is-exiting .layer-front .left-half {
+	animation: cloud-exit-l 900ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.is-exiting .layer-front .right-half {
+	animation: cloud-exit-r 900ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.is-exiting .layer-mid .left-half {
+	animation: cloud-exit-bl 1050ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.is-exiting .layer-mid .right-half {
+	animation: cloud-exit-tr 1050ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.is-exiting .layer-back .left-half {
+	animation: cloud-exit-tl 1200ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.is-exiting .layer-back .right-half {
+	animation: cloud-exit-br 1200ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* ---------------------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	.cloud-transition-overlay {
+		display: none !important;
+	}
+}

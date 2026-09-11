@@ -1,0 +1,2174 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+		/>
+		<title>Yusmentoro67</title>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<!-- Font khusus Slide 5 ("The Social Report") — tidak dipakai slide lain -->
+		<link
+			href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,700&family=Inter:wght@400;500;600&display=swap"
+			rel="stylesheet"
+		/>
+
+		<!--
+			PENTING — ARSITEKTUR:
+			present.html adalah halaman independen. TIDAK menautkan
+			board.js, main.js (opening), atau css/transition.css (lens
+			overlay) — semua itu milik index.html/board scene dan tidak
+			boleh ikut hidup di sini. css/style.css tetap ditautkan HANYA
+			karena berisi variabel :root (--font-display, --font-label,
+			warna dasar) yang dipakai slide1.css; selector lain di
+			style.css (mis. .scene, #gl, .photo opening) tidak akan
+			match elemen apa pun di halaman ini sehingga aman & tidak
+			memuat ulang Three.js opening/board.
+		-->
+		<link rel="stylesheet" href="css/style.css" />
+		<link rel="stylesheet" href="css/slide1.css" />
+		<link rel="stylesheet" href="css/present.css" />
+		<!--
+			css/slide2-film.css berisi styling KHUSUS untuk Slide 2 (filmstrip
+			5-shot) di halaman ini. Ini FILE BARU, terpisah dari css/slide2.css
+			lama yang dipakai board scene di index.html (tidak disentuh/tidak
+			ditautkan di sini).
+		-->
+		<link rel="stylesheet" href="css/slide2-film.css" />
+		<!--
+			css/slide3.css berisi styling KHUSUS untuk Slide 3 (meja investigasi
+			+ tumpukan kertas "Pertukaran Budaya") di halaman ini. File BARU,
+			tidak menyentuh file CSS slide lain.
+		-->
+		<link rel="stylesheet" href="css/slide3.css" />
+		<!--
+			css/slide4.css berisi styling KHUSUS untuk Slide 4 (cinematic
+			day/night scene "Dampak Sosial: Peluang dan Tantangan") di halaman
+			ini. File BARU, tidak menyentuh file CSS slide lain.
+		-->
+		<link rel="stylesheet" href="css/slide4.css" />
+		<!--
+			css/slide5.css berisi styling KHUSUS untuk Slide 5 ("The Social
+			Report" — meja redaksi + 4 koran fisik yang jatuh satu per satu)
+			di halaman ini. File BARU, tidak menyentuh file CSS slide lain.
+		-->
+		<link rel="stylesheet" href="css/slide5.css" />
+		<!--
+			css/slide6.css berisi styling KHUSUS untuk Slide 6 (video cover +
+			comment feed "Perspektif Sosiologis tentang Globalisasi") di
+			halaman ini. File BARU, tidak menyentuh CSS slide lain.
+		-->
+		<link rel="stylesheet" href="css/slide6.css" />
+		<!--
+			css/slide7.css berisi styling KHUSUS untuk Slide 7 (closing "Menghadapi
+			Globalisasi" — Bumi 3D + 5 panel editorial yang mengorbit) di halaman
+			ini. File BARU, tidak menyentuh CSS slide lain.
+		-->
+		<link rel="stylesheet" href="css/slide7.css" />
+		<!-- ★ PATCH: css/slide8.css — styling KHUSUS Slide 8 (closing "Thanks/
+			 Yupi" typewriter + flash overlay transisi 7→8). File BARU. -->
+		<link rel="stylesheet" href="css/slide8.css" />
+		<link rel="stylesheet" href="css/transition-3-4.css" />
+	</head>
+	<body class="perf-test">
+		<!-- Fade-in halaman saat present.html baru dibuka (CSS ringan, bukan Three.js) -->
+		<div
+			class="present-fade-overlay"
+			id="presentFadeOverlay"
+			aria-hidden="true"
+		></div>
+
+		<!--
+			PAPER TRANSITION OVERLAY — satu layer ringan, dipakai ulang untuk
+			SEMUA perpindahan slide (bukan hanya Slide 1 -> 2). Hanya
+			transform + opacity yang dianimasikan (lihat css/present.css),
+			tidak ada canvas/WebGL/gambar tekstur besar.
+		-->
+		<div
+			class="paper-transition"
+			id="paperTransition"
+			aria-hidden="true"
+		></div>
+
+		<!--
+			TOMBOL REFRESH KHUSUS — fitur recovery, bukan bagian dari slide
+			mana pun. position: fixed, tidak menyita ruang layout slide,
+			satu-satunya tugasnya: simpan slide aktif ke localStorage lalu
+			reload halaman (lihat bindRefreshButton() di js/present.js).
+		-->
+		<button
+			type="button"
+			class="present-refresh-btn"
+			id="presentRefreshBtn"
+			aria-label="Muat ulang presentasi"
+			title="Muat ulang"
+		>
+			<svg
+				class="present-refresh-btn__icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M21 12a9 9 0 1 1-3-6.7" />
+				<polyline points="21 3 21 9 15 9" />
+			</svg>
+		</button>
+
+		<!--
+			★ STEP 3 — INDIKATOR BACA
+			Satu bulat fixed di atas-tengah viewport. Warnanya di-set oleh
+			js/present.js lewat modifier class (--blue / --red / --green /
+			--yellow) mengikuti event psk:slide-changed yang sudah ada.
+			Murni informasi visual: bukan tombol, tidak clickable, tidak
+			mengganggu transition apa pun. position: fixed + sibling semua
+			<section> slide → tidak pernah ikut animasi slide.
+		-->
+		<div
+			class="present-reader-indicator"
+			id="presentReaderIndicator"
+			aria-hidden="true"
+		></div>
+
+		<!--
+			GLOBAL 8-DOT NAVIGATION — satu-satunya nav component untuk SELURUH
+			presentasi (Slide 1-8), bukan markup lokal per-slide. Sibling dari
+			semua <section id="slideNScene">, jadi TIDAK ikut hidden/removed
+			saat present.js menukar slide (showSlide/hideSlide hanya menyentuh
+			section slide, tidak menyentuh elemen di luar section).
+
+			★ PATCH: dot ke-8 ditambahkan untuk Slide 8 (closing). Sistem
+			[data-goto] generik di present.js otomatis mengaitkan dot baru
+			tanpa perubahan kode navigasi.
+		-->
+		<nav class="psk-nav" id="pskNav" aria-label="Navigasi slide">
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="1"
+				aria-label="Ke Slide 1"
+			></button>
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="2"
+				aria-label="Ke Slide 2"
+			></button>
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="3"
+				aria-label="Ke Slide 3"
+			></button>
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="4"
+				aria-label="Ke Slide 4"
+			></button>
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="5"
+				aria-label="Ke Slide 5"
+			></button>
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="6"
+				aria-label="Ke Slide 6"
+			></button>
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="7"
+				aria-label="Ke Slide 7"
+			></button>
+			<!-- ★ PATCH: dot ke-8 untuk Slide 8 (closing) -->
+			<button
+				type="button"
+				class="psk-nav-dot"
+				data-goto="8"
+				aria-label="Ke Slide 8"
+			></button>
+		</nav>
+
+		<!-- ================= SLIDE 1 (PETA ASLI + PAPER SWEEP TRANSITION) — LAYOUT TIDAK DIUBAH ================= -->
+		<section
+			id="slide1Scene"
+			class="slide1-scene"
+			aria-label="Slide 1: Dunia Makin Terhubung"
+		>
+			<div class="slide1-wall"></div>
+			<div class="slide1-content">
+				<div class="slide1-map-area">
+					<div class="map-paper">
+						<img
+							class="world-map-img"
+							src="img/world-map.svg"
+							alt="Peta dunia"
+						/>
+						<div class="map-paper__aging" aria-hidden="true"></div>
+
+						<div
+							class="map-pin indonesia"
+							style="left: 79%; top: 54%"
+						>
+							<span class="pin-dot"></span>
+							<span class="pin-label">INDONESIA</span>
+						</div>
+						<div class="map-pin japan" style="left: 88%; top: 30%">
+							<span class="pin-dot"></span>
+							<span class="pin-label">JEPANG</span>
+						</div>
+
+						<svg
+							class="connection-line"
+							viewBox="0 0 100 100"
+							preserveAspectRatio="none"
+						>
+							<path d="M 79 54 Q 84 40 88 30" />
+							<circle
+								class="connection-pin"
+								cx="79"
+								cy="54"
+								r="0.6"
+							/>
+							<circle
+								class="connection-pin"
+								cx="88"
+								cy="30"
+								r="0.6"
+							/>
+						</svg>
+
+						<div class="forum-note">
+							<svg
+								class="forum-note__icon"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
+								<path
+									d="M4 5h16v10H8l-4 4V5z"
+									stroke-linejoin="round"
+								/>
+							</svg>
+							<p class="forum-note__text">
+								Dua pelajar. Dua negara.<br />Satu ruang
+								digital.
+							</p>
+						</div>
+
+						<span class="map-credit"
+							>Peta: [isi sumber &amp; lisensi aset]</span
+						>
+					</div>
+				</div>
+
+				<div class="slide1-text-area">
+					<h1 class="slide1-title">DUNIA MAKIN<br />TERHUBUNG</h1>
+					<p class="slide1-subtitle">Apa Itu Globalisasi Sosial?</p>
+					<p class="slide1-definition">
+						Globalisasi adalah meningkatnya keterhubungan dan
+						ketergantungan antarmasyarakat di berbagai wilayah
+						dunia. Proses ini didorong oleh teknologi, transportasi,
+						ekonomi, serta pertukaran budaya dan ide.
+					</p>
+					<p class="slide1-definition">
+						Dalam aspek sosial, globalisasi mengubah cara manusia
+						berinteraksi, membangun hubungan, membentuk komunitas,
+						dan memaknai identitas. Interaksi sosial kini semakin
+						melampaui batas wilayah, dengan pertukaran informasi dan
+						pengalaman yang berlangsung cepat — seperti pelajar
+						Indonesia yang dapat berdiskusi dan berteman dengan
+						pelajar di Jepang melalui forum daring.
+					</p>
+					<div class="slide1-factors">
+						<span>TEKNOLOGI</span>
+						<span>TRANSPORTASI</span>
+						<span>EKONOMI</span>
+						<span>BUDAYA</span>
+						<span>IDE</span>
+					</div>
+					<p class="slide1-hook">
+						Dunia semakin terhubung.<br />
+						Tapi bagaimana perubahan itu mengubah cara manusia
+						berinteraksi?
+					</p>
+				</div>
+			</div>
+			<!-- Tombol Next: memicu paper page turn ke Slide 2 -->
+			<button class="slide1-next" id="slide1Next">NEXT →</button>
+		</section>
+
+		<!-- ================= SLIDE 2 (FILM / 5 SHOT) ================= -->
+		<section
+			id="slide2Scene"
+			class="generic-slide-scene s2-film"
+			aria-label="Slide 2: Perubahan Pola Interaksi dan Relasi Sosial"
+		>
+			<div class="s2-bar s2-bar--top" aria-hidden="true"></div>
+
+			<div class="s2-viewport">
+				<div class="s2-track" id="s2Track">
+					<div
+						class="s2-shot"
+						data-shot="1"
+						data-placeholder="GANTI: img/slide2/shot-01.jpg"
+					>
+						<img
+							class="s2-shot__img"
+							src="img/slide2/shot-01.webp"
+							alt="Seseorang melakukan panggilan video / komunikasi digital"
+							loading="eager"
+							onerror="this.style.display = 'none'"
+						/>
+						<div class="s2-shot__overlay" aria-hidden="true"></div>
+						<div class="s2-shot__body">
+							<span class="s2-shot__number">01</span>
+							<h1 class="s2-shot__title">
+								KOMUNIKASI LINTAS<br />RUANG &amp; WAKTU
+							</h1>
+							<p class="s2-shot__desc">
+								Teknologi memungkinkan manusia berkomunikasi
+								secara cepat tanpa harus berada di tempat yang
+								sama.
+							</p>
+						</div>
+					</div>
+
+					<div
+						class="s2-shot"
+						data-shot="2"
+						data-placeholder="GANTI: img/slide2/shot-02.jpg"
+					>
+						<img
+							class="s2-shot__img"
+							src="img/slide2/shot-02.webp"
+							alt="Orang dari latar belakang budaya berbeda sedang berdiskusi"
+							loading="lazy"
+							onerror="this.style.display = 'none'"
+						/>
+						<div class="s2-shot__overlay" aria-hidden="true"></div>
+						<div class="s2-shot__body">
+							<span class="s2-shot__number">02</span>
+							<h1 class="s2-shot__title">
+								INTERAKSI<br />ANTARBUDAYA
+							</h1>
+							<p class="s2-shot__desc">
+								Globalisasi mempertemukan masyarakat dari latar
+								belakang budaya berbeda sehingga terjadi
+								pertukaran pandangan, kebiasaan, dan pengalaman.
+							</p>
+						</div>
+					</div>
+
+					<div
+						class="s2-shot"
+						data-shot="3"
+						data-placeholder="GANTI: img/slide2/shot-03.jpg"
+					>
+						<img
+							class="s2-shot__img"
+							src="img/slide2/shot-03.png"
+							alt="Orang-orang terhubung dalam komunitas/diskusi daring"
+							loading="lazy"
+							onerror="this.style.display = 'none'"
+						/>
+						<div class="s2-shot__overlay" aria-hidden="true"></div>
+						<div class="s2-shot__body">
+							<span class="s2-shot__number">03</span>
+							<h1 class="s2-shot__title">KOMUNITAS VIRTUAL</h1>
+							<p class="s2-shot__desc">
+								Masyarakat dapat membentuk komunitas berdasarkan
+								minat, tujuan, atau identitas meskipun
+								anggotanya berada di wilayah berbeda.
+							</p>
+						</div>
+					</div>
+
+					<div
+						class="s2-shot"
+						data-shot="4"
+						data-placeholder="GANTI: img/slide2/shot-04.jpg"
+					>
+						<img
+							class="s2-shot__img"
+							src="img/slide2/shot-04.png"
+							alt="Smartphone menampilkan percakapan digital"
+							loading="lazy"
+							onerror="this.style.display = 'none'"
+						/>
+						<div class="s2-shot__overlay" aria-hidden="true"></div>
+						<div class="s2-shot__body">
+							<span class="s2-shot__number">04</span>
+							<h1 class="s2-shot__title">
+								NORMA KOMUNIKASI BARU
+							</h1>
+							<p class="s2-shot__desc">
+								Emoji, stiker, bahasa campuran, serta etika
+								berkomunikasi di ruang digital menjadi bagian
+								dari pola interaksi sosial baru.
+							</p>
+						</div>
+					</div>
+
+					<div
+						class="s2-shot s2-shot--closing"
+						data-shot="5"
+						data-placeholder="GANTI: img/slide2/shot-05.jpg"
+					>
+						<img
+							class="s2-shot__img"
+							src="img/slide2/shot-05.png"
+							alt="Orang-orang menyebarkan informasi lewat smartphone"
+							loading="lazy"
+							onerror="this.style.display = 'none'"
+						/>
+						<div class="s2-shot__overlay" aria-hidden="true"></div>
+						<div class="s2-shot__body">
+							<span class="s2-shot__number">05</span>
+							<h1 class="s2-shot__title">DIFUSI INFORMASI</h1>
+							<p class="s2-shot__desc">
+								Informasi, gagasan, tren, dan gerakan sosial
+								dapat menyebar dengan cepat dari satu wilayah ke
+								wilayah lain.
+							</p>
+							<p class="s2-shot__note">
+								Globalisasi tidak otomatis membuat masyarakat
+								lebih individualis. Yang berubah terutama adalah
+								bentuk dan ruang interaksinya.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<span class="s2-counter" id="s2Counter" aria-hidden="true"
+					>01 / 05</span
+				>
+
+				<div class="s2-controls">
+					<button
+						class="s2-next-shot"
+						id="s2NextShot"
+						aria-label="Shot berikutnya"
+					>
+						<span class="s2-next-shot__icon" aria-hidden="true"
+							>&gt;</span
+						>
+						<span class="s2-next-shot__label">NEXT SHOT</span>
+					</button>
+					<button
+						class="generic-slide-next s2-next-slide"
+						id="s2NextSlide"
+						data-goto="3"
+						aria-label="Lanjut ke Slide 3"
+					>
+						NEXT →
+					</button>
+				</div>
+			</div>
+
+			<div class="s2-bar s2-bar--bottom" aria-hidden="true"></div>
+		</section>
+
+		<!-- ================= SLIDE 3 (MEJA INVESTIGASI — PERTUKARAN BUDAYA) ================= -->
+		<section
+			id="slide3Scene"
+			class="generic-slide-scene s3-desk"
+			aria-label="Slide 3: Pertukaran Budaya"
+		>
+			<div class="s3-desk-bg" aria-hidden="true">
+				<img
+					class="s3-desk-bg__img"
+					src="img/slide3/bg-plank.jpg"
+					alt=""
+					loading="eager"
+					onerror="this.style.display = 'none'"
+				/>
+			</div>
+
+			<div class="s3-content">
+				<div class="s3-title-paper">
+					<h1 class="s3-heading">
+						PERTUKARAN BUDAYA:<br />DARI DOMINASI KE HIBRIDISASI
+					</h1>
+				</div>
+
+				<div class="s3-stage">
+					<div class="s3-deck" id="s3Deck">
+						<div class="s3-paper" data-paper="1" data-role="0">
+							<span class="s3-paper__num">01</span>
+							<h2 class="s3-paper__title">DIFUSI BUDAYA</h2>
+							<p class="s3-paper__body">
+								Unsur budaya seperti musik, makanan, bahasa, dan
+								gaya hidup dapat menyebar dari satu masyarakat
+								ke masyarakat lain.
+							</p>
+						</div>
+						<div class="s3-paper" data-paper="2" data-role="1">
+							<span class="s3-paper__num">02</span>
+							<h2 class="s3-paper__title">GLOCALIZATION</h2>
+							<p class="s3-paper__body">
+								Budaya atau produk global dapat disesuaikan
+								dengan nilai, kebiasaan, dan kondisi lokal
+								sehingga menghasilkan bentuk yang lebih sesuai
+								dengan masyarakat setempat.
+							</p>
+						</div>
+						<div class="s3-paper" data-paper="3" data-role="2">
+							<span class="s3-paper__num">03</span>
+							<h2 class="s3-paper__title">HIBRIDISASI</h2>
+							<p class="s3-paper__body">
+								Pertemuan budaya lokal dan global dapat
+								menghasilkan bentuk budaya baru yang merupakan
+								perpaduan keduanya.
+							</p>
+						</div>
+					</div>
+
+					<div class="s3-illust-stack">
+						<div
+							class="s3-illustration"
+							id="s3Illustration"
+							aria-hidden="true"
+						>
+							<!-- Paper 01 -->
+							<div
+								class="s3-illust is-active"
+								data-illust="1"
+								data-placeholder="GANTI: img/slide3/jowo.jpg"
+							>
+								<img
+									src="img/slide3/jowo.jpg"
+									alt="Difusi Budaya — Musik"
+									loading="eager"
+									onerror="
+										this.style.display = 'none';
+										this.parentElement.classList.add(
+											's3-illust--missing'
+										);
+									"
+								/>
+								<div
+									class="s3-stamp s3-stamp--1"
+									aria-hidden="true"
+								>
+									ARCHIVE
+								</div>
+							</div>
+
+							<!-- Paper 02 -->
+							<div
+								class="s3-illust"
+								data-illust="2"
+								data-placeholder="GANTI: img/slide3/mie-ayam.jpg"
+							>
+								<img
+									src="img/slide3/mie-ayam.jpg"
+									alt="Glocalization — Mie Ayam"
+									loading="lazy"
+									onerror="
+										this.style.display = 'none';
+										this.parentElement.classList.add(
+											's3-illust--missing'
+										);
+									"
+								/>
+								<div
+									class="s3-stamp s3-stamp--2"
+									aria-hidden="true"
+								>
+									CULTURE
+								</div>
+							</div>
+
+							<!-- Paper 03 -->
+							<div
+								class="s3-illust"
+								data-illust="3"
+								data-placeholder="GANTI: img/slide3/budaya.jpg"
+							>
+								<img
+									src="img/slide3/budaya.jpg"
+									alt="Hibridisasi — Seni"
+									loading="lazy"
+									onerror="
+										this.style.display = 'none';
+										this.parentElement.classList.add(
+											's3-illust--missing'
+										);
+									"
+								/>
+								<div
+									class="s3-stamp s3-stamp--3"
+									aria-hidden="true"
+								>
+									DOCUMENTED
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!--
+						KERTAS "CULTURAL IMPERIALISM" — dipindah keluar dari
+						.s3-deck (v4): sekarang anak langsung .s3-stage, agar
+						bisa diposisikan di antara deck dan ilustrasi. Isi teks
+						tidak diubah. CSS menempatkannya di tengah stage dengan
+						z-index di atas deck dan di bawah ilustrasi stack.
+					-->
+					<div class="s3-ci-paper">
+						<span class="s3-ci-docnum"
+							>DOC. 07 — ARSIP PERTUKARAN BUDAYA</span
+						>
+						<h2 class="s3-ci-title">CULTURAL IMPERIALISM</h2>
+						<span class="s3-ci-rule" aria-hidden="true"></span>
+						<p class="s3-ci-body">
+							Budaya yang lebih dominan dapat memengaruhi atau
+							menekan budaya lokal, terutama ketika terdapat
+							ketimpangan kekuatan antarbudaya.
+						</p>
+						<p class="s3-ci-summary">
+							Perubahan budaya tidak selalu berarti budaya lokal
+							hilang. Budaya dapat melemah, beradaptasi, berubah
+							bentuk, atau justru semakin ditegaskan.
+						</p>
+						<div class="s3-ci-clip" aria-hidden="true">
+							<svg viewBox="0 0 24 48" fill="none">
+								<path
+									d="M6 8v26a6 6 0 0 0 12 0V10a4 4 0 0 0-8 0v22a2 2 0 0 0 4 0V14"
+									stroke="currentColor"
+									stroke-width="2.4"
+									stroke-linecap="round"
+								/>
+							</svg>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Dekorasi meja -->
+			<div class="s3-decor s3-decor--pin" aria-hidden="true"></div>
+			<div class="s3-decor s3-decor--pin2" aria-hidden="true"></div>
+			<div class="s3-decor s3-decor--redline" aria-hidden="true"></div>
+			<div class="s3-decor s3-decor--thread" aria-hidden="true"></div>
+			<div class="s3-decor s3-decor--clipping" aria-hidden="true">
+				<span></span><span></span><span></span>
+			</div>
+			<div class="s3-decor s3-decor--paperclip" aria-hidden="true">
+				<svg viewBox="0 0 24 48" fill="none">
+					<path
+						d="M6 8v26a6 6 0 0 0 12 0V10a4 4 0 0 0-8 0v22a2 2 0 0 0 4 0V14"
+						stroke="currentColor"
+						stroke-width="2.4"
+						stroke-linecap="round"
+					/>
+				</svg>
+			</div>
+			<div class="s3-decor s3-decor--binderclip" aria-hidden="true"></div>
+			<div class="s3-decor s3-decor--tape" aria-hidden="true"></div>
+			<div class="s3-decor s3-decor--sticky" aria-hidden="true">
+				<span></span><span></span>
+			</div>
+			<div class="s3-decor s3-decor--pencil" aria-hidden="true"></div>
+			<div class="s3-decor s3-decor--indexcard" aria-hidden="true">
+				<span></span><span></span>
+			</div>
+			<div class="s3-decor s3-decor--archivetag" aria-hidden="true">
+				No. 042
+			</div>
+
+			<div class="s3-controls">
+				<button
+					class="s3-shuffle"
+					id="s3Shuffle"
+					type="button"
+					aria-label="Geser kertas ke kertas berikutnya"
+				>
+					<span class="s3-shuffle__icon" aria-hidden="true">⟳</span>
+					<span class="s3-shuffle__label">GESER KERTAS</span>
+				</button>
+				<button
+					class="generic-slide-next s3-next-slide"
+					id="s3NextSlide"
+					type="button"
+					data-goto="4"
+					aria-label="Lanjut ke Slide 4"
+					disabled
+				>
+					NEXT →
+				</button>
+			</div>
+		</section>
+
+		<!-- ================= SLIDE 4 (CINEMATIC DAY/NIGHT — PELUANG & TANTANGAN) ================= -->
+		<section
+			id="slide4Scene"
+			class="generic-slide-scene s4-scene"
+			aria-label="Slide 4: Dampak Sosial — Peluang dan Tantangan"
+			data-s4-state="peluang"
+		>
+			<div class="s4-sky" aria-hidden="true">
+				<div class="s4-sky__layer s4-sky__layer--day">
+					<div class="s4-kites">
+						<span class="s4-kite s4-kite--1"></span>
+						<span class="s4-kite s4-kite--2"></span>
+						<span class="s4-kite s4-kite--3"></span>
+						<span class="s4-kite s4-kite--4"></span>
+						<span class="s4-kite s4-kite--5"></span>
+					</div>
+				</div>
+				<div class="s4-sky__layer s4-sky__layer--night"></div>
+			</div>
+			<div class="s4-vignette" aria-hidden="true"></div>
+
+			<div class="s4-skyline" aria-hidden="true">
+				<div class="s4-building s4-building--a"></div>
+				<div class="s4-building s4-building--d"></div>
+				<div class="s4-building s4-building--b"></div>
+				<div class="s4-building s4-building--f"></div>
+				<div class="s4-building s4-building--c"></div>
+				<div class="s4-building s4-building--e"></div>
+				<div class="s4-building s4-building--g"></div>
+				<div class="s4-building s4-building--b"></div>
+				<div class="s4-building s4-building--a"></div>
+				<div class="s4-building s4-building--d"></div>
+				<div class="s4-building s4-building--f"></div>
+				<div class="s4-building s4-building--c"></div>
+				<div class="s4-building s4-building--e"></div>
+				<div class="s4-building s4-building--g"></div>
+			</div>
+
+			<div class="s4-kicker">
+				<span class="s4-kicker__num">04</span>
+				<span class="s4-kicker__title"
+					>Dampak Sosial: Peluang dan Tantangan</span
+				>
+			</div>
+
+			<div class="s4-cloud" aria-hidden="true"></div>
+
+			<div class="s4-character" id="s4Character" aria-hidden="true">
+				<div class="s4-character__inner" id="s4CharacterInner">
+					<img
+						class="s4-character__img"
+						src="img/slide4/bakekok.png"
+						alt=""
+						loading="eager"
+						onerror="
+							this.style.display = 'none';
+							this.closest('.s4-character').classList.add(
+								's4-character--missing'
+							);
+						"
+					/>
+				</div>
+			</div>
+
+			<!-- PANEL PELUANG (kanan) -->
+			<div class="s4-panel s4-panel--peluang" data-panel="peluang">
+				<h2 class="s4-panel__title">PELUANG</h2>
+				<ul class="s4-panel__list">
+					<li>
+						Memperluas pemahaman terhadap keberagaman masyarakat
+						dunia.
+					</li>
+					<li>
+						Meningkatkan toleransi dan kemampuan memahami perbedaan.
+					</li>
+					<li>
+						Mempermudah hubungan dan kerja sama sosial lintas
+						wilayah.
+					</li>
+					<li>
+						Mempercepat penyebaran nilai seperti kesetaraan,
+						kepedulian lingkungan, dan hak asasi manusia.
+					</li>
+				</ul>
+				<span
+					class="s4-panel__dot s4-panel__dot--1"
+					aria-hidden="true"
+				></span>
+				<span
+					class="s4-panel__dot s4-panel__dot--2"
+					aria-hidden="true"
+				></span>
+				<span
+					class="s4-panel__dot s4-panel__dot--3"
+					aria-hidden="true"
+				></span>
+			</div>
+
+			<!-- PANEL TANTANGAN (kiri) -->
+			<div class="s4-panel s4-panel--tantangan" data-panel="tantangan">
+				<h2 class="s4-panel__title">TANTANGAN</h2>
+				<ul class="s4-panel__list">
+					<li>
+						Ketimpangan akses informasi dapat memperlebar
+						kesenjangan sosial.
+					</li>
+					<li>
+						Perbedaan nilai lokal dan nilai global dapat menimbulkan
+						perdebatan atau konflik.
+					</li>
+					<li>
+						Misinformasi dan ujaran kebencian dapat memengaruhi
+						hubungan sosial.
+					</li>
+					<li>
+						Interaksi digital yang berlebihan dapat mengurangi
+						interaksi tatap muka bagi sebagian orang.
+					</li>
+				</ul>
+				<span
+					class="s4-panel__dot s4-panel__dot--1"
+					aria-hidden="true"
+				></span>
+				<span
+					class="s4-panel__dot s4-panel__dot--2"
+					aria-hidden="true"
+				></span>
+				<span
+					class="s4-panel__dot s4-panel__dot--3"
+					aria-hidden="true"
+				></span>
+			</div>
+
+			<div class="s4-footer">
+				<div class="s4-footer-left">
+					<span class="s4-label">DAMPAK SOSIAL</span>
+					<p class="s4-closing">
+						&ldquo;Dampak globalisasi perlu dikelola, bukan sekadar
+						diterima atau ditolak.&rdquo;
+					</p>
+				</div>
+				<div class="s4-footer-right">
+					<button
+						class="s4-toggle"
+						id="s4Toggle"
+						type="button"
+						aria-label="Lihat Tantangan"
+					>
+						<span class="s4-toggle__arrow" aria-hidden="true"
+							>→</span
+						>
+					</button>
+					<button
+						class="generic-slide-next s4-next-slide"
+						id="s4NextSlide"
+						type="button"
+						data-goto="5"
+						aria-label="Lanjut ke Slide 5"
+					>
+						NEXT →
+					</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- ================= SLIDE 5 (THE SOCIAL REPORT — NEWSPAPER) ================= -->
+		<section
+			id="slide5Scene"
+			class="generic-slide-scene s5-scene"
+			aria-label="Slide 5 — The Social Report"
+		>
+			<div class="s5-desk-texture" aria-hidden="true"></div>
+
+			<!-- Koran dekorasi — hanya dekorasi, tidak interaktif -->
+			<div class="s5-deco s5-deco--1" aria-hidden="true"></div>
+			<div class="s5-deco s5-deco--2" aria-hidden="true"></div>
+			<div class="s5-deco s5-deco--3" aria-hidden="true"></div>
+			<div class="s5-deco s5-deco--4" aria-hidden="true"></div>
+			<div class="s5-deco s5-deco--5" aria-hidden="true"></div>
+
+			<div class="s5-stage">
+				<header class="s5-masthead">
+					<span class="s5-masthead__meta">Digital Divide</span>
+					<h1 class="s5-masthead__title">Kesenjangan Digital</h1>
+					<span class="s5-masthead__meta"
+						>05 / 07 — Field Report</span
+					>
+				</header>
+
+				<!-- ===== JUDUL UTAMA SLIDE 5 (BARU) ===== -->
+				<div class="s5-intro">
+					<h2 class="s5-intro__title">News</h2>
+					<p class="s5-intro__subtitle">
+						Tidak Semua Orang Terhubung Secara Setara
+					</p>
+				</div>
+
+				<div class="s5-reports" id="s5Reports">
+					<!-- REPORT 01 — ANTARWILAYAH -->
+					<article
+						class="s5-report"
+						data-report="1"
+						style="--s5-rot: -1.8deg"
+					>
+						<div class="s5-report__inner">
+							<div class="s5-report__topline">
+								<span>News</span>
+								<span><em>Report 01</em> · Field Notes</span>
+							</div>
+							<div class="s5-report__body">
+								<div class="s5-report__text">
+									<span class="s5-report__label"
+										>Report 01</span
+									>
+									<h2 class="s5-report__headline">
+										Antarwilayah
+									</h2>
+									<p class="s5-report__copy">
+										Kota dan daerah terpencil memiliki akses
+										teknologi dan internet yang berbeda.
+									</p>
+								</div>
+								<figure class="s5-report__photo">
+									<img
+										src="img/slide5/01.jpg"
+										alt="Ilustrasi kesenjangan akses teknologi antarwilayah"
+									/>
+									<figcaption>
+										Antarwilayah — Field Photo
+									</figcaption>
+								</figure>
+							</div>
+							<!-- Lower content: kolom visual koran (bukan lorem ipsum terbaca) -->
+							<div class="s5-report__lower" aria-hidden="true">
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+							</div>
+							<div
+								class="s5-report__rule"
+								aria-hidden="true"
+							></div>
+						</div>
+					</article>
+
+					<!-- REPORT 02 — ANTARGENERASI -->
+					<article
+						class="s5-report"
+						data-report="2"
+						style="--s5-rot: 1.2deg"
+					>
+						<div class="s5-report__inner">
+							<div class="s5-report__topline">
+								<span>Nangnang news</span>
+								<span><em>Report 02</em> · Field Notes</span>
+							</div>
+							<div class="s5-report__body">
+								<div class="s5-report__text">
+									<span class="s5-report__label"
+										>Report 02</span
+									>
+									<h2 class="s5-report__headline">
+										Antargenerasi
+									</h2>
+									<p class="s5-report__copy">
+										Kemampuan menggunakan teknologi dapat
+										berbeda antara generasi muda dan lansia.
+									</p>
+								</div>
+								<figure class="s5-report__photo">
+									<img
+										src="img/slide5/02.jpg"
+										alt="Ilustrasi kesenjangan kemampuan teknologi antargenerasi"
+									/>
+									<figcaption>
+										Antargenerasi — Field Photo
+									</figcaption>
+								</figure>
+							</div>
+							<!-- Lower content: kolom visual koran (bukan lorem ipsum terbaca) -->
+							<div class="s5-report__lower" aria-hidden="true">
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+							</div>
+							<div
+								class="s5-report__rule"
+								aria-hidden="true"
+							></div>
+						</div>
+					</article>
+
+					<!-- REPORT 03 — ANTARKELOMPOK EKONOMI -->
+					<article
+						class="s5-report"
+						data-report="3"
+						style="--s5-rot: -0.8deg"
+					>
+						<div class="s5-report__inner">
+							<div class="s5-report__topline">
+								<span>Nangnang news</span>
+								<span><em>Report 03</em> · Field Notes</span>
+							</div>
+							<div class="s5-report__body">
+								<div class="s5-report__text">
+									<span class="s5-report__label"
+										>Report 03</span
+									>
+									<h2 class="s5-report__headline">
+										Antarkelompok Ekonomi
+									</h2>
+									<p class="s5-report__copy">
+										Harga perangkat dan internet dapat
+										menjadi hambatan bagi sebagian
+										masyarakat untuk terhubung secara
+										digital.
+									</p>
+								</div>
+								<figure class="s5-report__photo">
+									<img
+										src="img/slide5/03.jpg"
+										alt="Ilustrasi hambatan ekonomi terhadap akses digital"
+									/>
+									<figcaption>
+										Ekonomi — Field Photo
+									</figcaption>
+								</figure>
+							</div>
+							<!-- Lower content: kolom visual koran (bukan lorem ipsum terbaca) -->
+							<div class="s5-report__lower" aria-hidden="true">
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+							</div>
+							<div
+								class="s5-report__rule"
+								aria-hidden="true"
+							></div>
+						</div>
+					</article>
+
+					<!-- REPORT 04 — ANTAR TINGKAT PENDIDIKAN -->
+					<article
+						class="s5-report"
+						data-report="4"
+						style="--s5-rot: 1.6deg"
+					>
+						<div class="s5-report__inner">
+							<div class="s5-report__topline">
+								<span>Nangnang news</span>
+								<span><em>Report 04</em> · Field Notes</span>
+							</div>
+							<div class="s5-report__body">
+								<div class="s5-report__text">
+									<span class="s5-report__label"
+										>Report 04</span
+									>
+									<h2 class="s5-report__headline">
+										Antar Tingkat Pendidikan
+									</h2>
+									<p class="s5-report__copy">
+										Tidak semua orang memiliki kesempatan
+										pendidikan yang sama. Keterbatasan
+										fasilitas pendidikan dan biaya yang
+										mahal dapat membuat sebagian masyarakat
+										kesulitan memperoleh pendidikan yang
+										layak.
+									</p>
+								</div>
+								<!-- ===== DIGITAL EVIDENCE (bukan widget smartphone) ===== -->
+								<div class="s5-evidence">
+									<div class="s5-evidence__frame">
+										<div class="s5-evidence__screen">
+											<img
+												src="img/slide5/04.jpg"
+												alt="Bukti visual lapangan terkait kesenjangan akses pendidikan digital"
+											/>
+										</div>
+									</div>
+									<span class="s5-evidence__caption"
+										>Digital Evidence<em
+											>Field Report</em
+										></span
+									>
+								</div>
+							</div>
+							<!-- Lower content: kolom visual koran (bukan lorem ipsum terbaca) -->
+							<div class="s5-report__lower" aria-hidden="true">
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+								<div class="s5-lower-col">
+									<span></span><span></span><span></span
+									><span></span>
+								</div>
+							</div>
+							<div
+								class="s5-report__rule"
+								aria-hidden="true"
+							></div>
+						</div>
+					</article>
+				</div>
+
+				<div class="s5-controls">
+					<button
+						type="button"
+						class="s5-next"
+						id="s5NextReport"
+						aria-label="Lihat laporan berikutnya"
+					>
+						NEXT REPORT →
+					</button>
+				</div>
+			</div>
+		</section>
+
+		<!-- ================= SLIDE 6 (VIDEO COVER + COMMENT FEED) =================
+			Konsep: kiri = video/editorial cover, kanan = comment feed berisi
+			5 perspektif sosiologis. Navigasi & state TETAP memakai sistem
+			existing (transitionTo/[data-goto] di js/present.js) — tidak ada
+			router/state baru. Hanya area .s6-comments__feed yang scroll
+			(lihat css/slide6.css); Slide 6 sendiri tidak ikut scroll sebagai
+			halaman. Ganti img/slide6/thumbnail.jpg, img/slide6/creator.jpg,
+			dan img/slide6/profiles/*.jpg dengan asset asli kapan saja — tiap
+			<img> punya onerror sendiri sehingga jika path belum diganti,
+			fallback (gradient cover / inisial avatar) tetap tampil rapi. -->
+		<section
+			id="slide6Scene"
+			class="generic-slide-scene s6-scene"
+			aria-label="Slide 6 — Perspektif Sosiologis tentang Globalisasi"
+		>
+			<div class="s6-stage">
+				<div class="s6-layout">
+					<!-- KIRI — VIDEO / EDITORIAL COVER -->
+					<div class="s6-left">
+						<figure class="s6-thumb">
+							<!--
+								GANTI HANYA path src di bawah untuk memakai
+								thumbnail sendiri. <img> object-fit:cover,
+								mengisi penuh area thumbnail tanpa merusak
+								aspect ratio (lihat css/slide6.css).
+							-->
+							<img
+								class="s6-thumb__img"
+								src="img/slide6/profiles/thumbnail.jpg"
+								alt=""
+								loading="eager"
+								onerror="this.style.display = 'none'"
+							/>
+							<div
+								class="s6-thumb__scrim"
+								aria-hidden="true"
+							></div>
+
+							<!-- Video controls — visual saja, tidak ada <video>/autoplay -->
+							<button
+								type="button"
+								class="s6-thumb__play"
+								aria-label="Pratinjau video (visual saja)"
+								aria-pressed="true"
+							>
+								<svg
+									class="s6-thumb__play-icon s6-thumb__play-icon--pause"
+									viewBox="0 0 24 24"
+									aria-hidden="true"
+								>
+									<rect
+										x="6"
+										y="5"
+										width="4"
+										height="14"
+										rx="0.8"
+									/>
+									<rect
+										x="14"
+										y="5"
+										width="4"
+										height="14"
+										rx="0.8"
+									/>
+								</svg>
+								<svg
+									class="s6-thumb__play-icon s6-thumb__play-icon--play"
+									viewBox="0 0 24 24"
+									aria-hidden="true"
+								>
+									<path d="M7 4.5v15l13-7.5-13-7.5z" />
+								</svg>
+							</button>
+
+							<div class="s6-thumb__controls" aria-hidden="true">
+								<span class="s6-thumb__volume">
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											d="M4 9.5v5h3.6L13 19V5L7.6 9.5H4z"
+										/>
+										<path
+											d="M16.2 8.4a5 5 0 0 1 0 7.2"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="1.6"
+											stroke-linecap="round"
+										/>
+									</svg>
+								</span>
+								<span class="s6-thumb__duration">12:48</span>
+							</div>
+
+							<span class="s6-thumb__kicker"
+								>06 / 07 • GLOBALIZATION • SOCIOLOGY</span
+							>
+							<h2 class="s6-thumb__title">
+								<span>PERSPEKTIF</span>
+								<span>SOSIOLOGIS</span>
+								<span class="s6-thumb__title-sm"
+									>TENTANG GLOBALISASI</span
+								>
+							</h2>
+						</figure>
+
+						<!-- INFO VIDEO — creator, title, like/share/subscribe.
+							Semua avatar/foto di bawah pakai <img> lokal dengan
+							fallback inisial jika path belum diganti. -->
+						<div class="s6-meta">
+							<h1 class="s6-meta__title">
+								Perspektif Sosiologis tentang Globalisasi
+							</h1>
+
+							<div class="s6-meta__creator">
+								<span class="s6-meta__creator-avatar">
+									<img
+										src="img/slide6/profiles/chanel.jpg"
+										alt=""
+										loading="lazy"
+										onerror="this.style.display = 'none'"
+									/>
+									<span
+										class="s6-meta__creator-fallback"
+										aria-hidden="true"
+										>N</span
+									>
+								</span>
+								<span class="s6-meta__creator-info">
+									<span class="s6-meta__creator-name"
+										>Nangnang Sociology</span
+									>
+									<span class="s6-meta__creator-sub"
+										>Sociology / Globalization</span
+									>
+								</span>
+							</div>
+
+							<div class="s6-meta__actions">
+								<button
+									type="button"
+									class="s6-meta__action s6-meta__like"
+									aria-pressed="false"
+								>
+									<span
+										class="s6-meta__like-icon"
+										aria-hidden="true"
+										>♡</span
+									>
+									<span>1.4K</span>
+								</button>
+								<button
+									type="button"
+									class="s6-meta__action s6-meta__share"
+								>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											d="M15 5l6 6-6 6M3 19c0-5 3-9 9-9h9"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="1.7"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										/>
+									</svg>
+									<span>Share</span>
+								</button>
+								<button
+									type="button"
+									class="s6-meta__action s6-meta__subscribe"
+									aria-pressed="false"
+								>
+									Subscribe
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<!-- KANAN — COMMENT FEED (satu-satunya area yang scroll) -->
+					<div class="s6-right">
+						<div class="s6-comments">
+							<div class="s6-comments__header">
+								<span class="s6-comments__count">5</span>
+								COMMENTS
+							</div>
+
+							<div
+								class="s6-comments__feed"
+								tabindex="0"
+								role="list"
+								aria-label="Daftar perspektif sosiologis tentang globalisasi"
+							>
+								<article class="s6-comment" role="listitem">
+									<span class="s6-comment__avatar">
+										<img
+											src="img/slide6/profiles/01.jpg"
+											alt=""
+											loading="lazy"
+											onerror="
+												this.style.display = 'none'
+											"
+										/>
+										<span
+											class="s6-comment__avatar-fallback"
+											aria-hidden="true"
+											>M</span
+										>
+									</span>
+									<div class="s6-comment__body">
+										<div class="s6-comment__top">
+											<span class="s6-comment__author"
+												>Marshall McLuhan</span
+											>
+											<span class="s6-comment__theory"
+												>Global Village</span
+											>
+										</div>
+										<p class="s6-comment__text">
+											Teknologi komunikasi membuat dunia
+											terasa seperti desa kecil karena
+											jarak semakin tidak berarti.
+										</p>
+										<div class="s6-comment__foot">
+											<span class="s6-comment__like"
+												>♡ 1.2K</span
+											>
+											<span class="s6-comment__reply"
+												>Reply</span
+											>
+										</div>
+									</div>
+								</article>
+
+								<article class="s6-comment" role="listitem">
+									<span class="s6-comment__avatar">
+										<img
+											src="img/slide6/profiles/02.jpg"
+											alt=""
+											loading="lazy"
+											onerror="
+												this.style.display = 'none'
+											"
+										/>
+										<span
+											class="s6-comment__avatar-fallback"
+											aria-hidden="true"
+											>G</span
+										>
+									</span>
+									<div class="s6-comment__body">
+										<div class="s6-comment__top">
+											<span class="s6-comment__author"
+												>George Ritzer</span
+											>
+											<span class="s6-comment__theory"
+												>McDonaldization</span
+											>
+										</div>
+										<p class="s6-comment__text">
+											Masyarakat semakin dipengaruhi
+											prinsip efisiensi, keterhitungan,
+											prediktabilitas, dan kontrol.
+										</p>
+										<div class="s6-comment__foot">
+											<span class="s6-comment__like"
+												>♡ 842</span
+											>
+											<span class="s6-comment__reply"
+												>Reply</span
+											>
+										</div>
+									</div>
+								</article>
+
+								<article class="s6-comment" role="listitem">
+									<span class="s6-comment__avatar">
+										<img
+											src="img/slide6/profiles/03.jpg"
+											alt=""
+											loading="lazy"
+											onerror="
+												this.style.display = 'none'
+											"
+										/>
+										<span
+											class="s6-comment__avatar-fallback"
+											aria-hidden="true"
+											>S</span
+										>
+									</span>
+									<div class="s6-comment__body">
+										<div class="s6-comment__top">
+											<span class="s6-comment__author"
+												>Sociology Archive</span
+											>
+											<span class="s6-comment__theory"
+												>Cultural Imperialism</span
+											>
+										</div>
+										<p class="s6-comment__text">
+											Budaya dari negara dominan dapat
+											menyebar dan menekan budaya lokal
+											melalui media dan industri hiburan.
+										</p>
+										<div class="s6-comment__foot">
+											<span class="s6-comment__reply"
+												>Reply</span
+											>
+										</div>
+									</div>
+								</article>
+
+								<article class="s6-comment" role="listitem">
+									<span class="s6-comment__avatar">
+										<img
+											src="img/slide6/profiles/04.jpg"
+											alt=""
+											loading="lazy"
+											onerror="
+												this.style.display = 'none'
+											"
+										/>
+										<span
+											class="s6-comment__avatar-fallback"
+											aria-hidden="true"
+											>R</span
+										>
+									</span>
+									<div class="s6-comment__body">
+										<div class="s6-comment__top">
+											<span class="s6-comment__author"
+												>Roland Robertson</span
+											>
+											<span class="s6-comment__theory"
+												>Glocalization</span
+											>
+										</div>
+										<p class="s6-comment__text">
+											Budaya global dapat diadaptasi
+											dengan kondisi lokal sehingga
+											menghasilkan bentuk baru.
+										</p>
+										<div class="s6-comment__foot">
+											<span class="s6-comment__reply"
+												>Reply</span
+											>
+										</div>
+									</div>
+								</article>
+
+								<article class="s6-comment" role="listitem">
+									<span class="s6-comment__avatar">
+										<img
+											src="img/slide6/profiles/05.jpg"
+											alt=""
+											loading="lazy"
+											onerror="
+												this.style.display = 'none'
+											"
+										/>
+										<span
+											class="s6-comment__avatar-fallback"
+											aria-hidden="true"
+											>C</span
+										>
+									</span>
+									<div class="s6-comment__body">
+										<div class="s6-comment__top">
+											<span class="s6-comment__author"
+												>Manuel Castells</span
+											>
+											<span class="s6-comment__theory"
+												>Network Society</span
+											>
+										</div>
+										<p class="s6-comment__text">
+											Jaringan digital membentuk kembali
+											cara kekuasaan, ekonomi, dan
+											identitas bekerja dalam masyarakat.
+										</p>
+										<div class="s6-comment__foot">
+											<span class="s6-comment__reply"
+												>Reply</span
+											>
+										</div>
+									</div>
+								</article>
+							</div>
+						</div>
+
+						<button
+							type="button"
+							id="s6NextSlide"
+							class="generic-slide-next s6-next"
+							data-goto="7"
+							aria-label="Lanjut ke Slide 7"
+						>
+							NEXT →
+						</button>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ================= SLIDE 7 — "MENGHADAPI GLOBALISASI" =================
+			Bumi 3D (Three.js, lihat js/slide7.js) + 5 panel editorial yang
+			mengorbit, muncul satu per satu kiri->kanan. Class "generic-slide-scene"
+			DIPERTAHANKAN (dipakai present.js untuk show/hide dasar); semua
+			styling nyata di-override oleh css/slide7.css lewat class "s7-scene"
+			dan selector #slide7Scene.s7-scene (spesifisitas lebih tinggi dari
+			.generic-slide-scene).
+
+			★ PATCH ARSITEKTUR: closing sequence (Thanks/Yupi/typewriter/timer)
+			DIPINDAH ke Slide 8. Slide 7 sekarang murni slide materi biasa.
+			NEXT di Slide 7 TIDAK memicu typewriter, melainkan transisi
+			fade+flash ke Slide 8 (di-handle oleh js/slide8.js capture-phase).
+		-->
+		<section
+			id="slide7Scene"
+			class="generic-slide-scene s7-scene"
+			aria-label="Slide 7 — Menghadapi Globalisasi: Kritis, Terbuka, dan Berakar"
+		>
+			<div class="s7-stars" aria-hidden="true"></div>
+
+			<div class="s7-stage">
+				<header class="s7-header">
+					<p class="s7-quote">
+						&ldquo;Mengenal dunia bukan berarti kehilangan arah;
+						dengan pijakan identitas yang kuat, kita dapat melangkah
+						lebih jauh.&rdquo;
+					</p>
+					<h1 class="s7-title">MENGHADAPI GLOBALISASI</h1>
+					<p class="s7-subtitle">Kritis, Terbuka, dan Berakar</p>
+				</header>
+
+				<!-- Bumi 3D — canvas diisi/di-render oleh js/slide7.js (Three.js
+					 dimuat via dynamic import HANYA saat Slide 7 pertama kali
+					 aktif, supaya tidak membebani load awal present.html). -->
+				<div class="s7-earth-wrap" id="s7EarthWrap" aria-hidden="true">
+					<div class="s7-earth-glow"></div>
+					<canvas class="s7-earth-canvas" id="s7EarthCanvas"></canvas>
+					<div class="s7-earth-fallback-sphere"></div>
+				</div>
+
+				<div class="s7-panels" role="list">
+					<article class="s7-panel s7-panel--1" role="listitem">
+						<div class="s7-panel__inner">
+							<span class="s7-panel__num">01</span>
+							<h2 class="s7-panel__title">TERBUKA</h2>
+							<p class="s7-panel__text">
+								Belajar dari pengetahuan dan budaya baru.
+							</p>
+						</div>
+					</article>
+
+					<article class="s7-panel s7-panel--2" role="listitem">
+						<div class="s7-panel__inner">
+							<span class="s7-panel__num">02</span>
+							<h2 class="s7-panel__title">KRITIS</h2>
+							<p class="s7-panel__text">
+								Meningkatkan literasi digital dan memverifikasi
+								informasi.
+							</p>
+						</div>
+					</article>
+
+					<article class="s7-panel s7-panel--3" role="listitem">
+						<div class="s7-panel__inner">
+							<span class="s7-panel__num">03</span>
+							<h2 class="s7-panel__title">BERAKAR</h2>
+							<p class="s7-panel__text">
+								Menjaga dan mengembangkan budaya lokal.
+							</p>
+						</div>
+					</article>
+
+					<article class="s7-panel s7-panel--4" role="listitem">
+						<div class="s7-panel__inner">
+							<span class="s7-panel__num">04</span>
+							<h2 class="s7-panel__title">MENGHARGAI</h2>
+							<p class="s7-panel__text">
+								Membangun solidaritas dan menghormati perbedaan.
+							</p>
+						</div>
+					</article>
+
+					<article class="s7-panel s7-panel--5" role="listitem">
+						<div class="s7-panel__inner">
+							<span class="s7-panel__num">05</span>
+							<h2 class="s7-panel__title">INKLUSIF</h2>
+							<p class="s7-panel__text">
+								Mendorong kesetaraan akses terhadap teknologi
+								dan informasi.
+							</p>
+						</div>
+					</article>
+				</div>
+
+				<p class="s7-conclusion">
+					Globalisasi sosial adalah realitas yang tidak dapat
+					dihindari. Tantangannya bukan bagaimana menghindarinya,
+					tetapi bagaimana menghadapinya secara terbuka, kritis, dan
+					tetap memiliki identitas.
+				</p>
+
+				<!-- NEXT: mengarah ke Slide 8 (closing). TIDAK memakai
+					 [data-goto] — klik di-intercept oleh js/slide8.js
+					 (capture phase) untuk menjalankan transisi fade + flash
+					 lalu trigger nav dot [data-goto="8"]. Setelah Slide 8
+					 aktif, typewriter Thanks/Yupi berjalan di sana. -->
+				<button
+					type="button"
+					id="s7NextBtn"
+					class="generic-slide-next s7-next"
+					aria-label="Lanjut ke Slide 8"
+				>
+					NEXT →
+				</button>
+
+				<!-- ★ PATCH: markup .s7-ending / #s7EndingText DIHAPUS dari
+					 Slide 7. Overlay typewriter sekarang hidup di Slide 8
+					 (#s8EndingText). Slide 7 tidak lagi menyimpan state
+					 closing apa pun. -->
+			</div>
+		</section>
+
+		<!-- ================= SLIDE 8 — CLOSING "Thanks / Yupi" =================
+			★ PATCH ARSITEKTUR: Slide 8 baru. Slide penutup murni — typewriter
+			Thanks -> hold 10s -> erase -> Yupi -> hold 3s -> erase -> Thanks
+			final (STOP). Di-trigger oleh NEXT Slide 7 (via js/slide8.js).
+			Tidak ada Earth, panel, atau dekorasi berat — fokus tunggal pada
+			teks. Semua logic ada di js/slide8.js, styling di css/slide8.css. -->
+		<section
+			id="slide8Scene"
+			class="generic-slide-scene s8-scene"
+			aria-label="Slide 8 — Penutup"
+		>
+			<div class="s8-stage">
+				<p
+					class="s8-ending-text"
+					id="s8EndingText"
+					aria-live="polite"
+				></p>
+			</div>
+
+			<!-- ★ ADDITIVE PATCH: Hamburger "Menu Jawaban" — murni tambahan,
+				 TIDAK mengubah/menyentuh .s8-stage / #s8EndingText / sequence
+				 typewriter di atas. Logic ada di IIFE terpisah di akhir
+				 js/slide8.js, styling di css/slide8.css (namespace .s8-). -->
+			<button
+				type="button"
+				class="s8-hamburger"
+				id="s8HamburgerBtn"
+				aria-label="Buka menu jawaban pertanyaan"
+				aria-expanded="false"
+				aria-controls="s8KnowledgeMenu"
+			>
+				<span class="s8-hamburger__bar"></span>
+				<span class="s8-hamburger__bar"></span>
+				<span class="s8-hamburger__bar"></span>
+			</button>
+
+			<nav
+				class="s8-menu"
+				id="s8KnowledgeMenu"
+				aria-hidden="true"
+				aria-label="Menu jawaban pertanyaan"
+			>
+				<ul class="s8-menu__list">
+					<li>
+						<button
+							type="button"
+							class="s8-menu__item"
+							data-topic="cultural-imperialism"
+						>
+							Cultural Imperialism
+						</button>
+					</li>
+					<li>
+						<button
+							type="button"
+							class="s8-menu__item"
+							data-topic="difusi"
+						>
+							Difusi
+						</button>
+					</li>
+					<li>
+						<button
+							type="button"
+							class="s8-menu__item"
+							data-topic="glocalization"
+						>
+							Glocalization
+						</button>
+					</li>
+					<li>
+						<button
+							type="button"
+							class="s8-menu__item"
+							data-topic="hibridasi"
+						>
+							Hibridasi
+						</button>
+					</li>
+					<li>
+						<button
+							type="button"
+							class="s8-menu__item"
+							data-topic="mcdonaldization"
+						>
+							McDonaldization
+						</button>
+					</li>
+					<li>
+						<button
+							type="button"
+							class="s8-menu__item"
+							data-topic="network-society"
+						>
+							Network Society
+						</button>
+					</li>
+					<li>
+						<button
+							type="button"
+							class="s8-menu__item"
+							data-topic="inklusif"
+						>
+							Inklusif
+						</button>
+					</li>
+				</ul>
+			</nav>
+
+			<div
+				class="s8-info-overlay"
+				id="s8InfoOverlay"
+				aria-hidden="true"
+			>
+				<div class="s8-info-panel" role="document">
+					<h2
+						class="s8-info-panel__title"
+						id="s8InfoPanelTitle"
+					></h2>
+					<p
+						class="s8-info-panel__meta"
+						id="s8InfoPanelMeta"
+					></p>
+
+					<div class="s8-info-panel__section">
+						<span class="s8-info-panel__label"
+							>Pengertian</span
+						>
+						<p
+							class="s8-info-panel__text"
+							id="s8InfoPanelDef"
+						></p>
+					</div>
+
+					<div class="s8-info-panel__section">
+						<span class="s8-info-panel__label">Contoh</span>
+						<p
+							class="s8-info-panel__text"
+							id="s8InfoPanelExample"
+						></p>
+					</div>
+
+					<div class="s8-info-panel__section">
+						<span class="s8-info-panel__label">Inti</span>
+						<p
+							class="s8-info-panel__text"
+							id="s8InfoPanelCore"
+						></p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Overlay transisi khusus Slide 3 → 4: Awan Solid -->
+		<div
+			class="cloud-transition-overlay"
+			id="cloudTransitionOverlay"
+			aria-hidden="true"
+		>
+			<!-- Layer Belakang (Bayangan) -->
+			<div class="cloud-layer layer-back">
+				<div class="cloud-half left-half">
+					<div class="cloud-fill"></div>
+					<div
+						class="puff"
+						style="
+							width: 40vh;
+							height: 40vh;
+							right: -15vh;
+							top: 5vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 55vh;
+							height: 50vh;
+							right: -25vh;
+							top: 45vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 35vh;
+							height: 35vh;
+							right: -10vh;
+							top: 85vh;
+						"
+					></div>
+				</div>
+				<div class="cloud-half right-half">
+					<div class="cloud-fill"></div>
+					<div
+						class="puff"
+						style="
+							width: 45vh;
+							height: 40vh;
+							left: -20vh;
+							top: 15vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 35vh;
+							height: 35vh;
+							left: -15vh;
+							top: 55vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 50vh;
+							height: 50vh;
+							left: -25vh;
+							top: 75vh;
+						"
+					></div>
+				</div>
+			</div>
+
+			<!-- Layer Tengah -->
+			<div class="cloud-layer layer-mid">
+				<div class="cloud-half left-half">
+					<div class="cloud-fill"></div>
+					<div
+						class="puff"
+						style="
+							width: 50vh;
+							height: 40vh;
+							right: -20vh;
+							top: -5vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 35vh;
+							height: 45vh;
+							right: -12vh;
+							top: 25vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 60vh;
+							height: 55vh;
+							right: -28vh;
+							top: 50vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 40vh;
+							height: 30vh;
+							right: -18vh;
+							top: 90vh;
+						"
+					></div>
+				</div>
+				<div class="cloud-half right-half">
+					<div class="cloud-fill"></div>
+					<div
+						class="puff"
+						style="
+							width: 40vh;
+							height: 30vh;
+							left: -15vh;
+							top: 10vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 65vh;
+							height: 55vh;
+							left: -30vh;
+							top: 30vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 35vh;
+							height: 40vh;
+							left: -12vh;
+							top: 70vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 45vh;
+							height: 45vh;
+							left: -20vh;
+							top: 95vh;
+						"
+					></div>
+				</div>
+			</div>
+
+			<!-- Layer Depan (Paling Terang) -->
+			<div class="cloud-layer layer-front">
+				<div class="cloud-half left-half">
+					<div class="cloud-fill"></div>
+					<div
+						class="puff"
+						style="
+							width: 45vh;
+							height: 45vh;
+							right: -22vh;
+							top: 5vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 30vh;
+							height: 30vh;
+							right: -10vh;
+							top: 35vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 55vh;
+							height: 60vh;
+							right: -25vh;
+							top: 45vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 45vh;
+							height: 35vh;
+							right: -20vh;
+							top: 85vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 35vh;
+							height: 35vh;
+							right: -15vh;
+							top: 105vh;
+						"
+					></div>
+				</div>
+				<div class="cloud-half right-half">
+					<div class="cloud-fill"></div>
+					<div
+						class="puff"
+						style="
+							width: 35vh;
+							height: 35vh;
+							left: -15vh;
+							top: -5vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 55vh;
+							height: 50vh;
+							left: -25vh;
+							top: 20vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 40vh;
+							height: 40vh;
+							left: -18vh;
+							top: 60vh;
+						"
+					></div>
+					<div
+						class="puff"
+						style="
+							width: 60vh;
+							height: 55vh;
+							left: -28vh;
+							top: 80vh;
+						"
+					></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ★ PATCH: FLASH OVERLAY untuk transisi 7 -> 8. Full-screen fixed,
+			 murni opacity CSS, dikontrol js/slide8.js lewat class
+			 .s8-flash--active. Tidak menyentuh layout slide apa pun. -->
+		<div
+			class="s8-flash-overlay"
+			id="s8FlashOverlay"
+			aria-hidden="true"
+		></div>
+
+		<!--
+			Dimuat & dijalankan SEBELUM js/present.js dengan sengaja (lihat
+			catatan di js/transition-3-4.js): satu-satunya tugasnya di awal
+			adalah melepas atribut [data-goto] dari tombol NEXT Slide 3
+			supaya init() generik di present.js TIDAK ikut memasang
+			listener paper-sweep-nya sendiri ke tombol yang sama —
+			mencegah dua sistem transisi berjalan berbarengan pada satu
+			klik. Tidak ada elemen/section lain yang disentuh oleh
+			pemindahan urutan ini.
+		-->
+		<script defer src="js/transition-3-4.js"></script>
+		<!-- ===== SCRIPT TRANSISI 4→5 (BARU) ===== -->
+		<script defer src="js/transition-4-5.js"></script>
+		<!-- Script presentasi saja: TIDAK ada board.js / main.js opening di sini -->
+		<script defer src="js/transition-6-7.js"></script>
+		<script defer src="js/present.js"></script>
+		<!--
+					LLogic khusus filmstrip Slide 2 (shot state terpisah dari state
+					slide di present.js). FILE BARU, tidak menyentuh js/slide2.js
+					lama milik board scene di index.html.
+				-->
+		<script defer src="js/slide2-film.js"></script>
+		<!--
+			Logic khusus meja kertas Slide 3 (geser kertas + ganti ilustrasi
+			gambar). TIDAK DIUBAH oleh revisi visual ini — tombol NEXT di
+			Slide 3 tetap memakai [data-goto="4"] yang sudah dikaitkan
+			otomatis oleh js/present.js; di sini kita hanya mengatur kapan
+			tombol itu aktif (lihat updateNextButton()).
+		-->
+		<script defer src="js/slide3.js"></script>
+		<!--
+			Logic khusus state Peluang/Tantangan Slide 4 (siang<->malam,
+			karakter berbalik). Tombol NEXT-nya tetap memakai [data-goto="5"]
+			yang sudah otomatis dikaitkan oleh js/present.js. TIDAK PERLU
+			DIUBAH untuk skyline: warna jendela dikendalikan murni lewat CSS
+			(attribute selector data-s4-state + class transisi yang sudah
+			ditoggle oleh file ini).
+		-->
+		<script defer src="js/slide4.js"></script>
+		<!--
+			js/slide5.js mengatur state lokal Slide 5 (report mana yang
+			sedang jatuh/aktif/tertumpuk). TIDAK membuat navigasi/router/
+			state management baru — tombol terakhir tetap pakai
+			[data-goto="6"] yang sudah otomatis dikaitkan oleh init() di
+			js/present.js.
+		-->
+		<script defer src="js/slide5.js"></script>
+		<!--
+			js/slide6.js HANYA mengatur state visual opsional (toggle ikon
+			play/pause pada thumbnail, toggle warna like/subscribe). TIDAK
+			ada navigasi/router/state slide baru — tombol NEXT tetap pakai
+			[data-goto="7"] yang sudah otomatis dikaitkan oleh init() di
+			js/present.js.
+		-->
+		<script defer src="js/slide6.js"></script>
+		<!--
+			js/slide7.js mengatur Bumi 3D (Three.js dimuat via dynamic import()
+			HANYA saat Slide 7 pertama kali aktif — bukan saat halaman dibuka —
+			supaya present.html tetap ringan di awal) + urutan kemunculan 5
+			panel.
+
+			★ PATCH ARSITEKTUR: seluruh closing sequence (Thanks/Yupi/
+			typewriter/timer 10s/3s/nav-lock) SUDAH DIHAPUS dari file ini.
+			Slide 7 sekarang murni slide materi biasa.
+		-->
+		<script defer src="js/slide7.js"></script>
+		<!--
+			★ PATCH ARSITEKTUR: js/slide8.js menangani Slide 8 (closing).
+			Dua tugas:
+			1) Intercept klik NEXT di Slide 7 (capture phase) -> jalankan
+			   transisi fade + flash putih -> trigger nav dot [data-goto="8"]
+			   (sistem navigasi existing, bukan router baru).
+			2) Setelah Slide 8 aktif (event psk:slide-changed), jalankan
+			   typewriter: Thanks -> hold 10s -> erase -> Yupi -> hold 3s
+			   -> erase -> Thanks final (STOP). Tidak ada RAF baru,
+			   WebGL baru, atau render loop baru.
+		-->
+		<script defer src="js/slide8.js"></script>
+	</body>
+</html>

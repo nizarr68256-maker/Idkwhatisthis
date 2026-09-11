@@ -1,0 +1,503 @@
+/* ==========================================================================
+   PRESENT.HTML — fade-in halaman + placeholder Slide 2-7
+   Semua transisi di sini murni CSS (opacity), tidak ada Three.js/WebGL,
+   tidak ada renderer/camera/canvas baru.
+
+   Tambahan: transisi khusus Slide 2 → Slide 3 (movie frame keluar
+   asimetris + slide 3 masuk dari bawah). Tetap berbasis transform/opacity
+   agar performa tetap ringan.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------
+   FADE-IN SAAT PRESENT.HTML BARU DIBUKA
+   present.js menghapus class .is-active setelah DOM siap, sehingga
+   overlay hitam ini memudar dan Slide 1 (yang sudah .is-active secara
+   default lewat HTML) langsung terlihat.
+   --------------------------------------------------------------------- */
+.present-fade-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 300;
+	background: #0a0806;
+	opacity: 1;
+	pointer-events: none;
+	transition: opacity 700ms ease;
+}
+
+.present-fade-overlay.is-hidden {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.present-fade-overlay {
+		transition: none !important;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   PAPER TRANSITION — satu layer ringan yang menyapu layar saat berganti
+   slide. Hanya transform (translateX) + opacity yang dianimasikan, jadi
+   browser cukup mengkomposit satu layer di GPU tanpa reflow/repaint pada
+   konten slide di baliknya. Slide lama/baru ditukar via display saat
+   paper sedang menutupi layar penuh (lihat js/present.js), sehingga
+   pergantian itu sendiri tidak perlu terlihat/transisi.
+   --------------------------------------------------------------------- */
+.paper-transition {
+	position: fixed;
+	inset: 0;
+	z-index: 150; /* di atas semua slide (maks 80), di bawah fade overlay */
+	background: linear-gradient(100deg, #f4ecd8 0%, #efe6d0 45%, #e9dfc5 100%);
+	box-shadow:
+		inset 0 0 48px rgba(120, 96, 60, 0.08),
+		6px 0 18px rgba(20, 14, 6, 0.22);
+	transform: translateX(-100%);
+	opacity: 0;
+	pointer-events: none;
+	contain: strict;
+}
+
+.paper-transition.is-sweeping {
+	animation: paper-sweep 600ms cubic-bezier(0.65, 0, 0.35, 1) both;
+	will-change: transform, opacity; /* hanya aktif selama animasi berjalan */
+}
+
+@keyframes paper-sweep {
+	0% {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+	10% {
+		opacity: 1;
+	}
+	50% {
+		transform: translateX(0%);
+		opacity: 1;
+	}
+	90% {
+		opacity: 1;
+	}
+	100% {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.paper-transition {
+		display: none !important; /* JS langsung menukar slide tanpa sweep */
+	}
+}
+
+/* ---------------------------------------------------------------------
+   GENERIC SLIDE (placeholder Slide 2-7)
+   Dipakai sampai konten asli tiap slide dibuatkan desainnya sendiri.
+   opacity/is-active di sini hanya untuk show/hide dasar; transisi visual
+   antar SEMUA slide (termasuk Slide 1 -> 2) kini ditangani oleh satu
+   layer .paper-transition di atas (lihat js/present.js transitionTo()),
+   jadi pertukaran display di sini terjadi instan saat layar tertutup
+   paper — tidak lagi mengandalkan durasi opacity 350ms ini untuk terlihat
+   mulus.
+   --------------------------------------------------------------------- */
+.generic-slide-scene {
+	position: fixed;
+	inset: 0;
+	z-index: 70;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: radial-gradient(
+		120% 90% at 50% 30%,
+		#f0ead9 0%,
+		#e5ddcb 55%,
+		#d5cab5 100%
+	);
+	opacity: 0;
+	transition: opacity 350ms ease; /* sudah disamakan dari 0.5s */
+}
+
+.generic-slide-scene.is-active {
+	display: flex;
+	opacity: 1;
+}
+
+.generic-slide-content {
+	text-align: center;
+	color: #2b241c;
+	font-family: var(--font-label, "Jost", sans-serif);
+}
+
+.generic-slide-content h1 {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(2rem, 6vw, 3.4rem);
+	margin: 0 0 0.5rem;
+	color: #1c1611;
+}
+
+.generic-slide-content p {
+	font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+	color: #5a4a3a;
+	margin: 0 0 1.5rem;
+}
+
+/* Tombol navigasi generic */
+.generic-slide-next {
+	background: none;
+	border: none;
+	padding: 10px 18px;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	font-size: 0.9rem;
+	letter-spacing: 0.15em;
+	color: #3a2e1e;
+	cursor: pointer;
+	transition:
+		transform 0.2s,
+		color 0.2s;
+}
+
+.generic-slide-next:hover {
+	transform: translateX(4px);
+	color: #1c1611;
+}
+
+.generic-slide-next:active {
+	transform: scale(0.95);
+}
+
+.generic-slide-end {
+	display: inline-block;
+	margin-top: 0.5rem;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-style: italic;
+	font-size: 1.1rem;
+	letter-spacing: 0.08em;
+	color: #6b4a3a;
+}
+
+/* ==========================================================================
+   MINIMAL FIX — Button browser default reset & focus management
+   Berlaku untuk semua tombol navigasi di presentasi.
+   ========================================================================== */
+.generic-slide-next,
+.slide1-next,
+.s2-next-shot {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-webkit-tap-highlight-color: transparent;
+	tap-highlight-color: transparent;
+	-webkit-touch-callout: none; /* cegah context-menu saat tap-and-hold di touchscreen */
+	user-select: none;
+	-webkit-user-select: none;
+	cursor: pointer;
+	outline: none; /* hilangkan outline default */
+	touch-action: manipulation; /* mencegah double-tap zoom pada tombol */
+}
+
+/* Pastikan hitbox tombol navigasi utama memenuhi target sentuh minimal
+   (~44x44px) di layar touchscreen, tanpa mengubah tampilan teks/posisi:
+   inline-flex + align-items center hanya memusatkan label secara
+   vertikal di dalam kotak yang sedikit lebih tinggi. */
+.generic-slide-next,
+.slide1-next {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+}
+
+.generic-slide-next:focus-visible,
+.slide1-next:focus-visible,
+.s2-next-shot:focus-visible {
+	outline: 2px solid #8b3a3a;
+	outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.generic-slide-scene {
+		transition: none !important;
+	}
+}
+
+/* ==========================================================================
+   TRANSISI KHUSUS SLIDE 2 -> SLIDE 3 (MOVIE FRAME KELUAR ASIMETRIS +
+   SLIDE 3 MASUK DARI BAWAH)
+   ========================================================================== */
+
+/* Slide 2 keluar: terdorong ke kanan atas dengan sedikit rotasi & skew */
+.s2-exit {
+	animation: s2-exit 700ms cubic-bezier(0.55, 0, 0.2, 1) both;
+	will-change: transform, opacity;
+	/* Pastikan slide 2 tetap terlihat selama animasi berjalan */
+	pointer-events: none;
+}
+
+@keyframes s2-exit {
+	0% {
+		transform: translate(0, 0) rotate(0deg) skewX(0deg);
+		opacity: 1;
+	}
+	100% {
+		transform: translate(115%, -22%) rotate(2.5deg) skewX(2deg);
+		opacity: 0;
+	}
+}
+
+/* Slide 3 masuk: muncul dari bawah */
+.s3-enter {
+	animation: s3-enter 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+	will-change: transform, opacity;
+	/* Nonaktifkan transisi default .generic-slide-scene agar tidak konflik */
+	transition: none !important;
+	/* Pastikan slide 3 tidak menghalangi klik sampai animasi selesai */
+	pointer-events: auto;
+}
+
+@keyframes s3-enter {
+	0% {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+	100% {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+/* Jika pengguna memilih reduce motion, semua animasi khusus dimatikan */
+@media (prefers-reduced-motion: reduce) {
+	.s2-exit,
+	.s3-enter {
+		animation: none !important;
+	}
+}
+
+/* ==========================================================================
+   TOMBOL REFRESH KHUSUS — pojok kanan atas
+   Fitur recovery (bukan bagian visual slide manapun). position: fixed
+   supaya tidak pernah menggeser layout slide. z-index di atas paper
+   transition (150) dan semua slide (maks 80), di bawah fade overlay
+   (300) agar tetap ikut memudar/tersembunyi saat overlay hitam awal
+   menutupi layar. Hanya transform + opacity + background yang
+   dianimasikan (tidak ada shadow/filter berat, tidak ada RAF/JS timer).
+   ========================================================================== */
+.present-refresh-btn {
+	position: fixed;
+	top: clamp(14px, 2.2vh, 28px);
+	right: clamp(14px, 2.2vw, 32px);
+	z-index: 200;
+
+	width: clamp(36px, 3.6vw, 46px);
+	height: clamp(36px, 3.6vw, 46px);
+	min-width: 44px;
+	min-height: 44px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	appearance: none;
+	-webkit-appearance: none;
+	border: 1px solid rgba(58, 46, 30, 0.28);
+	border-radius: 50%;
+	background: rgba(239, 233, 220, 0.28);
+	color: #3a2e1e;
+	cursor: pointer;
+	padding: 0;
+
+	-webkit-tap-highlight-color: transparent;
+	tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	user-select: none;
+	-webkit-user-select: none;
+	touch-action: manipulation;
+	outline: none;
+
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease,
+		transform 0.15s ease,
+		opacity 0.2s ease;
+}
+
+.present-refresh-btn__icon {
+	width: 55%;
+	height: 55%;
+	pointer-events: none;
+}
+
+.present-refresh-btn:hover {
+	background: rgba(239, 233, 220, 0.46);
+	border-color: rgba(58, 46, 30, 0.45);
+}
+
+.present-refresh-btn:active {
+	transform: scale(0.9);
+	background: rgba(239, 233, 220, 0.6);
+}
+
+.present-refresh-btn:focus-visible {
+	outline: 2px solid #8b3a3a;
+	outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.present-refresh-btn {
+		transition: none !important;
+	}
+}
+
+/* ==========================================================================
+   GLOBAL 7-DOT NAVIGATION — satu component untuk seluruh presentasi
+   (Slide 1-7). position: fixed di level halaman (sibling semua section
+   slide), jadi otomatis persist melewati setiap pergantian slide tanpa
+   duplikasi markup. z-index sama seperti present-refresh-btn (200): di
+   atas semua slide (maks 70) & paper-transition (150), di bawah fade
+   overlay pembuka (300).
+
+   Dibuat netral (ring putih transparan) supaya tetap terbaca di atas
+   background terang (Slide 1-6, generic-slide-scene krem) maupun gelap
+   (Slide 7, starfield). Sinkronisasi state aktif ada di js/present.js
+   (syncGlobalNavActive), bukan di-hardcode ke slide manapun. Klik dot
+   memakai [data-goto] generik yang SUDAH ADA — tidak ada sistem
+   navigasi kedua.
+   ========================================================================== */
+.psk-nav {
+	position: fixed;
+	z-index: 200;
+	right: clamp(10px, 1.8vw, 28px);
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: clamp(10px, 1.4vh, 16px);
+}
+
+.psk-nav-dot {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 7px;
+	margin: 0;
+	cursor: pointer;
+	outline: none;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.psk-nav-dot::before {
+	content: "";
+	display: block;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.55);
+	box-shadow:
+		0 0 0 1px rgba(20, 16, 10, 0.35),
+		0 1px 3px rgba(0, 0, 0, 0.35);
+	opacity: 0.7;
+	transition:
+		opacity 220ms ease,
+		transform 220ms ease,
+		background 220ms ease,
+		box-shadow 220ms ease;
+}
+
+.psk-nav-dot:hover::before,
+.psk-nav-dot:focus-visible::before {
+	opacity: 1;
+	transform: scale(1.1);
+}
+
+.psk-nav-dot:focus-visible {
+	outline: 2px solid #8b3a3a;
+	outline-offset: 3px;
+	border-radius: 50%;
+}
+
+.psk-nav-dot--active {
+	cursor: default;
+}
+
+.psk-nav-dot--active::before {
+	width: 9px;
+	height: 9px;
+	background: #c9a463;
+	box-shadow:
+		0 0 0 1px rgba(20, 16, 10, 0.25),
+		0 0 10px rgba(201, 164, 99, 0.75);
+	opacity: 1;
+	transform: scale(1.15);
+}
+
+/* Dikunci oleh js/slide7.js selama final ending sequence Slide 7. */
+.psk-nav.psk-nav--locked .psk-nav-dot {
+	pointer-events: none;
+	opacity: 0.4;
+}
+
+@media (max-height: 620px) {
+	.psk-nav {
+		gap: clamp(7px, 1vh, 11px);
+		right: clamp(8px, 1.2vw, 16px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.psk-nav-dot::before {
+		transition: none !important;
+	}
+}
+/* ==========================================================================
+   INDIKATOR BACA — satu bulat fixed di atas-tengah viewport.
+   Warnanya di-set oleh js/present.js lewat modifier class
+   (--blue / --red / --green / --yellow) mengikuti event psk:slide-changed.
+   Tidak ada animasi/glow/backdrop-filter. Bukan tombol, pointer-events:none.
+   z-index 200 = sejajar dgn .psk-nav & .present-refresh-btn — di atas
+   semua slide (maks 80) & paper-transition (150), di bawah fade overlay
+   pembuka (300).
+   ========================================================================== */
+.present-reader-indicator {
+	position: fixed;
+	top: clamp(14px, 2.2vh, 28px);
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 200;
+
+	width: clamp(11px, 1.2vw, 16px);
+	height: clamp(11px, 1.2vw, 16px);
+	border-radius: 50%;
+
+	background-color: #a8443a; /* fallback default (merah) */
+	border: 1px solid rgba(20, 16, 10, 0.28);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+
+	pointer-events: none;
+	user-select: none;
+	-webkit-user-select: none;
+
+	transition: background-color 200ms ease;
+}
+
+.present-reader-indicator--blue {
+	background-color: #4a7ba7;
+}
+.present-reader-indicator--red {
+	background-color: #a8443a;
+}
+.present-reader-indicator--green {
+	background-color: #4a7a52;
+}
+.present-reader-indicator--yellow {
+	background-color: #c9a463;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.present-reader-indicator {
+		transition: none !important;
+	}
+}

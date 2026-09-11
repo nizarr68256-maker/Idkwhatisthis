@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+		/>
+		<title>Yusmentoro67</title>
+
+		<!-- Typeface editorial untuk judul + sans tipis untuk caption nama anggota -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap"
+			rel="stylesheet"
+		/>
+
+		<link rel="stylesheet" href="css/style.css" />
+		<link rel="stylesheet" href="css/transition.css" />
+		<link rel="stylesheet" href="css/board.css" />
+		<!-- SLIDE 1 & 2 CSS dihapus dari index.html karena presentasi dipindah ke present.html -->
+		<style>
+			/* ==============================================================
+	   DEKORASI PAPAN INVESTIGASI — 6 detail kecil, murni dekoratif.
+	   Hanya CSS. Tanpa JS/render loop/canvas baru.
+	   z-index 2 (di atas felt+vignette, di bawah foto/judul/pin).
+	   pointer-events:none → tidak pernah menghalangi klik Photo 1.
+	   ============================================================== */
+			.board-deco {
+				position: absolute;
+				inset: 0;
+				z-index: 2;
+				pointer-events: none;
+			}
+
+			.board-deco__item {
+				position: absolute;
+				top: var(--dy, 50%);
+				left: var(--dx, 50%);
+				transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+				pointer-events: none;
+				user-select: none;
+				-webkit-user-select: none;
+				-webkit-user-drag: none;
+			}
+
+			/* 1. Sobekan kertas tua dengan garis catatan tangan */
+			.board-deco__scrap {
+				width: clamp(38px, 5.4%, 66px);
+				aspect-ratio: 4 / 5;
+				background: linear-gradient(160deg, #f3ecdc 0%, #e6dcc4 100%);
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+				clip-path: polygon(
+					4% 2%,
+					92% 0%,
+					100% 10%,
+					97% 90%,
+					86% 100%,
+					8% 97%,
+					0% 86%,
+					3% 10%
+				);
+			}
+			.board-deco__scrap::before {
+				content: "";
+				position: absolute;
+				left: 14%;
+				right: 14%;
+				top: 22%;
+				height: 40%;
+				background: repeating-linear-gradient(
+					to bottom,
+					rgba(60, 40, 25, 0.45) 0 2px,
+					transparent 2px 100%
+				);
+				background-size: 100% 8px;
+				opacity: 0.75;
+			}
+
+			/* 2. Pin merah kecil dengan nomor */
+			.board-deco__tag {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: clamp(18px, 2.2%, 26px);
+				aspect-ratio: 1;
+				border-radius: 50%;
+				background: radial-gradient(
+					circle at 32% 28%,
+					#cf3a34,
+					#6f1a17 78%
+				);
+				box-shadow:
+					0 2px 3px rgba(0, 0, 0, 0.55),
+					inset 0 1px 1px rgba(255, 255, 255, 0.45),
+					inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+				color: #f5e6c9;
+				font-family: var(--font-label, "Jost", sans-serif);
+				font-size: clamp(8px, 0.75vw, 11px);
+				font-weight: 500;
+				letter-spacing: 0.02em;
+			}
+
+			/* 3. Sticky note kuning kecil */
+			.board-deco__sticky {
+				width: clamp(24px, 3%, 38px);
+				aspect-ratio: 1;
+				background: linear-gradient(168deg, #fdf6c8 0%, #f6e77f 100%);
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+				clip-path: polygon(0% 0%, 100% 0%, 100% 84%, 88% 100%, 0% 100%);
+			}
+
+			/* 4. Label kecil "EVIDENCE" bergaya stempel merah */
+			.board-deco__label {
+				padding: 3px 7px;
+				background: rgba(250, 240, 220, 0.92);
+				border: 1px solid rgba(139, 58, 58, 0.6);
+				color: #8b3a3a;
+				font-family: var(--font-label, "Jost", sans-serif);
+				font-size: clamp(6.5px, 0.62vw, 9px);
+				font-weight: 500;
+				letter-spacing: 0.16em;
+				text-transform: uppercase;
+				white-space: nowrap;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+			}
+
+			/* 5. Tape strip semi-transparan */
+			.board-deco__tape {
+				width: clamp(28px, 3.6%, 46px);
+				height: clamp(7px, 0.9vw, 11px);
+				background: linear-gradient(
+					180deg,
+					rgba(255, 250, 235, 0.7),
+					rgba(238, 228, 202, 0.55)
+				);
+				border-left: 1px dashed rgba(255, 255, 255, 0.55);
+				border-right: 1px dashed rgba(255, 255, 255, 0.55);
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+			}
+
+			/* 6. Klip kertas kecil */
+			.board-deco__clip {
+				width: clamp(7px, 0.9vw, 10px);
+				height: clamp(18px, 2.2vw, 24px);
+				border: 1.4px solid rgba(188, 188, 192, 0.9);
+				border-radius: 50% / 32%;
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+			}
+			.board-deco__clip::before {
+				content: "";
+				position: absolute;
+				left: 22%;
+				right: 22%;
+				top: 14%;
+				bottom: 58%;
+				border: 1.2px solid rgba(188, 188, 192, 0.9);
+				border-radius: 50% / 40%;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- ================= SCENE 0: OPENING (TIDAK DIUBAH) ================= -->
+		<main
+			class="scene"
+			id="scene"
+			aria-label="Opening: Perubahan Sosial Kontemporer"
+		>
+			<canvas id="gl"></canvas>
+
+			<div class="wall-fallback" id="wallFallback" aria-hidden="true">
+				<div class="wall-fallback__glow"></div>
+			</div>
+
+			<div class="overlay">
+				<div class="title-block" id="titleBlock">
+					<h1 class="title">
+						Globalisasi Ditinjau<br />Dari Aspek Sosial
+					</h1>
+					<p class="title-sub">Kelompok 6</p>
+				</div>
+
+				<!--
+					4 foto anggota (WANTED papers) TIDAK LAGI berupa <figure> 2D di
+					sini. Sekarang berupa objek 3D Three.js (paper mesh menempel di
+					dinding, dengan tekstur foto + tulisan WANTED + nama anggota yang
+					digambar ke canvas texture) yang dibangun & dianimasikan di
+					js/main.js. Nama anggota tetap dipertahankan (dibakar ke dalam
+					tekstur kertas, di bagian bawah), hanya cara render-nya yang
+					berubah dari DOM/CSS menjadi mesh 3D.
+				-->
+			</div>
+			<!-- /.overlay -->
+		</main>
+
+		<!-- ================= OVERLAY TRANSISI: PUSH THROUGH THE LENS (TIDAK DIUBAH) ================= -->
+		<div class="lens-overlay" id="lensOverlay" aria-hidden="true">
+			<div class="lens-overlay__glass"></div>
+			<div class="lens-overlay__chroma"></div>
+			<div class="lens-overlay__vignette"></div>
+			<div class="lens-overlay__flare"></div>
+		</div>
+
+		<!-- ================= SCENE 1: PAPAN HIJAU (MENU VISUAL — 7 FOTO) — TIDAK DIUBAH ================= -->
+		<section
+			id="boardScene"
+			aria-label="Papan pilihan slide: Perubahan Sosial Kontemporer"
+		>
+			<div class="board-viewport">
+				<div class="board-frame" id="boardFrame">
+					<div class="board-felt">
+						<canvas id="feltCanvas"></canvas>
+						<!-- Dekorasi papan investigasi — 6 detail kecil di area kosong.
+     Murni dekoratif, tidak menutupi foto / string / judul / pin.
+     Dihilangkan dari a11y tree (aria-hidden). -->
+						<div class="board-deco" aria-hidden="true">
+							<span
+								class="board-deco__item board-deco__scrap"
+								style="--dx: 28%; --dy: 8%; --rot: -6deg"
+							></span>
+							<span
+								class="board-deco__item board-deco__tag"
+								style="--dx: 66%; --dy: 8%; --rot: 0deg"
+								>02</span
+							>
+							<span
+								class="board-deco__item board-deco__sticky"
+								style="--dx: 3.5%; --dy: 52%; --rot: -8deg"
+							></span>
+							<span
+								class="board-deco__item board-deco__label"
+								style="--dx: 96.5%; --dy: 50%; --rot: 6deg"
+								>Evidence</span
+							>
+							<span
+								class="board-deco__item board-deco__tape"
+								style="--dx: 30%; --dy: 95%; --rot: -12deg"
+							></span>
+							<span
+								class="board-deco__item board-deco__clip"
+								style="--dx: 70%; --dy: 95%; --rot: 14deg"
+							></span>
+							<span
+								class="board-deco__item board-deco__tag"
+								style="--dx: 33%; --dy: 11%; --rot: 0deg"
+								>07</span
+							>
+							<span
+								class="board-deco__item board-deco__tape"
+								style="--dx: 67%; --dy: 11%; --rot: 8deg"
+							></span>
+							<span
+								class="board-deco__item board-deco__sticky"
+								style="--dx: 35%; --dy: 52%; --rot: 7deg"
+							></span>
+							<span
+								class="board-deco__item board-deco__scrap"
+								style="--dx: 65%; --dy: 52%; --rot: 5deg"
+							></span>
+							<span
+								class="board-deco__item board-deco__tag"
+								style="--dx: 35%; --dy: 72%; --rot: 0deg"
+								>13</span
+							>
+							<span
+								class="board-deco__item board-deco__clip"
+								style="--dx: 65%; --dy: 72%; --rot: -10deg"
+							></span>
+						</div>
+						<!-- Judul papan -->
+						<div class="board-title" aria-hidden="true">
+							<span class="board-title__line"
+								>GLOBALISASI DITINJAU</span
+							>
+							<span class="board-title__line"
+								>DARI ASPEK SOSIAL</span
+							>
+						</div>
+						<div class="board-photos" id="boardPhotos">
+							<!-- 7 foto dibangun secara dinamis oleh js/board.js -->
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<button type="button" class="board-back" id="boardBack">
+				&larr; Kembali
+			</button>
+		</section>
+
+		<!--
+			CATATAN PENTING:
+			- Semua elemen #slide1Scene dan #slide2Scene telah DIHAPUS dari halaman ini.
+			- Presentasi kini berada di file terpisah: present.html.
+			- Script presentasi (js/slide1.js, js/slide2.js) juga dihapus.
+			- Navigasi ke present.html dilakukan oleh js/board.js setelah fokus foto pertama selesai.
+		-->
+
+		<!-- Script utama dan modul board -->
+		<script type="module" src="js/main.js"></script>
+		<script defer src="js/board.js"></script>
+	</body>
+</html>

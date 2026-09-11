@@ -1,0 +1,449 @@
+/* ==========================================================================
+   SLIDE 8 — closing / final animation ("Thanks" / "Yupi" typewriter).
+
+   FIX v4:
+   - Flash overlay z-index diturunkan dari 9999 -> 9000, supaya TIDAK
+     berada di atas cloud-transition-overlay (transisi 3->4) maupun
+     paper-transition (present.js). Ini mencegah flash putih dari
+     transisi 7->8 "nyangkut" dan menutupi transisi slide lain.
+   - Semua overlay pakai pointer-events: none (tidak menahan klik).
+   - Slide 8 background putih, teks hitam, caret hitam.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------
+   0. SCENE — background PUTIH. Display TIDAK di-set di sini — present.js
+   yang mengatur via inline style.
+   --------------------------------------------------------------------- */
+#slide8Scene.s8-scene {
+	background: #ffffff;
+	overflow: hidden;
+	align-items: center;
+	justify-content: center;
+}
+
+#slide8Scene.s8-scene:not(.is-active) {
+	display: none !important;
+}
+
+.s8-stage {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	padding: clamp(24px, 6vw, 80px);
+	box-sizing: border-box;
+	pointer-events: none;
+}
+
+.s8-ending-text {
+	margin: 0;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(3rem, 10vw, 7rem);
+	letter-spacing: 0.05em;
+	line-height: 1;
+	color: #0a0a0a;
+	white-space: pre;
+	min-height: 1em;
+	text-shadow: none;
+}
+
+.s8-ending-text::after {
+	content: "";
+	display: inline-block;
+	width: 0.05em;
+	height: 0.92em;
+	vertical-align: -0.06em;
+	background: rgba(10, 10, 10, 0.75);
+	margin-left: 0.08em;
+	animation: s8-caret 900ms steps(1) infinite;
+}
+
+@keyframes s8-caret {
+	0%,
+	49% {
+		opacity: 1;
+	}
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   1. FLASH OVERLAY — transition 7 -> 8.
+
+   z-index = 9000 (DI BAWAH cloud-transition-overlay di transisi 3->4,
+   DI BAWAH paper-transition present.js). Sebelumnya 9999 — terlalu
+   tinggi, menyebabkan flash nyangkut di atas transisi slide lain.
+
+   Guard tambahan: hanya boleh terlihat kalau MEMANG ada class
+   s8-flash--active yang dipasang js/slide8.js. Opacity default 0,
+   pointer-events: none.
+   --------------------------------------------------------------------- */
+.s8-flash-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 9000;
+	pointer-events: none;
+	background: radial-gradient(
+		circle at 50% 50%,
+		#ffffff 0%,
+		#f6f9ff 45%,
+		#eaf1ff 100%
+	);
+	opacity: 0;
+	transition: opacity 350ms cubic-bezier(0.4, 0, 0.2, 1);
+	will-change: opacity;
+}
+
+.s8-flash-overlay.s8-flash--active {
+	opacity: 1;
+}
+
+/* Guard keras: kalau class aktif dihapus, paksa opacity 0 — walau ada
+   CSS lain yang menaikkan opacity secara tidak sengaja. */
+.s8-flash-overlay:not(.s8-flash--active) {
+	opacity: 0 !important;
+}
+
+/* ---------------------------------------------------------------------
+   2. REDUCED MOTION
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	.s8-ending-text::after {
+		animation: none;
+		opacity: 0;
+	}
+	.s8-flash-overlay,
+	.s8-flash-overlay.s8-flash--active {
+		transition: none;
+	}
+}
+.s8-flash-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 9000;
+	pointer-events: none;
+	background: radial-gradient(
+		circle at 50% 50%,
+		#ffffff 0%,
+		#f6f9ff 45%,
+		#eaf1ff 100%
+	);
+	opacity: 0;
+	visibility: hidden;
+	transition:
+		opacity 350ms cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s linear 350ms;
+}
+
+.s8-flash-overlay.s8-flash--active {
+	opacity: 1;
+	visibility: visible;
+	transition:
+		opacity 350ms cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s linear 0s;
+}
+
+/* ==========================================================================
+   ★ ADDITIVE PATCH — HAMBURGER "MENU JAWABAN" (Slide 8 saja)
+
+   Murni tambahan: tidak mengubah rule apa pun di atas (scene, stage,
+   ending text, flash overlay). Semua selector baru pakai namespace
+   ".s8-" sesuai project convention, tidak ada selector global.
+
+   Stacking lokal di dalam #slide8Scene (yang sudah jadi stacking
+   context sendiri lewat position:fixed + z-index:70 dari
+   .generic-slide-scene, lihat present.css):
+     .s8-info-overlay  -> z-index 20 (paling bawah dari 3 elemen baru)
+     .s8-menu          -> z-index 30
+     .s8-hamburger     -> z-index 40 (PALING ATAS, sengaja dibuat lebih
+                           tinggi dari overlay supaya tombol selalu bisa
+                           diklik untuk menutup, walau information panel
+                           sedang terbuka).
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------
+   HAMBURGER BUTTON — pojok kiri bawah, safe margin dari tepi layar.
+   --------------------------------------------------------------------- */
+.s8-hamburger {
+	position: fixed;
+	left: clamp(16px, 3vw, 32px);
+	bottom: clamp(16px, 3vh, 32px);
+	z-index: 40;
+	width: clamp(48px, 5vw, 58px);
+	height: clamp(48px, 5vw, 58px);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	background: rgba(20, 18, 14, 0.9);
+	border: 1px solid rgba(43, 36, 28, 0.85);
+	border-radius: 10px;
+	cursor: pointer;
+	padding: 0;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.s8-hamburger:hover {
+	background: rgba(20, 18, 14, 1);
+}
+
+.s8-hamburger:focus-visible {
+	outline: 2px solid #8b3a3a;
+	outline-offset: 3px;
+}
+
+.s8-hamburger__bar {
+	display: block;
+	width: 22px;
+	height: 2px;
+	background: #f4ecd8;
+	border-radius: 2px;
+	transition:
+		transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+		opacity 200ms ease;
+}
+
+/* Hamburger -> X, murni transform/opacity (tanpa library). */
+.s8-hamburger.s8-hamburger--active .s8-hamburger__bar:nth-child(1) {
+	transform: translateY(8px) rotate(45deg);
+}
+.s8-hamburger.s8-hamburger--active .s8-hamburger__bar:nth-child(2) {
+	opacity: 0;
+}
+.s8-hamburger.s8-hamburger--active .s8-hamburger__bar:nth-child(3) {
+	transform: translateY(-8px) rotate(-45deg);
+}
+
+/* ---------------------------------------------------------------------
+   MENU — daftar 7 topik, muncul di atas hamburger (bottom-left corner).
+   --------------------------------------------------------------------- */
+.s8-menu {
+	position: fixed;
+	left: clamp(16px, 3vw, 32px);
+	bottom: calc(clamp(16px, 3vh, 32px) + clamp(48px, 5vw, 58px) + 14px);
+	z-index: 30;
+	width: min(78vw, 300px);
+	max-height: 60vh;
+	overflow-y: auto;
+	background: rgba(20, 18, 14, 0.96);
+	border: 1px solid rgba(43, 36, 28, 0.85);
+	border-radius: 12px;
+	padding: 10px;
+
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(10px);
+	pointer-events: none;
+	transition:
+		opacity 260ms ease,
+		transform 260ms ease,
+		visibility 0s linear 260ms;
+}
+
+.s8-menu.s8-menu--open {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+	pointer-events: auto;
+	transition:
+		opacity 260ms ease,
+		transform 260ms ease,
+		visibility 0s linear 0s;
+}
+
+.s8-menu__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.s8-menu__list li {
+	opacity: 0;
+	transform: translateY(6px);
+	transition:
+		opacity 220ms ease,
+		transform 220ms ease;
+}
+
+/* Stagger ringan saat menu terbuka — hanya efektif ketika .s8-menu--open
+   aktif (lihat selector gabungan di bawah), supaya tidak animasi mundur
+   yang aneh saat menu tertutup. */
+.s8-menu.s8-menu--open .s8-menu__list li:nth-child(1) {
+	transition-delay: 20ms;
+}
+.s8-menu.s8-menu--open .s8-menu__list li:nth-child(2) {
+	transition-delay: 50ms;
+}
+.s8-menu.s8-menu--open .s8-menu__list li:nth-child(3) {
+	transition-delay: 80ms;
+}
+.s8-menu.s8-menu--open .s8-menu__list li:nth-child(4) {
+	transition-delay: 110ms;
+}
+.s8-menu.s8-menu--open .s8-menu__list li:nth-child(5) {
+	transition-delay: 140ms;
+}
+.s8-menu.s8-menu--open .s8-menu__list li:nth-child(6) {
+	transition-delay: 170ms;
+}
+.s8-menu.s8-menu--open .s8-menu__list li:nth-child(7) {
+	transition-delay: 200ms;
+}
+.s8-menu.s8-menu--open .s8-menu__list li {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.s8-menu__item {
+	display: block;
+	width: 100%;
+	text-align: left;
+	background: transparent;
+	border: none;
+	border-radius: 7px;
+	padding: 10px 12px;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: clamp(0.85rem, 1vw, 0.98rem);
+	letter-spacing: 0.03em;
+	color: #f4ecd8;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.s8-menu__item:hover,
+.s8-menu__item:focus-visible {
+	background: rgba(244, 236, 216, 0.12);
+	outline: none;
+}
+
+/* ---------------------------------------------------------------------
+   INFO OVERLAY — panel besar di tengah layar, overlay di atas Slide 8.
+   Ditutup HANYA lewat tombol hamburger (tidak ada tombol X terpisah).
+   --------------------------------------------------------------------- */
+.s8-info-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: clamp(16px, 4vw, 48px);
+	background: rgba(10, 9, 7, 0.55);
+
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	transition:
+		opacity 300ms ease,
+		visibility 0s linear 300ms;
+}
+
+.s8-info-overlay.s8-info-overlay--open {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transition:
+		opacity 300ms ease,
+		visibility 0s linear 0s;
+}
+
+.s8-info-panel {
+	width: min(90vw, 860px);
+	max-height: 80vh;
+	overflow-y: auto;
+	background: radial-gradient(
+		120% 90% at 50% 20%,
+		#f5efe0 0%,
+		#e9e0cd 100%
+	);
+	color: #2b241c;
+	border-radius: 14px;
+	padding: clamp(24px, 4vw, 48px);
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+
+	transform: translateY(14px) scale(0.98);
+	opacity: 0;
+	transition:
+		transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+		opacity 280ms ease;
+}
+
+.s8-info-overlay.s8-info-overlay--open .s8-info-panel {
+	transform: translateY(0) scale(1);
+	opacity: 1;
+}
+
+.s8-info-panel__title {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 600;
+	font-size: clamp(1.6rem, 3vw, 2.4rem);
+	margin: 0 0 4px;
+	color: #1c1611;
+}
+
+.s8-info-panel__meta {
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: clamp(0.8rem, 1vw, 0.92rem);
+	letter-spacing: 0.08em;
+	color: #8b3a3a;
+	margin: 0 0 18px;
+}
+
+.s8-info-panel__section {
+	padding-top: 16px;
+	margin-top: 16px;
+	border-top: 1px solid rgba(43, 36, 28, 0.2);
+}
+
+.s8-info-panel__section:first-of-type {
+	border-top: none;
+	margin-top: 0;
+	padding-top: 0;
+}
+
+.s8-info-panel__label {
+	display: block;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 500;
+	font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	color: #8b3a3a;
+	margin-bottom: 6px;
+}
+
+.s8-info-panel__text {
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 300;
+	font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+	line-height: 1.6;
+	color: #2b241c;
+	margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.s8-hamburger__bar,
+	.s8-menu,
+	.s8-menu__list li,
+	.s8-info-overlay,
+	.s8-info-panel {
+		transition: none !important;
+	}
+}

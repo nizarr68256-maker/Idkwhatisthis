@@ -1,0 +1,399 @@
+/* ==========================================================================
+   SLIDE 2 — "PERUBAHAN POLA INTERAKSI DAN RELASI SOSIAL" (FILM / 5 SHOT)
+
+   File baru, terpisah dari css/slide2.css lama (punya board scene di
+   index.html). Hanya dipakai oleh #slide2Scene di present.html.
+
+   Arsitektur animasi:
+   - .s2-track berisi 5 .s2-shot berjejer (flex row, width:500%).
+   - Berpindah shot = satu transform: translateX() pada .s2-track SAJA.
+   - Letterbox bar & controls TIDAK ikut di dalam track (elemen statis,
+     tidak pernah dianimasikan) supaya tidak ikut di-repaint tiap geser.
+   - will-change hanya aktif selama class .is-moving menempel di track.
+
+   Polish kecil (ditambahkan): garis horizontal pada .s2-bar atas dan
+   bawah kini memiliki animasi pergeseran halus berupa pola garis-garis
+   tipis redup (1px) yang bergerak dari kiri ke kanan secara terus-
+   menerus. Animasi menggunakan transform: translateX, performa ringan,
+   tanpa JavaScript/RAF/WebGL, dan dihilangkan jika pengguna memilih
+   prefers-reduced-motion.
+
+   Revisi terakhir: border batas bar diredupkan drastis (0.25 -> 0.06)
+   karena border putih solid itulah yang terbaca sebagai "white film
+   strip", bukan background bar (background bar sudah #000 dari
+   revisi sebelumnya). Pola garis drift TIDAK dibuat lebih terang;
+   periode & lebar pola diperbesar (40px/2px -> 100px/4px) supaya
+   pergerakannya terlihat jelas tanpa menaikkan opacity/brightness.
+   ========================================================================== */
+
+/* Override kuat untuk memastikan slide 2 benar-benar gelap. */
+#slide2Scene.generic-slide-scene {
+	background: #000;
+}
+
+.s2-film {
+	/* .generic-slide-scene sudah memberi position:fixed; inset:0; display
+	   (none/flex via is-active); z-index:70; align-items/justify-content:
+	   center (untuk slide generic biasa). Di sini kita override jadi
+	   kolom full-bleed (bar/viewport/bar) supaya anak-anaknya melebar
+	   penuh, bukan menyusut ke ukuran konten. */
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
+	background: #000; /* pastikan hitam pekat */
+	overflow: hidden;
+	padding: 0;
+}
+
+.s2-film.is-active {
+	display: flex;
+}
+
+/* ---------------------------------------------------------------------
+   LETTERBOX BARS — statis, bukan bagian dari track yang dianimasikan.
+   --------------------------------------------------------------------- */
+.s2-bar {
+	flex: 0 0 auto;
+	height: clamp(28px, 6vh, 64px);
+	background: #000;
+	position: relative; /* untuk menempatkan pseudo-element animasi */
+	overflow: hidden; /* potong pseudo-element agar tidak bocor */
+}
+
+/* Garis batas atas/bawah dibuat SANGAT redup — hanya pemisah samar,
+   bukan lagi garis putih terang yang terbaca sebagai white film strip. */
+.s2-bar--top {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.s2-bar--bottom {
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Pola garis tipis yang bergerak horizontal (cinematic drift). Opacity
+   TIDAK dinaikkan (tetap 0.15) — yang diperbesar adalah periode/lebar
+   pola (40px -> 100px, 2px -> 4px) supaya pergeseran per detik lebih
+   jauh secara visual dan pergerakannya jelas terlihat tanpa membuat
+   bar lebih terang. */
+.s2-bar::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: calc(100% + 100px); /* periode pola 100px untuk loop mulus */
+	height: 100%;
+	background-image: repeating-linear-gradient(
+		90deg,
+		rgba(255, 255, 255, 0.15) 0px,
+		rgba(255, 255, 255, 0.15) 4px,
+		transparent 4px,
+		transparent 100px
+	);
+	animation: s2-bar-drift 4s linear infinite;
+	will-change: transform; /* dipromosikan ke layer GPU, tidak layout */
+	pointer-events: none; /* pastikan tidak mengganggu klik */
+}
+
+@keyframes s2-bar-drift {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-100px);
+	}
+}
+
+/* Matikan animasi garis bagi pengguna yang memilih reduce motion. */
+@media (prefers-reduced-motion: reduce) {
+	.s2-bar::before {
+		animation: none;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   VIEWPORT + TRACK
+   --------------------------------------------------------------------- */
+.s2-viewport {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.s2-track {
+	display: flex;
+	width: 500%; /* 5 shot x 100% */
+	height: 100%;
+	transform: translateX(0%);
+	transition: transform 600ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.s2-track.is-moving {
+	will-change: transform; /* hanya selagi animasi berjalan */
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.s2-track {
+		transition: none !important;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   SATU SHOT
+   --------------------------------------------------------------------- */
+.s2-shot {
+	position: relative;
+	flex: 0 0 20%; /* 100% / 5 shot, relatif ke lebar track */
+	width: 20%;
+	height: 100%;
+	overflow: hidden;
+	/* Placeholder gradasi hangat — tampak jika foto shot belum tersedia. */
+	background: linear-gradient(165deg, #322a22 0%, #241d17 55%, #171310 100%);
+}
+
+/* Label placeholder ("GANTI: img/slide2/shot-0X.jpg"). Otomatis tertutup
+   begitu <img> shot berhasil dimuat karena img berada di atasnya (z-index
+   lebih tinggi); tidak perlu JS untuk menyembunyikannya. */
+.s2-shot::before {
+	content: attr(data-placeholder);
+	position: absolute;
+	inset: auto auto 50% 50%;
+	transform: translate(-50%, 50%);
+	z-index: 1;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: 0.7rem;
+	letter-spacing: 0.08em;
+	color: rgba(239, 233, 220, 0.35);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.s2-shot__img {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+}
+
+/* Overlay gelap agar teks tetap terbaca di atas foto apa pun. */
+.s2-shot__overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	pointer-events: none;
+	background: linear-gradient(
+		180deg,
+		rgba(5, 4, 3, 0) 35%,
+		rgba(5, 4, 3, 0.55) 75%,
+		rgba(5, 4, 3, 0.82) 100%
+	);
+}
+
+.s2-shot__body {
+	position: absolute;
+	z-index: 4;
+	left: clamp(20px, 4vw, 64px);
+	right: clamp(20px, 4vw, 64px);
+	bottom: clamp(20px, 4vh, 44px);
+	max-width: 640px;
+	color: var(--paper, #efe9dd);
+}
+
+.s2-shot__number {
+	display: inline-block;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	/* PATCH TYPOGRAPHY: 0.85rem -> clamp lebih besar supaya terbaca dari
+	   jarak presentasi di layar besar/TV (1920x1080, 3840x2160). Layout/
+	   posisi/markup tidak diubah. */
+	font-size: clamp(0.9rem, 1.1vw, 1.15rem);
+	letter-spacing: 0.3em;
+	color: #d98b6a;
+	margin-bottom: 0.6rem;
+}
+
+.s2-shot__title {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	/* PATCH TYPOGRAPHY: cap lama (2.8rem) tercapai lebih dulu di layar
+	   besar (mis. 4vw @1920px = 76.8px, jauh melebihi cap lama), sehingga
+	   judul tidak pernah tumbuh melebihi 2.8rem walau di TV 4K. Cap
+	   dinaikkan jadi 4.2rem, minimum juga dinaikkan supaya tetap nyaman
+	   di layar kecil. */
+	font-size: clamp(2.1rem, 4.6vw, 4.2rem);
+	line-height: 1.12;
+	letter-spacing: 0.01em;
+	margin: 0 0 0.6rem;
+	color: #f4ecd8;
+	text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.s2-shot__desc {
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 300;
+	/* PATCH TYPOGRAPHY: cap lama (1.05rem) juga sudah tercapai jauh di
+	   bawah resolusi presentasi umum — dinaikkan jadi 1.6rem. */
+	font-size: clamp(1.05rem, 1.7vw, 1.6rem);
+	line-height: 1.55;
+	color: rgba(239, 233, 220, 0.82);
+	max-width: 46ch;
+	margin: 0;
+}
+
+/* Catatan penutup — hanya ada di Shot 05, jadi bagian visual shot itu
+   (bukan slide/shot tersendiri) supaya animasi tetap 5-shot sederhana. */
+.s2-shot__note {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-style: italic;
+	/* PATCH TYPOGRAPHY: cap lama (1rem) dinaikkan jadi 1.4rem, senada
+	   dengan .s2-shot__desc di atas. */
+	font-size: clamp(1rem, 1.5vw, 1.4rem);
+	line-height: 1.5;
+	color: rgba(244, 236, 216, 0.75);
+	max-width: 42ch;
+	margin: 0.9rem 0 0;
+	padding-top: 0.75rem;
+	border-top: 1px solid rgba(239, 233, 220, 0.2);
+}
+
+/* ---------------------------------------------------------------------
+   SHOT COUNTER
+   --------------------------------------------------------------------- */
+.s2-counter {
+	position: absolute;
+	top: clamp(14px, 3vh, 28px);
+	right: clamp(20px, 4vw, 64px);
+	z-index: 20;
+	font-family: var(--font-label, "Jost", sans-serif);
+	/* PATCH TYPOGRAPHY: sedikit dinaikkan supaya konsisten dengan teks
+	   utama yang diperbesar di atas. */
+	font-size: clamp(0.8rem, 1vw, 0.95rem);
+	letter-spacing: 0.2em;
+	color: rgba(239, 233, 220, 0.55);
+	pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   CONTROLS — Next Shot & Next Slide berbagi satu slot visual (bottom
+   right), supaya tidak terlihat seperti dua sistem navigasi.
+   --------------------------------------------------------------------- */
+.s2-controls {
+	position: absolute;
+	right: clamp(16px, 3vw, 40px);
+	bottom: clamp(14px, 3vh, 28px);
+	z-index: 20;
+	display: flex;
+	align-items: center;
+}
+
+.s2-next-shot {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: none;
+	border: none;
+	padding: 12px 16px; /* hitbox nyaman untuk touchscreen */
+	min-height: 44px;
+	color: #f4ecd8;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	transition:
+		transform 0.2s,
+		opacity 0.2s,
+		color 0.2s;
+}
+
+.s2-next-shot__icon {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-size: 1.4rem;
+	line-height: 1;
+	color: #d98b6a;
+}
+
+.s2-next-shot__label {
+	font-size: 0.75rem;
+	letter-spacing: 0.2em;
+}
+
+.s2-next-shot:hover {
+	transform: translateX(4px);
+	color: #fff;
+}
+
+.s2-next-shot:active {
+	transform: scale(0.95);
+}
+
+.s2-next-shot.is-hidden {
+	display: none;
+}
+
+/* Tombol Next Slide me-reuse reset .generic-slide-next (lihat
+   present.css) untuk appearance/tap-highlight/focus-visible; di sini
+   hanya override posisi & warna supaya cocok dengan panggung gelap. */
+.s2-next-slide {
+	display: none;
+	min-height: 44px;
+	color: #f4ecd8;
+}
+
+.s2-next-slide:hover {
+	color: #fff;
+}
+
+.s2-next-slide.is-visible {
+	display: flex;
+	align-items: center;
+}
+
+@media (max-width: 640px) {
+	.s2-shot__body {
+		max-width: none;
+	}
+	.s2-shot__desc,
+	.s2-shot__note {
+		max-width: none;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   RESPONSIVE — viewport pendek (ponsel landscape, mis. 568x320,
+   667x375). Letterbox bar + judul + deskripsi (+ catatan penutup di
+   Shot 5) bisa mendekati/melebihi tinggi viewport yang tersisa karena
+   .s2-viewport overflow:hidden. Perkecil bar & tipografi supaya seluruh
+   konten shot tetap terlihat penuh, tanpa menghapus teks apa pun.
+   --------------------------------------------------------------------- */
+@media (max-height: 430px) {
+	.s2-bar {
+		height: clamp(18px, 5vh, 36px);
+	}
+	.s2-shot__body {
+		bottom: clamp(8px, 2vh, 18px);
+	}
+	.s2-shot__number {
+		margin-bottom: 0.3rem;
+	}
+	.s2-shot__title {
+		font-size: clamp(1.15rem, 3.2vw, 1.8rem);
+		margin-bottom: 0.35rem;
+	}
+	.s2-shot__desc {
+		font-size: clamp(0.72rem, 1.2vw, 0.88rem);
+		line-height: 1.4;
+	}
+	.s2-shot__note {
+		margin-top: 0.5rem;
+		padding-top: 0.4rem;
+		font-size: clamp(0.72rem, 1.1vw, 0.85rem);
+		line-height: 1.35;
+	}
+	.s2-counter {
+		top: clamp(6px, 2vh, 14px);
+	}
+	.s2-controls {
+		bottom: clamp(6px, 2vh, 14px);
+	}
+}
