@@ -1,0 +1,72 @@
+/* ==========================================================================
+   TRANSISI — Push Through The Lens
+   Overlay ini murni efek "menembus permukaan kaca", bukan fade ke hitam.
+   Dikendalikan lewat custom property --lens-progress (0..1) dari main.js.
+   Dipakai HANYA di index.html (opening -> board).
+   ========================================================================== */
+
+.lens-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	pointer-events: none;
+	opacity: 0;
+	--lens-progress: 0;
+}
+
+.lens-overlay.is-active {
+	opacity: 1;
+}
+
+.lens-overlay__glass {
+	position: absolute;
+	inset: 0;
+	backdrop-filter: blur(calc(var(--lens-progress) * 14px))
+		saturate(calc(1 - var(--lens-progress) * 0.3));
+	-webkit-backdrop-filter: blur(calc(var(--lens-progress) * 14px))
+		saturate(calc(1 - var(--lens-progress) * 0.3));
+}
+
+.lens-overlay__vignette {
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(
+		circle at 50% 52%,
+		rgba(255, 236, 200, 0) calc(30% - var(--lens-progress) * 20%),
+		rgba(10, 8, 5, calc(var(--lens-progress) * 0.55)) 78%
+	);
+}
+
+.lens-overlay__chroma {
+	position: absolute;
+	inset: -4px;
+	mix-blend-mode: screen;
+	opacity: calc(var(--lens-progress) * 0.5);
+	background:
+		radial-gradient(
+			circle at 48% 50%,
+			rgba(255, 90, 60, 0.35) 0%,
+			rgba(255, 90, 60, 0) 55%
+		),
+		radial-gradient(
+			circle at 52% 50%,
+			rgba(80, 180, 255, 0.3) 0%,
+			rgba(80, 180, 255, 0) 55%
+		);
+}
+
+.lens-overlay__flare {
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(
+		circle at 50% 50%,
+		rgba(255, 244, 222, calc(max(0, var(--lens-progress) - 0.6) * 1.7)) 0%,
+		rgba(255, 244, 222, 0) 42%
+	);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lens-overlay {
+		transition: none !important;
+	}
+}

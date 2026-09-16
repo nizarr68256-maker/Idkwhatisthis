@@ -1,0 +1,370 @@
+/* ==========================================================================
+   PERUBAHAN SOSIAL KONTEMPORER — Scene 1: Papan Hijau (Billiard Board)
+   Menu visual: HANYA 7 foto. Tidak ada teks materi, tali, atau popup.
+   ========================================================================== */
+
+#boardScene {
+	position: fixed;
+	inset: 0;
+	z-index: 1;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: radial-gradient(
+		120% 90% at 50% 30%,
+		#f0ead9 0%,
+		#e5ddcb 55%,
+		#d5cab5 100%
+	);
+	overflow: hidden;
+	opacity: 0;
+	transition: opacity 1100ms ease;
+}
+
+#boardScene.is-visible {
+	opacity: 1;
+}
+
+.board-viewport {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 3vmin;
+	animation: boardSway 8s ease-in-out infinite;
+	will-change: transform;
+}
+
+#boardScene.is-focus .board-viewport {
+	animation-play-state: paused;
+}
+
+.board-frame {
+	position: relative;
+	width: min(94vw, 210vh);
+	max-width: 1400px;
+	aspect-ratio: 21 / 9;
+	max-height: 94vh;
+	border-radius: 6px;
+	background: linear-gradient(155deg, #4a3320 0%, #2e2013 55%, #1c130b 100%);
+	padding: clamp(10px, 2.2vmin, 26px);
+	box-shadow:
+		0 40px 90px rgba(0, 0, 0, 0.7),
+		0 4px 0 rgba(255, 255, 255, 0.03) inset,
+		0 -6px 14px rgba(0, 0, 0, 0.5) inset;
+	transform-origin: 50% 50%;
+	will-change: transform;
+	overflow: hidden;
+}
+
+#boardScene.is-focus .board-frame {
+	overflow: visible;
+}
+
+.board-frame::before {
+	content: "";
+	position: absolute;
+	inset: clamp(6px, 1.3vmin, 16px);
+	border-radius: 3px;
+	box-shadow:
+		0 2px 3px rgba(0, 0, 0, 0.55) inset,
+		0 -1px 0 rgba(255, 220, 170, 0.06) inset;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.board-felt {
+	position: absolute;
+	inset: clamp(10px, 2vmin, 24px);
+	border-radius: 2px;
+	overflow: hidden;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) inset;
+	z-index: 2;
+}
+
+#boardScene.is-focus .board-felt {
+	overflow: visible;
+}
+
+#feltCanvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.board-felt::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: radial-gradient(
+		120% 85% at 50% 18%,
+		rgba(255, 224, 170, calc(0.14 * var(--room-light, 1))) 0%,
+		rgba(0, 0, 0, 0) 45%,
+		rgba(0, 0, 0, 0.5) 100%
+	);
+	mix-blend-mode: multiply;
+	z-index: 1;
+}
+
+.board-title {
+	position: absolute;
+	top: 4%;
+	right: 4%;
+	z-index: 4;
+	text-align: right;
+	pointer-events: none;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.board-title__line {
+	display: block;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	font-size: clamp(0.7rem, 1.8vw, 1.1rem);
+	letter-spacing: 0.18em;
+	color: rgba(255, 245, 230, 0.85);
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+	line-height: 1.4;
+}
+
+.board-strings {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+	pointer-events: none;
+	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+.board-strings path {
+	stroke-width: 0.8;
+	stroke: #8b3a3a;
+	opacity: 0.9;
+}
+
+.board-photos {
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+}
+
+.board-photo {
+	position: absolute;
+	top: var(--y, 50%);
+	left: var(--x, 50%);
+	width: calc(var(--size, 1) * clamp(90px, 14%, 160px));
+	transform: translate(-50%, -50%) rotate(var(--tilt, 0deg)) scale(0.94);
+	transform-origin: 50% 50%;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	cursor: pointer;
+	opacity: 0;
+	transition:
+		opacity 0.6s ease,
+		transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+		filter 0.5s ease;
+	transition-delay: var(--delay, 0ms);
+	z-index: 4;
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-user-drag: none;
+	touch-action: manipulation;
+	will-change: transform;
+	contain: layout paint;
+}
+
+#boardScene.is-visible .board-photo {
+	opacity: 1;
+	transform: translate(-50%, -50%) rotate(var(--tilt, 0deg)) scale(1);
+}
+
+.board-photo:not(.board-photo--static):hover,
+.board-photo:not(.board-photo--static):focus-visible {
+	transform: translate(-50%, -50%) rotate(var(--tilt, 0deg)) scale(1.06);
+	z-index: 10;
+}
+
+.board-photo--static {
+	cursor: default;
+	pointer-events: none;
+}
+
+.board-photo__paper {
+	display: block;
+	background: linear-gradient(165deg, #f8f3e9 0%, #f1ebdc 55%, #e8e1cf 100%);
+	padding: 6% 6% 8%;
+	box-shadow:
+		0 10px 18px rgba(0, 0, 0, 0.45),
+		inset 0 1px 0 rgba(255, 255, 255, 0.5);
+	clip-path: polygon(
+		1.5% 0.5%,
+		97% 0%,
+		100% 3%,
+		99% 97%,
+		96.5% 100%,
+		2% 99.3%,
+		0% 96%,
+		0.8% 2%
+	);
+	pointer-events: none;
+}
+
+.board-photo__paper img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 10;
+	object-fit: cover;
+	filter: contrast(1.04) saturate(0.92) brightness(0.97) sepia(0.06);
+	box-shadow: inset 0 0 6px rgba(20, 14, 8, 0.25);
+	pointer-events: none;
+	-webkit-user-drag: none;
+}
+
+.board-photo__pin {
+	position: absolute;
+	top: -6px;
+	left: 50%;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	transform: translateX(-50%);
+	background: radial-gradient(circle at 35% 30%, #e0736e, #7a1f1c 70%);
+	box-shadow:
+		0 2px 3px rgba(0, 0, 0, 0.5),
+		inset 0 1px 1px rgba(255, 255, 255, 0.5),
+		inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+	z-index: 5;
+	pointer-events: none;
+}
+
+#boardScene.is-focus .board-photo:not(.is-fullscreen) {
+	opacity: 0.15;
+	filter: blur(1.5px) saturate(0.7);
+	pointer-events: none;
+}
+
+.board-photo.is-fullscreen {
+	z-index: 50;
+	opacity: 1 !important;
+	transform: translate(-50%, -50%) rotate(0deg) scale(1);
+	transition: transform 0.8s cubic-bezier(0.22, 0.8, 0.2, 1);
+	cursor: default;
+	pointer-events: auto;
+	will-change: transform;
+}
+
+.board-back {
+	position: fixed;
+	top: calc(env(safe-area-inset-top, 0px) + 18px);
+	left: 18px;
+	z-index: 60;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 44px;
+	gap: 8px;
+	padding: 10px 18px 10px 14px;
+	border: none;
+	border-radius: 999px;
+	background: rgba(20, 15, 10, 0.72);
+	color: #f2ead9;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	font-size: 0.85rem;
+	letter-spacing: 0.04em;
+	backdrop-filter: blur(6px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+	cursor: pointer;
+	opacity: 0;
+	transform: translateY(-6px);
+	pointer-events: none;
+	transition:
+		opacity 0.35s ease,
+		transform 0.35s ease;
+}
+
+#boardScene.is-focus .board-back {
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
+}
+
+.board-back:hover {
+	background: rgba(30, 22, 15, 0.85);
+}
+
+@media (max-width: 560px) {
+	.board-frame {
+		width: 98vw;
+		aspect-ratio: 16/9;
+		padding: 8px;
+	}
+	.board-photo {
+		width: calc(var(--size) * clamp(70px, 24%, 120px));
+	}
+	.board-title__line {
+		font-size: clamp(0.55rem, 2.5vw, 0.8rem);
+	}
+}
+
+/* Ponsel dalam orientasi portrait: rasio 16/9 di atas terlalu pendek
+   untuk menampung sebaran 7 foto (jarak antar-y% jadi sangat kecil
+   dalam piksel -> foto saling menutupi). Beri panel felt ruang vertikal
+   lebih besar HANYA saat sempit & portrait; posisi/ukuran relatif foto
+   (--x/--y/--size dari js/board.js) tidak diubah sama sekali, hanya
+   proporsi wadahnya yang disesuaikan supaya jarak antar foto (dalam px)
+   cukup untuk tidak tumpang tindih. */
+@media (max-width: 560px) and (orientation: portrait) {
+	.board-frame {
+		aspect-ratio: 3 / 4;
+	}
+	.board-photo {
+		width: calc(var(--size) * clamp(60px, 20%, 100px));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#boardScene,
+	.board-frame,
+	.board-photo,
+	.board-back,
+	.board-viewport {
+		transition: none !important;
+		animation: none !important;
+	}
+}
+
+/* ==========================================================================
+   PENAMBAHAN REFACTOR — fade DOM/CSS ringan sebelum navigasi ke present.html
+   Dipicu oleh js/board.js setelah zoom Foto 1 selesai. Murni CSS opacity,
+   tidak menyentuh Three.js/WebGL sama sekali.
+   ========================================================================== */
+.page-fade-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	background: #000;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 600ms ease;
+}
+
+.page-fade-overlay.is-active {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.page-fade-overlay {
+		transition: none !important;
+	}
+}

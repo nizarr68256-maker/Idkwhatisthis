@@ -1,0 +1,1829 @@
+/* ==========================================================================
+   SLIDE 4 — "DAMPAK SOSIAL: PELUANG DAN TANTANGAN"
+   Konsep: cinematic scene siang/malam. Karakter PNG (menghadap kanan by
+   default) di tengah-bawah. State PELUANG = siang penuh, karakter kanan.
+   State TANTANGAN = malam penuh, karakter kiri. Transisi berbalik karakter
+   + crossfade siang->malam terjadi bersamaan, satu adegan sinematik.
+
+   TAMBAHAN (city skyline): kumpulan bangunan rendah/sedang di horizon,
+   di belakang character, murni HTML/CSS (lihat blok "CITY SKYLINE" di
+   bawah). Jendela dibuat dari radial-gradient dots (pola yang sama
+   dipakai .s4-sky__layer--night untuk bintang) dan warnanya berubah
+   redup->hangat mengikuti state siang/malam yang SUDAH ADA — tidak ada
+   sistem transisi baru, tidak ada JS baru.
+
+   ATURAN PERFORMA:
+   - Hanya `transform` dan `opacity` yang dianimasikan (lihat blok
+     "TRANSISI" di bawah). Tidak ada animasi width/height/top/left,
+     tidak ada filter/backdrop-filter, tidak ada blur besar, tidak ada
+     canvas/WebGL/Three.js, tidak ada requestAnimationFrame/setInterval.
+   - `will-change` hanya aktif selama class transisi terpasang, lalu
+     dilepas (lihat js/slide4.js).
+   - Resting state (warna/posisi akhir) diatur lewat atribut
+     `data-s4-state` pada .s4-scene — TIDAK memakai CSS `transition`,
+     supaya prefers-reduced-motion otomatis aman (tinggal skip class
+     animasi transisinya, tidak perlu override transition apa pun).
+   ========================================================================== */
+
+.generic-slide-scene.s4-scene {
+	background: #060504;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.s4-scene * {
+	box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------------------
+   LANGIT (DAY / NIGHT LAYER) — dua layer full-bleed, ditukar lewat
+   opacity saja (crossfade). Warna dibuat fotografis/sinematik, bukan
+   flat cartoon.
+   --------------------------------------------------------------------- */
+.s4-sky {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+}
+
+.s4-sky__layer {
+	position: absolute;
+	inset: 0;
+}
+
+.s4-sky__layer--day {
+	background:
+		radial-gradient(
+			38% 30% at 74% 22%,
+			rgba(255, 236, 190, 0.55) 0%,
+			rgba(255, 236, 190, 0) 70%
+		),
+		linear-gradient(
+			180deg,
+			#6f9dc2 0%,
+			#9dc0cf 24%,
+			#cdd3bd 46%,
+			#e8cf9c 68%,
+			#d9a76a 86%,
+			#b9834f 100%
+		);
+	opacity: 1;
+}
+
+.s4-sky__layer--night {
+	background:
+		radial-gradient(2px 2px at 12% 18%, #fff 100%, transparent 100%),
+		radial-gradient(2px 2px at 28% 12%, #fff 100%, transparent 100%),
+		radial-gradient(1.5px 1.5px at 20% 30%, #fff 100%, transparent 100%),
+		radial-gradient(2px 2px at 42% 9%, #fff 100%, transparent 100%),
+		radial-gradient(1.5px 1.5px at 60% 16%, #fff 100%, transparent 100%),
+		radial-gradient(2px 2px at 68% 8%, #fff 100%, transparent 100%),
+		radial-gradient(1.5px 1.5px at 78% 22%, #fff 100%, transparent 100%),
+		radial-gradient(2px 2px at 88% 14%, #fff 100%, transparent 100%),
+		radial-gradient(1.5px 1.5px at 8% 8%, #fff 100%, transparent 100%),
+		radial-gradient(1.5px 1.5px at 52% 26%, #fff 100%, transparent 100%),
+		linear-gradient(
+			180deg,
+			#0a0f22 0%,
+			#101733 26%,
+			#182042 50%,
+			#232c48 72%,
+			#2c3350 100%
+		);
+	background-repeat: no-repeat;
+	opacity: 0;
+}
+
+/* ---------------------------------------------------------------------
+   LAYANGAN (KITES) — detail latar langit siang. Murni CSS (clip-path +
+   gradient), tidak ada canvas/SVG/Three.js/particle system. Anak dari
+   .s4-sky__layer--day sehingga otomatis ikut fade in/out lewat opacity
+   parent saat transisi siang<->malam — tidak perlu JS tambahan.
+   Ukuran/posisi/jarak sengaja dibuat berbeda-beda (asymmetrical) supaya
+   tidak terlihat identik/berulang. Sway sangat halus, hanya `transform`.
+   --------------------------------------------------------------------- */
+.s4-kites {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.s4-kite {
+	position: absolute;
+	display: block;
+	clip-path: polygon(50% 0%, 100% 38%, 50% 100%, 0% 38%);
+	will-change: transform;
+}
+
+/* Ekor layangan — beberapa simpul kecil meredup, bukan garis solid. */
+.s4-kite::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 100%;
+	width: 1px;
+	height: 3.2em;
+	transform: translateX(-50%);
+	background: linear-gradient(
+		180deg,
+		rgba(90, 60, 30, 0.32) 0%,
+		rgba(90, 60, 30, 0.14) 55%,
+		rgba(90, 60, 30, 0) 100%
+	);
+}
+
+.s4-kite--1 {
+	top: 12%;
+	left: 18%;
+	width: 22px;
+	height: 22px;
+	font-size: 22px;
+	background: linear-gradient(
+		135deg,
+		rgba(196, 74, 58, 0.55) 0%,
+		rgba(196, 74, 58, 0.3) 100%
+	);
+	animation: s4-kite-sway 7.5s ease-in-out infinite;
+}
+.s4-kite--2 {
+	top: 22%;
+	left: 63%;
+	width: 15px;
+	height: 15px;
+	font-size: 15px;
+	background: linear-gradient(
+		135deg,
+		rgba(58, 84, 120, 0.5) 0%,
+		rgba(58, 84, 120, 0.26) 100%
+	);
+	animation: s4-kite-sway 9.2s ease-in-out infinite 1.1s;
+}
+.s4-kite--3 {
+	top: 8%;
+	left: 82%;
+	width: 30px;
+	height: 30px;
+	font-size: 30px;
+	background: linear-gradient(
+		135deg,
+		rgba(214, 168, 84, 0.5) 0%,
+		rgba(214, 168, 84, 0.26) 100%
+	);
+	animation: s4-kite-sway 8.4s ease-in-out infinite 0.4s;
+}
+.s4-kite--4 {
+	top: 30%;
+	left: 8%;
+	width: 12px;
+	height: 12px;
+	font-size: 12px;
+	background: linear-gradient(
+		135deg,
+		rgba(120, 140, 90, 0.46) 0%,
+		rgba(120, 140, 90, 0.22) 100%
+	);
+	animation: s4-kite-sway 10.5s ease-in-out infinite 2.2s;
+}
+.s4-kite--5 {
+	top: 17%;
+	left: 40%;
+	width: 17px;
+	height: 17px;
+	font-size: 17px;
+	background: linear-gradient(
+		135deg,
+		rgba(196, 130, 70, 0.48) 0%,
+		rgba(196, 130, 70, 0.24) 100%
+	);
+	animation: s4-kite-sway 6.8s ease-in-out infinite 0.8s;
+}
+
+@keyframes s4-kite-sway {
+	0%,
+	100% {
+		transform: rotate(-5deg) translateY(0);
+	}
+	50% {
+		transform: rotate(5deg) translateY(-5px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.s4-kite {
+		animation: none !important;
+	}
+}
+
+/* Vignette sinematik statis (tidak dianimasikan) */
+.s4-vignette {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
+	background: radial-gradient(
+		130% 95% at 50% 42%,
+		rgba(0, 0, 0, 0) 52%,
+		rgba(0, 0, 0, 0.4) 100%
+	);
+	mix-blend-mode: multiply;
+}
+
+/* ==========================================================================
+   CITY SKYLINE — detail environment kejauhan (BARU).
+
+   - Murni div + background-image (radial-gradient dots utk jendela),
+     tidak ada canvas/SVG berat, tidak ada elemen DOM per-jendela.
+   - z-index: 1 -> di ATAS langit (.s4-sky, z0) tapi di BAWAH vignette
+     (.s4-vignette, z2) supaya skyline ikut "diredupkan" tipis oleh
+     vignette sinematik yang sama seperti langit (konsisten secara
+     visual), dan jauh di BAWAH character (z5), thought cloud (z6),
+     panel (z10), kicker/footer (z15) — sehingga tidak pernah menutupi
+     elemen-elemen tsb.
+   - Lebar & tinggi memakai %, vw, vh, clamp() (bukan px absolut) supaya
+     responsive di 1920x1080, 3840x2160, dan layar TV touchscreen
+     landscape.
+   - Warna dasar bangunan sedikit berbeda tiap tipe supaya tidak terasa
+     copy-paste; siluet rendah-sedang (BUKAN gedung pencakar langit).
+   ========================================================================== */
+.s4-skyline {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: clamp(64px, 17vh, 190px);
+	z-index: 1;
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: clamp(4px, 1vw, 14px);
+	padding-inline: clamp(2%, 3vw, 4%);
+	pointer-events: none;
+}
+
+.s4-building {
+	position: relative;
+	flex: 0 0 auto;
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ::before = jendela redup/siang (selalu tampil, warna netral gelap).
+   ::after  = jendela lampu hangat malam (opacity 0 di siang, 1 di
+   malam — dianimasikan lewat class transisi yang SUDAH ADA, lihat
+   blok TRANSISI di bawah). Posisi dot pada ::before & ::after dibuat
+   identik per tipe supaya "lampu" terlihat menyalakan jendela yang
+   sama, bukan berpindah tempat. */
+.s4-building::before,
+.s4-building::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-repeat: no-repeat;
+	pointer-events: none;
+}
+
+.s4-building::after {
+	opacity: 0;
+}
+
+/* --- Tipe A: sedang, agak tinggi (3 kolom x 4 baris jendela) --- */
+.s4-building--a {
+	width: clamp(38px, 5vw, 84px);
+	height: 58%;
+	background-color: rgba(34, 29, 27, 0.7);
+}
+.s4-building--a::before {
+	background-image:
+		radial-gradient(
+			13% 6% at 24% 14%,
+			rgba(70, 65, 58, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 50% 14%,
+			rgba(70, 65, 58, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 76% 14%,
+			rgba(70, 65, 58, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 24% 38%,
+			rgba(70, 65, 58, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 50% 38%,
+			rgba(70, 65, 58, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 76% 38%,
+			rgba(70, 65, 58, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 24% 62%,
+			rgba(70, 65, 58, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 50% 62%,
+			rgba(70, 65, 58, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 76% 62%,
+			rgba(70, 65, 58, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 24% 86%,
+			rgba(70, 65, 58, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 50% 86%,
+			rgba(70, 65, 58, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 76% 86%,
+			rgba(70, 65, 58, 0.5) 60%,
+			transparent 62%
+		);
+}
+.s4-building--a::after {
+	background-image:
+		radial-gradient(
+			13% 6% at 24% 14%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 50% 14%,
+			rgba(255, 196, 120, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 76% 14%,
+			rgba(255, 196, 120, 0.85) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 6% at 24% 38%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 6% at 50% 38%,
+			rgba(255, 196, 120, 0.7) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 76% 38%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 24% 62%,
+			rgba(255, 196, 120, 0.6) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 6% at 50% 62%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 6% at 76% 62%,
+			rgba(255, 196, 120, 0.85) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 24% 86%,
+			rgba(255, 196, 120, 0.75) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 6% at 50% 86%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 6% at 76% 86%, transparent 60%, transparent 62%);
+}
+
+/* --- Tipe B: kecil/pendek (2 kolom x 3 baris) --- */
+.s4-building--b {
+	width: clamp(26px, 3.4vw, 56px);
+	height: 36%;
+	background-color: rgba(40, 34, 31, 0.62);
+}
+.s4-building--b::before {
+	background-image:
+		radial-gradient(
+			20% 8% at 30% 18%,
+			rgba(72, 66, 60, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			20% 8% at 70% 18%,
+			rgba(72, 66, 60, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			20% 8% at 30% 50%,
+			rgba(72, 66, 60, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			20% 8% at 70% 50%,
+			rgba(72, 66, 60, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			20% 8% at 30% 82%,
+			rgba(72, 66, 60, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			20% 8% at 70% 82%,
+			rgba(72, 66, 60, 0.55) 60%,
+			transparent 62%
+		);
+}
+.s4-building--b::after {
+	background-image:
+		radial-gradient(
+			20% 8% at 30% 18%,
+			rgba(255, 196, 120, 0.85) 60%,
+			transparent 62%
+		),
+		radial-gradient(20% 8% at 70% 18%, transparent 60%, transparent 62%),
+		radial-gradient(
+			20% 8% at 30% 50%,
+			rgba(255, 196, 120, 0.6) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			20% 8% at 70% 50%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(20% 8% at 30% 82%, transparent 60%, transparent 62%),
+		radial-gradient(
+			20% 8% at 70% 82%,
+			rgba(255, 196, 120, 0.7) 60%,
+			transparent 62%
+		);
+}
+
+/* --- Tipe C: paling tinggi tapi tetap sedang (3 kolom x 5 baris) --- */
+.s4-building--c {
+	width: clamp(32px, 4.2vw, 70px);
+	height: 82%;
+	background-color: rgba(27, 23, 22, 0.74);
+}
+.s4-building--c::before {
+	background-image:
+		radial-gradient(
+			13% 5% at 24% 10%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 10%,
+			rgba(66, 61, 55, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 10%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 30%,
+			rgba(66, 61, 55, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 30%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 30%,
+			rgba(66, 61, 55, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 50%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 50%,
+			rgba(66, 61, 55, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 50%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 70%,
+			rgba(66, 61, 55, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 70%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 70%,
+			rgba(66, 61, 55, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 90%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 90%,
+			rgba(66, 61, 55, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 90%,
+			rgba(66, 61, 55, 0.55) 60%,
+			transparent 62%
+		);
+}
+.s4-building--c::after {
+	background-image:
+		radial-gradient(
+			13% 5% at 24% 10%,
+			rgba(255, 196, 120, 0.6) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 5% at 50% 10%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 5% at 76% 10%,
+			rgba(255, 196, 120, 0.85) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 30%,
+			rgba(255, 196, 120, 0.75) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 30%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 5% at 76% 30%, transparent 60%, transparent 62%),
+		radial-gradient(13% 5% at 24% 50%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 5% at 50% 50%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 50%,
+			rgba(255, 196, 120, 0.65) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 70%,
+			rgba(255, 196, 120, 0.8) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 5% at 50% 70%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 5% at 76% 70%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 90%,
+			rgba(255, 196, 120, 0.7) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 90%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 5% at 76% 90%, transparent 60%, transparent 62%);
+}
+
+/* --- Tipe D: pendek & lebar (4 kolom x 2 baris) --- */
+.s4-building--d {
+	width: clamp(44px, 5.8vw, 96px);
+	height: 30%;
+	background-color: rgba(42, 36, 32, 0.6);
+}
+.s4-building--d::before {
+	background-image:
+		radial-gradient(
+			9% 10% at 15% 28%,
+			rgba(74, 68, 60, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 38% 28%,
+			rgba(74, 68, 60, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 61% 28%,
+			rgba(74, 68, 60, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 84% 28%,
+			rgba(74, 68, 60, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 15% 68%,
+			rgba(74, 68, 60, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 38% 68%,
+			rgba(74, 68, 60, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 61% 68%,
+			rgba(74, 68, 60, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 84% 68%,
+			rgba(74, 68, 60, 0.5) 60%,
+			transparent 62%
+		);
+}
+.s4-building--d::after {
+	background-image:
+		radial-gradient(
+			9% 10% at 15% 28%,
+			rgba(255, 196, 120, 0.7) 60%,
+			transparent 62%
+		),
+		radial-gradient(9% 10% at 38% 28%, transparent 60%, transparent 62%),
+		radial-gradient(
+			9% 10% at 61% 28%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 84% 28%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(9% 10% at 15% 68%, transparent 60%, transparent 62%),
+		radial-gradient(
+			9% 10% at 38% 68%,
+			rgba(255, 196, 120, 0.8) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			9% 10% at 61% 68%,
+			rgba(255, 196, 120, 0.6) 60%,
+			transparent 62%
+		),
+		radial-gradient(9% 10% at 84% 68%, transparent 60%, transparent 62%);
+}
+
+/* --- Tipe E: sempit & agak tinggi (2 kolom x 4 baris) --- */
+.s4-building--e {
+	width: clamp(22px, 3vw, 48px);
+	height: 50%;
+	background-color: rgba(31, 27, 25, 0.7);
+}
+.s4-building--e::before {
+	background-image:
+		radial-gradient(
+			24% 6% at 30% 14%,
+			rgba(68, 62, 56, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 70% 14%,
+			rgba(68, 62, 56, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 30% 40%,
+			rgba(68, 62, 56, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 70% 40%,
+			rgba(68, 62, 56, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 30% 66%,
+			rgba(68, 62, 56, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 70% 66%,
+			rgba(68, 62, 56, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 30% 90%,
+			rgba(68, 62, 56, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 70% 90%,
+			rgba(68, 62, 56, 0.55) 60%,
+			transparent 62%
+		);
+}
+.s4-building--e::after {
+	background-image:
+		radial-gradient(24% 6% at 30% 14%, transparent 60%, transparent 62%),
+		radial-gradient(
+			24% 6% at 70% 14%,
+			rgba(255, 196, 120, 0.85) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 30% 40%,
+			rgba(255, 196, 120, 0.65) 60%,
+			transparent 62%
+		),
+		radial-gradient(24% 6% at 70% 40%, transparent 60%, transparent 62%),
+		radial-gradient(
+			24% 6% at 30% 66%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			24% 6% at 70% 66%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(24% 6% at 30% 90%, transparent 60%, transparent 62%),
+		radial-gradient(
+			24% 6% at 70% 90%,
+			rgba(255, 196, 120, 0.75) 60%,
+			transparent 62%
+		);
+}
+
+/* --- Tipe F: sedang, persegi (3 kolom x 3 baris) --- */
+.s4-building--f {
+	width: clamp(34px, 4.4vw, 76px);
+	height: 44%;
+	background-color: rgba(37, 32, 29, 0.64);
+}
+.s4-building--f::before {
+	background-image:
+		radial-gradient(
+			14% 7% at 24% 18%,
+			rgba(72, 66, 59, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 50% 18%,
+			rgba(72, 66, 59, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 76% 18%,
+			rgba(72, 66, 59, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 24% 50%,
+			rgba(72, 66, 59, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 50% 50%,
+			rgba(72, 66, 59, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 76% 50%,
+			rgba(72, 66, 59, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 24% 82%,
+			rgba(72, 66, 59, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 50% 82%,
+			rgba(72, 66, 59, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 76% 82%,
+			rgba(72, 66, 59, 0.55) 60%,
+			transparent 62%
+		);
+}
+.s4-building--f::after {
+	background-image:
+		radial-gradient(
+			14% 7% at 24% 18%,
+			rgba(255, 196, 120, 0.8) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 50% 18%,
+			rgba(255, 196, 120, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(14% 7% at 76% 18%, transparent 60%, transparent 62%),
+		radial-gradient(14% 7% at 24% 50%, transparent 60%, transparent 62%),
+		radial-gradient(
+			14% 7% at 50% 50%,
+			rgba(255, 196, 120, 0.65) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 76% 50%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 24% 82%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			14% 7% at 50% 82%,
+			rgba(255, 196, 120, 0.75) 60%,
+			transparent 62%
+		),
+		radial-gradient(14% 7% at 76% 82%, transparent 60%, transparent 62%);
+}
+
+/* --- Tipe G: tinggi, gelap (3 kolom x 5 baris, variasi berbeda dr C) --- */
+.s4-building--g {
+	width: clamp(32px, 4.2vw, 70px);
+	height: 76%;
+	background-color: rgba(24, 21, 20, 0.76);
+}
+.s4-building--g::before {
+	background-image:
+		radial-gradient(
+			13% 5% at 24% 10%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 10%,
+			rgba(62, 57, 51, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 10%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 30%,
+			rgba(62, 57, 51, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 30%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 30%,
+			rgba(62, 57, 51, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 50%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 50%,
+			rgba(62, 57, 51, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 50%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 70%,
+			rgba(62, 57, 51, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 70%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 70%,
+			rgba(62, 57, 51, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 90%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 90%,
+			rgba(62, 57, 51, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 90%,
+			rgba(62, 57, 51, 0.55) 60%,
+			transparent 62%
+		);
+}
+.s4-building--g::after {
+	background-image:
+		radial-gradient(
+			13% 5% at 24% 10%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 10%,
+			rgba(255, 196, 120, 0.85) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 5% at 76% 10%, transparent 60%, transparent 62%),
+		radial-gradient(13% 5% at 24% 30%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 5% at 50% 30%,
+			rgba(255, 196, 120, 0.7) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 30%,
+			rgba(255, 196, 120, 0.6) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 50%,
+			rgba(255, 196, 120, 0.9) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 5% at 50% 50%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 5% at 76% 50%,
+			rgba(255, 196, 120, 0.65) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 24% 70%,
+			rgba(255, 196, 120, 0.55) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 70%,
+			rgba(255, 196, 120, 0.85) 60%,
+			transparent 62%
+		),
+		radial-gradient(13% 5% at 76% 70%, transparent 60%, transparent 62%),
+		radial-gradient(
+			13% 5% at 24% 90%,
+			rgba(255, 196, 120, 0.7) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 50% 90%,
+			rgba(255, 196, 120, 0.5) 60%,
+			transparent 62%
+		),
+		radial-gradient(
+			13% 5% at 76% 90%,
+			rgba(255, 196, 120, 0.8) 60%,
+			transparent 62%
+		);
+}
+
+/* Resting state jendela — instan lewat atribut data-s4-state (bukan CSS
+   transition), konsisten dgn pola langit/cloud di bawah: aman otomatis
+   utk prefers-reduced-motion (lihat query di paling bawah file). */
+.s4-scene[data-s4-state="peluang"] .s4-building::after {
+	opacity: 0;
+}
+.s4-scene[data-s4-state="tantangan"] .s4-building::after {
+	opacity: 1;
+}
+
+/* Resting state berdasarkan data-s4-state (tanpa transition -> aman utk
+   prefers-reduced-motion, cukup ganti atribut = langsung berpindah). */
+.s4-scene[data-s4-state="peluang"] .s4-sky__layer--day {
+	opacity: 1;
+}
+.s4-scene[data-s4-state="peluang"] .s4-sky__layer--night {
+	opacity: 0;
+}
+.s4-scene[data-s4-state="tantangan"] .s4-sky__layer--day {
+	opacity: 0;
+}
+.s4-scene[data-s4-state="tantangan"] .s4-sky__layer--night {
+	opacity: 1;
+}
+
+/* ---------------------------------------------------------------------
+   KICKER — judul materi, persisten di kedua state.
+   --------------------------------------------------------------------- */
+.s4-kicker {
+	position: absolute;
+	top: clamp(16px, 4vh, 40px);
+	left: clamp(16px, 4vw, 48px);
+	z-index: 15;
+	display: flex;
+	align-items: baseline;
+	gap: clamp(8px, 1.2vw, 16px);
+	max-width: min(90vw, 720px);
+	background: rgba(8, 6, 4, 0.32);
+	padding: 0.5em 0.9em;
+	border-radius: 2px;
+}
+
+.s4-kicker__num {
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+	letter-spacing: 0.22em;
+	color: #e7c48a;
+	flex-shrink: 0;
+}
+
+.s4-kicker__title {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-style: italic;
+	font-size: clamp(1rem, 2vw, 1.5rem);
+	color: #f5efe2;
+	letter-spacing: 0.01em;
+}
+
+/* ---------------------------------------------------------------------
+   THOUGHT CLOUD — dekat kepala karakter, sisi kanan, hanya di PELUANG.
+   Dibuat dari radial-gradient berlapis, tanpa filter/blur.
+   --------------------------------------------------------------------- */
+.s4-cloud {
+	position: absolute;
+	left: 50%;
+	bottom: clamp(46%, 50vh, 58%);
+	width: clamp(90px, 11vw, 170px);
+	height: clamp(50px, 6vw, 95px);
+	transform: translateX(calc(-50% + clamp(60px, 9vw, 150px)));
+	z-index: 6;
+	pointer-events: none;
+	background:
+		radial-gradient(
+			38% 55% at 30% 60%,
+			rgba(255, 250, 240, 0.5) 0%,
+			rgba(255, 250, 240, 0) 100%
+		),
+		radial-gradient(
+			34% 50% at 58% 40%,
+			rgba(255, 250, 240, 0.42) 0%,
+			rgba(255, 250, 240, 0) 100%
+		),
+		radial-gradient(
+			30% 46% at 78% 62%,
+			rgba(255, 250, 240, 0.34) 0%,
+			rgba(255, 250, 240, 0) 100%
+		);
+}
+
+.s4-scene[data-s4-state="peluang"] .s4-cloud {
+	opacity: 0.85;
+}
+.s4-scene[data-s4-state="tantangan"] .s4-cloud {
+	opacity: 0;
+}
+
+/* ---------------------------------------------------------------------
+   KARAKTER — tengah-bawah, tidak berpindah posisi. Arah hadap diatur
+   pada elemen INNER lewat scaleX (bukan pada wrapper), supaya offset
+   centering (-50%) di wrapper tidak ikut terbalik.
+   --------------------------------------------------------------------- */
+.s4-character {
+	position: absolute;
+	left: 50%;
+	/*
+		Sebelumnya clamp(10%,12vh,16%) — karakter terlihat melayang jauh
+		dari dasar layar. PNG (img/slide4/bakekok.png) tidak punya
+		transparent padding di bagian bawah (bounding box opaque sudah
+		menyentuh tepi bawah file), jadi bagian visual paling bawah
+		karakter = tepi bawah gambar itu sendiri. Menurunkan offset ini
+		membuat tepi bawah gambar itu mendekati dasar viewport (dasar
+		sky/warna hangat di bawah day-gradient berfungsi sebagai "tanah"
+		implisit). Footer (.s4-footer, z-index 15) tetap di atas karakter
+		(z-index 5) secara stacking, jadi label/tombol navigasi tidak akan
+		pernah tertutup meski secara visual sedikit tumpang tindih.
+	*/
+	bottom: clamp(0px, 1.5vh, 12px);
+	width: clamp(190px, 22vw, 440px);
+	/*
+		FIX race condition gambar: sebelum ini elemen hanya punya width
+		(height mengikuti img secara auto). Selama img/slide4/bakekok.png
+		(735x732px) belum selesai decode, tinggi kotak ini = 0, lalu
+		"melompat" ke tinggi penuh begitu gambar siap — inilah salah satu
+		sumber gambar yang "tiba-tiba membesar" saat Slide 4 baru aktif.
+		aspect-ratio memesan ruang vertikal sejak awal (berdasarkan rasio
+		asli file), jadi tinggi kotak sudah pasti sebelum gambar dimuat.
+	*/
+	aspect-ratio: 735 / 732;
+	transform: translateX(-50%);
+	z-index: 5;
+}
+
+.s4-character__inner {
+	transform-origin: 50% 100%;
+	transform: scaleX(1);
+}
+
+.s4-character__img {
+	display: block;
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+	filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+}
+
+.s4-scene[data-s4-state="peluang"] .s4-character__inner {
+	transform: scaleX(1);
+}
+.s4-scene[data-s4-state="tantangan"] .s4-character__inner {
+	transform: scaleX(-1);
+}
+
+/* Placeholder silhouette — tampil otomatis kalau img/slide4/karakter.png
+   belum ada (lihat onerror di present.html). Ganti dengan PNG asli:
+   struktur & animasi di bawah tidak perlu diubah sama sekali. */
+.s4-character--missing .s4-character__img {
+	display: none;
+}
+.s4-character--missing {
+	/* Placeholder silhouette punya rasio sendiri (lihat padding-top di
+	   bawah) — kembalikan ke auto supaya aspect-ratio 735/732 di atas
+	   (untuk PNG asli) tidak memaksa kotak placeholder jadi persegi. */
+	aspect-ratio: auto;
+}
+
+.s4-character--missing .s4-character__inner {
+	position: relative;
+	width: 100%;
+	padding-top: 190%;
+}
+.s4-character--missing .s4-character__inner::before {
+	content: "";
+	position: absolute;
+	left: 32%;
+	top: 0;
+	width: 36%;
+	height: 22%;
+	border-radius: 50%;
+	background: rgba(235, 224, 200, 0.55);
+}
+.s4-character--missing .s4-character__inner::after {
+	content: "";
+	position: absolute;
+	left: 12%;
+	top: 24%;
+	width: 76%;
+	height: 76%;
+	border-radius: 30% 30% 4% 4%;
+	background: rgba(235, 224, 200, 0.55);
+}
+
+/* ---------------------------------------------------------------------
+   PANEL TEKS — PELUANG (kanan) & TANTANGAN (kiri). Editorial/sinematik:
+   tanpa card UI, hanya scrim gradasi lembut + tipografi + text-shadow.
+   Posisi absolut & tumpang tindih; hanya opacity yang membedakan mana
+   yang terlihat, supaya swap tidak butuh toggle display.
+   --------------------------------------------------------------------- */
+/*
+	THOUGHT CLOUD (bukan card/dashboard) — silhouette organic dibuat dari
+	border-radius asimetris (bukan border-radius seragam supaya tidak
+	terlihat seperti rounded card) + dua "puff" (::before/::after) di tepi
+	dekat karakter + rantai 3 titik mengecil (.s4-panel__dot) menuju arah
+	kepala karakter. Semua elemen ini adalah ANAK dari .s4-panel sehingga
+	otomatis ikut fade in/out lewat opacity/animasi panel yang sudah ada
+	(s4-panel-in/out) — tidak perlu animasi atau JS baru.
+
+	SIANG (peluang): fill lembut krem semi-transparan (bukan card gelap).
+	MALAM (tantangan): TRANSPARAN PENUH — hanya outline tipis, supaya
+	langit malam & bintang tetap terlihat di dalam area cloud, sesuai
+	permintaan (tidak boleh ada background solid/opaque).
+*/
+.s4-panel {
+	position: absolute;
+	top: 50%;
+	width: min(37vw, 480px);
+	transform: translateY(-50%);
+	z-index: 10;
+	/*
+		Padding dibuat cukup besar (>= radius sudut terbesar di bawah)
+		supaya teks tidak pernah mendekati lengkung sudut organic —
+		ini yang menghindarkan teks "keluar" dari siluet cloud.
+	*/
+	padding: clamp(30px, 3.6vw, 46px) clamp(32px, 3.9vw, 50px);
+	opacity: 0;
+	pointer-events: none;
+	border: 1px solid rgba(245, 239, 226, 0.28);
+}
+
+.s4-panel--peluang {
+	right: clamp(5%, 7vw, 10%);
+	background: radial-gradient(
+		120% 130% at 26% 18%,
+		rgba(255, 248, 232, 0.4) 0%,
+		rgba(255, 248, 232, 0.24) 55%,
+		rgba(255, 248, 232, 0.1) 100%
+	);
+	/*
+		Radius dalam px (bukan %) supaya kedalaman lengkung sudut tidak
+		ikut membesar mengikuti tinggi konten (yang berubah setelah
+		deskripsi lengkap ditampilkan) — sudut tetap dangkal & aman
+		berapa pun tinggi kotaknya, siluet tetap organic/asymmetrical.
+	*/
+	border-radius: 34px 52px 30px 46px / 42px 30px 50px 34px;
+}
+
+.s4-panel--tantangan {
+	left: clamp(5%, 7vw, 10%);
+	background: transparent;
+	border: 2px solid rgba(245, 239, 226, 0.5);
+	border-radius: 52px 34px 46px 30px / 30px 42px 34px 50px;
+}
+
+.s4-panel.is-active {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* Dua "puff" kecil di tepi cloud (dekat sisi karakter) supaya siluet
+   tidak terlihat seperti satu blob rounded-rectangle tunggal. */
+.s4-panel::before,
+.s4-panel::after {
+	content: "";
+	position: absolute;
+	border-radius: 50%;
+	pointer-events: none;
+}
+
+.s4-panel--peluang::before {
+	width: 20%;
+	height: 26%;
+	left: -7%;
+	top: 20%;
+	background: rgba(255, 248, 232, 0.14);
+	border: 1px solid rgba(245, 239, 226, 0.24);
+}
+.s4-panel--peluang::after {
+	width: 13%;
+	height: 17%;
+	right: 14%;
+	top: -9%;
+	background: rgba(255, 248, 232, 0.12);
+	border: 1px solid rgba(245, 239, 226, 0.2);
+}
+
+.s4-panel--tantangan::before {
+	width: 20%;
+	height: 26%;
+	right: -7%;
+	top: 20%;
+	background: transparent;
+	border: 2px solid rgba(245, 239, 226, 0.45);
+}
+.s4-panel--tantangan::after {
+	width: 13%;
+	height: 17%;
+	left: 14%;
+	top: -9%;
+	background: transparent;
+	border: 2px solid rgba(245, 239, 226, 0.4);
+}
+
+/* Rantai 3 titik mengecil ("○ ○ ○") dari cloud menuju kepala karakter
+   di tengah layar — trail klasik thought-bubble, tetap subtle/editorial
+   (bukan gaya kartun anak-anak). Peluang di kanan -> trail turun ke
+   KIRI (ke tengah); Tantangan di kiri -> trail turun ke KANAN. */
+.s4-panel__dot {
+	position: absolute;
+	border-radius: 50%;
+	pointer-events: none;
+}
+
+.s4-panel--peluang .s4-panel__dot--1 {
+	width: 15%;
+	height: 15%;
+	left: 8%;
+	bottom: -13%;
+	background: rgba(255, 248, 232, 0.18);
+	border: 1px solid rgba(245, 239, 226, 0.3);
+}
+.s4-panel--peluang .s4-panel__dot--2 {
+	width: 9%;
+	height: 9%;
+	left: -4%;
+	bottom: -23%;
+	background: rgba(255, 248, 232, 0.16);
+	border: 1px solid rgba(245, 239, 226, 0.26);
+}
+.s4-panel--peluang .s4-panel__dot--3 {
+	width: 5%;
+	height: 5%;
+	left: -12%;
+	bottom: -31%;
+	background: rgba(255, 248, 232, 0.14);
+	border: 1px solid rgba(245, 239, 226, 0.22);
+}
+
+.s4-panel--tantangan .s4-panel__dot--1 {
+	width: 15%;
+	height: 15%;
+	right: 8%;
+	bottom: -13%;
+	background: transparent;
+	border: 2px solid rgba(245, 239, 226, 0.42);
+}
+.s4-panel--tantangan .s4-panel__dot--2 {
+	width: 9%;
+	height: 9%;
+	right: -4%;
+	bottom: -23%;
+	background: transparent;
+	border: 1.5px solid rgba(245, 239, 226, 0.36);
+}
+.s4-panel--tantangan .s4-panel__dot--3 {
+	width: 5%;
+	height: 5%;
+	right: -12%;
+	bottom: -31%;
+	background: transparent;
+	border: 1.5px solid rgba(245, 239, 226, 0.3);
+}
+
+.s4-panel__title {
+	margin: 0 0 0.55em;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(1.5rem, 3.1vw, 2.4rem);
+	letter-spacing: 0.06em;
+	color: #f5efe2;
+	text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+
+.s4-panel__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.55em;
+	/* Batas lebar internal + wrap yang aman di dalam padding panel, di
+	   resolusi 1920x1080 maupun 3840x2160 (lebar panel itu sendiri
+	   sudah clamp lewat .s4-panel width). */
+	max-width: 100%;
+}
+
+.s4-panel__list li {
+	position: relative;
+	padding-left: 1.3em;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 300;
+	font-size: clamp(0.78rem, 1.35vw, 1rem);
+	line-height: 1.48;
+	color: #ece4d4;
+	text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+	overflow-wrap: break-word;
+}
+
+.s4-panel__list li::before {
+	content: "—";
+	position: absolute;
+	left: 0;
+	color: #d8b788;
+}
+
+/* -----------------------------------------------------------------
+   STATE SIANG (PELUANG) — background cloud lebih terang/hangat,
+   sehingga teks putih/krem yang dipakai untuk TANTANGAN (di atas
+   langit malam) tidak terbaca di sini. Warna dibuat gelap & natural
+   (deep navy untuk judul, deep brown untuk isi) supaya kontras jelas
+   tanpa terasa neon/mencolok, dan tetap terasa cinematic (bukan flat
+   hitam pekat).
+   ----------------------------------------------------------------- */
+.s4-panel--peluang .s4-panel__title {
+	color: #22314a;
+	text-shadow: 0 1px 3px rgba(255, 248, 232, 0.4);
+}
+
+.s4-panel--peluang .s4-panel__list li {
+	color: #3a2c1e;
+	text-shadow: 0 1px 2px rgba(255, 248, 232, 0.35);
+}
+
+.s4-panel--peluang .s4-panel__list li::before {
+	color: #6b4423;
+}
+
+/* ---------------------------------------------------------------------
+   FOOTER — label "DAMPAK SOSIAL" + kesimpulan (kiri-bawah, muncul
+   bersama TANTANGAN) dan kontrol (kanan-bawah, persisten).
+   --------------------------------------------------------------------- */
+.s4-footer {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: clamp(14px, 3vh, 32px);
+	z-index: 15;
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: clamp(12px, 3vw, 40px);
+	padding-inline: clamp(16px, 4vw, 48px);
+}
+
+.s4-footer-left {
+	max-width: min(46vw, 560px);
+	/* Persistent sekarang: "DAMPAK SOSIAL" (di dalam) harus terlihat di
+	   KEDUA state. Hanya .s4-closing (kesimpulan) di bawah ini yang masih
+	   tersembunyi sampai state TANTANGAN. */
+	opacity: 1;
+}
+
+.s4-label {
+	display: block;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+	letter-spacing: 0.24em;
+	color: #d8b788;
+	margin-bottom: 0.5em;
+	text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+.s4-closing {
+	margin: 0;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-style: italic;
+	font-weight: 500;
+	font-size: clamp(0.95rem, 1.7vw, 1.25rem);
+	line-height: 1.4;
+	color: #f5efe2;
+	text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+	opacity: 0;
+}
+
+.s4-scene[data-s4-state="tantangan"] .s4-closing {
+	opacity: 1;
+}
+
+.s4-footer-right {
+	display: flex;
+	align-items: center;
+	gap: clamp(10px, 1.6vw, 22px);
+	flex-shrink: 0;
+}
+
+/* Tombol toggle Peluang <-> Tantangan */
+.s4-toggle {
+	appearance: none;
+	-webkit-appearance: none;
+	background: rgba(245, 239, 226, 0.08);
+	border: 1px solid rgba(245, 239, 226, 0.45);
+	border-radius: 999px;
+	padding: 0.6em 1.1em;
+	min-height: 44px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6em;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-weight: 400;
+	font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+	letter-spacing: 0.14em;
+	color: #f5efe2;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	user-select: none;
+	touch-action: manipulation;
+	outline: none;
+	transition:
+		transform 0.15s,
+		background 0.2s;
+}
+
+.s4-toggle:active {
+	transform: scale(0.94);
+	background: rgba(245, 239, 226, 0.16);
+}
+
+.s4-toggle:focus-visible {
+	outline: 2px solid #d8b788;
+	outline-offset: 3px;
+}
+
+.s4-toggle[disabled] {
+	pointer-events: none;
+	opacity: 0.55;
+}
+
+.s4-toggle__arrow {
+	display: inline-block;
+	transition: transform 0.2s;
+}
+
+.s4-scene[data-s4-state="tantangan"] .s4-toggle__arrow {
+	transform: scaleX(-1);
+}
+
+/* Tombol NEXT -> Slide 5: hanya muncul di state TANTANGAN */
+.s4-next-slide {
+	color: #f5efe2;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s;
+}
+
+.s4-scene[data-s4-state="tantangan"] .s4-next-slide {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.s4-next-slide:hover {
+	color: #ffffff;
+}
+
+/* ==========================================================================
+   TRANSISI SIANG -> MALAM (karakter berbalik kanan -> kiri)
+   Semua nilai delay/duration dalam ms, HARUS sinkron dgn TIMING di
+   js/slide4.js (S4_TIMING).
+   ========================================================================== */
+.s4-scene.is-turning-to-night .s4-sky__layer--day {
+	animation: s4-day-out 550ms ease-in-out 300ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-night .s4-sky__layer--night {
+	animation: s4-night-in 550ms ease-in-out 300ms both;
+	will-change: opacity;
+}
+/* Jendela bangunan ikut crossfade langit — dipakai ULANG animasi
+   s4-night-in yang sama persis (timing sinkron otomatis dengan langit,
+   bukan sistem transisi baru). */
+.s4-scene.is-turning-to-night .s4-building::after {
+	animation: s4-night-in 550ms ease-in-out 300ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-night .s4-cloud {
+	animation: s4-cloud-out 300ms ease-out 80ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-night .s4-character__inner {
+	animation: s4-turn-r2l 650ms cubic-bezier(0.65, 0, 0.35, 1) 150ms both;
+	will-change: transform;
+}
+.s4-scene.is-turning-to-night .s4-panel--peluang {
+	animation: s4-panel-out 250ms ease-in both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-night .s4-panel--tantangan {
+	animation: s4-panel-in 300ms ease-out 620ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-night .s4-closing {
+	animation: s4-panel-in 300ms ease-out 640ms both;
+	will-change: opacity;
+}
+
+/* ==========================================================================
+   TRANSISI MALAM -> SIANG (kembali ke PELUANG)
+   ========================================================================== */
+.s4-scene.is-turning-to-day .s4-sky__layer--night {
+	animation: s4-night-out 550ms ease-in-out 300ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-day .s4-sky__layer--day {
+	animation: s4-day-in 550ms ease-in-out 300ms both;
+	will-change: opacity;
+}
+/* Jendela bangunan ikut crossfade langit — dipakai ULANG animasi
+   s4-night-out yang sama persis. */
+.s4-scene.is-turning-to-day .s4-building::after {
+	animation: s4-night-out 550ms ease-in-out 300ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-day .s4-cloud {
+	animation: s4-cloud-in 300ms ease-in 620ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-day .s4-character__inner {
+	animation: s4-turn-l2r 650ms cubic-bezier(0.65, 0, 0.35, 1) 150ms both;
+	will-change: transform;
+}
+.s4-scene.is-turning-to-day .s4-panel--tantangan {
+	animation: s4-panel-out 250ms ease-in both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-day .s4-panel--peluang {
+	animation: s4-panel-in 300ms ease-out 620ms both;
+	will-change: opacity;
+}
+.s4-scene.is-turning-to-day .s4-closing {
+	animation: s4-panel-out 200ms ease-in both;
+	will-change: opacity;
+}
+
+@keyframes s4-day-out {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+@keyframes s4-day-in {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+@keyframes s4-night-in {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+@keyframes s4-night-out {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+@keyframes s4-cloud-out {
+	0% {
+		opacity: 0.85;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+@keyframes s4-cloud-in {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 0.85;
+	}
+}
+@keyframes s4-panel-out {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+@keyframes s4-panel-in {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+/* Karakter berbalik: scaleX diinterpolasi lewat 0 (bukan instan) supaya
+   terasa "berputar", bukan sekadar dicerminkan tiba-tiba. Hanya
+   `transform`, ringan untuk 4K, tidak ada rotateY/3D. */
+@keyframes s4-turn-r2l {
+	0% {
+		transform: scaleX(1);
+	}
+	48% {
+		transform: scaleX(0.06);
+	}
+	52% {
+		transform: scaleX(-0.06);
+	}
+	100% {
+		transform: scaleX(-1);
+	}
+}
+@keyframes s4-turn-l2r {
+	0% {
+		transform: scaleX(-1);
+	}
+	48% {
+		transform: scaleX(-0.06);
+	}
+	52% {
+		transform: scaleX(0.06);
+	}
+	100% {
+		transform: scaleX(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.s4-scene.is-turning-to-night *,
+	.s4-scene.is-turning-to-day * {
+		animation: none !important;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   RESPONSIVE — layar sempit (tablet portrait/kecil): panel dipersempit
+   sedikit agar tidak bertabrakan dgn karakter di tengah.
+   --------------------------------------------------------------------- */
+@media (max-width: 720px) {
+	.s4-panel {
+		width: min(46vw, 320px);
+		padding: clamp(16px, 3.4vw, 22px);
+		/* Radius diperkecil sesuai padding yang lebih sempit di layar
+		   ini, supaya teks tetap tidak mendekati lengkung sudut. */
+		border-radius: 18px 26px 16px 22px / 20px 16px 24px 18px;
+	}
+	.s4-panel--tantangan {
+		border-radius: 26px 18px 22px 16px / 16px 20px 18px 24px;
+	}
+	.s4-footer-left {
+		max-width: 58vw;
+	}
+	.s4-footer {
+		flex-wrap: wrap;
+	}
+	.s4-skyline {
+		height: clamp(46px, 14vh, 120px);
+		gap: 2px;
+		padding-inline: 1.5%;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   RESPONSIVE — rentang menengah (tablet kecil & ponsel landscape lebar,
+   721-900px, mis. 844x390). Di rentang ini breakpoint 720px di atas
+   BELUM aktif, tapi panel default (37vw, sampai 480px) sudah cukup
+   lebar untuk mepet/tumpang tindih dengan karakter yang diposisikan
+   tengah. Panel dipersempit sedikit di sini saja, tanpa mengubah
+   breakpoint 720px maupun layout desktop >900px.
+   --------------------------------------------------------------------- */
+@media (min-width: 721px) and (max-width: 900px) {
+	.s4-panel {
+		width: min(30vw, 340px);
+	}
+}
+
+/* ---------------------------------------------------------------------
+   RESPONSIVE — viewport pendek (ponsel landscape, mis. 568x320,
+   667x375, 844x390). Kicker (atas), panel (tengah), dan footer (bawah)
+   berpotensi berdesakan saat tinggi viewport kecil. Perkecil padding &
+   tipografi elemen² ini SAJA (posisi/struktur tidak berubah) supaya
+   semuanya tetap muat tanpa saling menutupi atau terpotong.
+   --------------------------------------------------------------------- */
+@media (max-height: 480px) {
+	.s4-kicker {
+		top: clamp(8px, 3vh, 20px);
+		padding: 0.35em 0.7em;
+	}
+	.s4-panel {
+		padding: clamp(12px, 2.6vh, 20px) clamp(16px, 3vw, 28px);
+	}
+	.s4-panel__title {
+		margin-bottom: 0.35em;
+		font-size: clamp(1.1rem, 2.8vh, 1.6rem);
+	}
+	.s4-panel__list {
+		gap: 0.35em;
+	}
+	.s4-footer {
+		bottom: clamp(8px, 2vh, 16px);
+	}
+	.s4-skyline {
+		height: clamp(32px, 12vh, 70px);
+	}
+}

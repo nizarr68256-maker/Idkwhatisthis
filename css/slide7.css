@@ -1,0 +1,481 @@
+/* ==========================================================================
+   SLIDE 7 — closing "MENGHADAPI GLOBALISASI"
+   Styling KHUSUS untuk Slide 7 saja (Bumi 3D + 5 panel + ending sequence).
+
+   RESTORED — file ini sebelumnya secara tidak sengaja tertimpa oleh isi
+   css/present.css (duplikat penuh) saat integrasi global navigation,
+   sehingga Slide 7 kehilangan seluruh styling-nya dan tampak kosong.
+   Ditulis ulang dari referensi markup di present.html + class yang
+   dipakai js/slide7.js. TIDAK menyentuh css/present.css atau file CSS
+   slide lain.
+
+   FINAL PATCH v1:
+   - Panel: light blue dominan + white subtle highlight.
+   - NEXT dipindah ke pojok kanan bawah (position: fixed).
+   - Starfield diperkaya (3 layer, ukuran bervariasi, CSS murni).
+   - (Patch "hapus SELESAI" ada di present.html, bukan di file ini.)
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------
+   0. SCENE — override background .generic-slide-scene (krem terang)
+   jadi tema gelap/starfield khusus Slide 7. Spesifisitas
+   #slide7Scene.s7-scene > .generic-slide-scene biasa.
+   --------------------------------------------------------------------- */
+#slide7Scene.s7-scene {
+	background: radial-gradient(
+		120% 100% at 50% 20%,
+		#141a2e 0%,
+		#0c0f1c 55%,
+		#07080f 100%
+	);
+	overflow: hidden;
+	padding: clamp(16px, 3vh, 40px) clamp(16px, 4vw, 48px);
+}
+
+/* Starfield — 3 layer radial-gradient yang di-tile dengan background-size
+   berbeda supaya distribusi natural & tidak terlihat berulang. Layer:
+   bright (jarang, tile besar) / medium / tiny dim (banyak, tile kecil).
+   TIDAK ada image/asset baru, TIDAK ada canvas/WebGL/RAF baru. */
+.s7-stars {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+
+	background-image:
+		/* --- BRIGHT (tile 460px, 4 titik) --- */
+		radial-gradient(2px 2px at 8% 22%, #ffffff, transparent 62%),
+		radial-gradient(2.2px 2.2px at 44% 14%, #ffffff, transparent 60%),
+		radial-gradient(1.9px 1.9px at 78% 66%, #ffffff, transparent 62%),
+		radial-gradient(2.4px 2.4px at 26% 84%, #ffffff, transparent 60%),
+		/* --- MEDIUM (tile 340px, 6 titik) --- */
+		radial-gradient(
+				1.3px 1.3px at 20% 52%,
+				rgba(255, 255, 255, 0.85),
+				transparent 60%
+			),
+		radial-gradient(
+			1.5px 1.5px at 60% 30%,
+			rgba(255, 255, 255, 0.85),
+			transparent 60%
+		),
+		radial-gradient(
+			1.2px 1.2px at 88% 82%,
+			rgba(255, 255, 255, 0.85),
+			transparent 60%
+		),
+		radial-gradient(
+			1.4px 1.4px at 14% 92%,
+			rgba(255, 255, 255, 0.85),
+			transparent 60%
+		),
+		radial-gradient(
+			1.3px 1.3px at 68% 46%,
+			rgba(255, 255, 255, 0.85),
+			transparent 60%
+		),
+		radial-gradient(
+			1.5px 1.5px at 34% 6%,
+			rgba(255, 255, 255, 0.85),
+			transparent 60%
+		),
+		/* --- TINY DIM (tile 240px, 8 titik) --- */
+		radial-gradient(
+				0.8px 0.8px at 18% 10%,
+				rgba(255, 255, 255, 0.6),
+				transparent 60%
+			),
+		radial-gradient(
+			0.7px 0.7px at 46% 44%,
+			rgba(255, 255, 255, 0.55),
+			transparent 60%
+		),
+		radial-gradient(
+			0.9px 0.9px at 72% 8%,
+			rgba(255, 255, 255, 0.6),
+			transparent 60%
+		),
+		radial-gradient(
+			0.8px 0.8px at 54% 74%,
+			rgba(255, 255, 255, 0.55),
+			transparent 60%
+		),
+		radial-gradient(
+			0.7px 0.7px at 86% 50%,
+			rgba(255, 255, 255, 0.6),
+			transparent 60%
+		),
+		radial-gradient(
+			0.9px 0.9px at 6% 42%,
+			rgba(255, 255, 255, 0.55),
+			transparent 60%
+		),
+		radial-gradient(
+			0.8px 0.8px at 32% 96%,
+			rgba(255, 255, 255, 0.6),
+			transparent 60%
+		),
+		radial-gradient(
+			0.7px 0.7px at 64% 88%,
+			rgba(255, 255, 255, 0.55),
+			transparent 60%
+		);
+
+	background-repeat: repeat;
+	background-size:
+		460px 460px,
+		460px 460px,
+		460px 460px,
+		460px 460px,
+		340px 340px,
+		340px 340px,
+		340px 340px,
+		340px 340px,
+		340px 340px,
+		340px 340px,
+		240px 240px,
+		240px 240px,
+		240px 240px,
+		240px 240px,
+		240px 240px,
+		240px 240px,
+		240px 240px,
+		240px 240px;
+
+	opacity: 0.85;
+}
+
+/* ---------------------------------------------------------------------
+   1. STAGE — wadah konten, di atas starfield.
+   --------------------------------------------------------------------- */
+.s7-stage {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: clamp(10px, 1.6vh, 18px);
+	max-width: min(920px, 92vw);
+	max-height: 100%;
+	overflow-y: auto;
+	text-align: center;
+	color: #eef0f6;
+	font-family: var(--font-label, "Jost", sans-serif);
+}
+
+.s7-header {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.s7-quote {
+	margin: 0;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-style: italic;
+	font-size: clamp(0.95rem, 1.7vw, 1.15rem);
+	color: #b9c2da;
+	max-width: 46ch;
+	margin-inline: auto;
+}
+
+.s7-title {
+	margin: 0;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(1.8rem, 4.6vw, 2.9rem);
+	letter-spacing: 0.03em;
+	color: #f5f2e8;
+}
+
+.s7-subtitle {
+	margin: 0;
+	font-size: clamp(0.85rem, 1.5vw, 1rem);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #c9a463;
+}
+
+/* ---------------------------------------------------------------------
+   2. BUMI 3D WRAP — canvas diisi Three.js oleh js/slide7.js.
+   --------------------------------------------------------------------- */
+.s7-earth-wrap {
+	position: relative;
+	width: clamp(140px, 20vw, 220px);
+	height: clamp(140px, 20vw, 220px);
+	margin: clamp(2px, 0.6vh, 10px) 0;
+}
+
+.s7-earth-glow {
+	position: absolute;
+	inset: -22%;
+	border-radius: 50%;
+	background: radial-gradient(
+		circle,
+		rgba(90, 140, 255, 0.28) 0%,
+		rgba(90, 140, 255, 0.08) 45%,
+		transparent 72%
+	);
+	pointer-events: none;
+}
+
+.s7-earth-canvas {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	transition: opacity 900ms ease;
+}
+
+.s7-earth-wrap.s7-earth--ready .s7-earth-canvas {
+	opacity: 1;
+}
+
+/* Fallback (dipakai kalau dynamic import Three.js gagal) — bola gradient
+   CSS murni, tidak ada dependency baru. Tersembunyi secara default. */
+.s7-earth-fallback-sphere {
+	position: absolute;
+	inset: 8%;
+	border-radius: 50%;
+	display: none;
+	background: radial-gradient(
+		circle at 35% 30%,
+		#6d9dff 0%,
+		#2c58a8 40%,
+		#12245a 75%,
+		#060b1e 100%
+	);
+	box-shadow: inset -14px -14px 30px rgba(0, 0, 0, 0.55);
+}
+
+.s7-earth-wrap.s7-earth--fallback .s7-earth-canvas {
+	display: none;
+}
+
+.s7-earth-wrap.s7-earth--fallback .s7-earth-fallback-sphere {
+	display: block;
+}
+
+/* ---------------------------------------------------------------------
+   3. 5 PANEL — muncul kiri->kanan lewat class "s7-is-revealing" pada
+   #slide7Scene (lihat startReveal() di js/slide7.js). Default: opacity 0
+   + sedikit translateY, dianimasikan satu per satu via animation-delay
+   per nth panel.
+
+   FINAL PATCH — warna panel: light blue dominan + white subtle highlight
+   (radial di sudut atas). Ukuran/padding/radius/gap/typography TIDAK
+   diubah.
+   --------------------------------------------------------------------- */
+.s7-panels {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: clamp(8px, 1.4vw, 16px);
+	width: 100%;
+}
+
+.s7-panel {
+	opacity: 0;
+	transform: translateY(14px);
+}
+
+.s7-panel__inner {
+	height: 100%;
+	padding: clamp(10px, 1.4vw, 16px) clamp(8px, 1vw, 12px);
+	border: 1px solid rgba(247, 251, 255, 0.55);
+	border-radius: 10px;
+	/* light blue dominan, white sebagai highlight halus di sudut atas */
+	background:
+		radial-gradient(
+			circle at 25% 0%,
+			rgba(247, 251, 255, 0.85) 0%,
+			rgba(247, 251, 255, 0) 45%
+		),
+		linear-gradient(160deg, #c4e3f5 0%, #b9dcf2 55%, #a9d0ea 100%);
+	backdrop-filter: blur(2px);
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.s7-panel__num {
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-size: 0.75rem;
+	letter-spacing: 0.14em;
+	color: #3a6b96;
+}
+
+.s7-panel__title {
+	margin: 0;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+	color: #0d2942;
+}
+
+.s7-panel__text {
+	margin: 0;
+	font-size: clamp(0.66rem, 1.05vw, 0.78rem);
+	line-height: 1.35;
+	color: #2a4763;
+}
+
+@keyframes s7-panel-in {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.s7-scene.s7-is-revealing .s7-panel {
+	animation: s7-panel-in 520ms ease both;
+}
+
+.s7-scene.s7-is-revealing .s7-panel--1 {
+	animation-delay: 0ms;
+}
+.s7-scene.s7-is-revealing .s7-panel--2 {
+	animation-delay: 110ms;
+}
+.s7-scene.s7-is-revealing .s7-panel--3 {
+	animation-delay: 220ms;
+}
+.s7-scene.s7-is-revealing .s7-panel--4 {
+	animation-delay: 330ms;
+}
+.s7-scene.s7-is-revealing .s7-panel--5 {
+	animation-delay: 440ms;
+}
+
+/* ---------------------------------------------------------------------
+   4. KESIMPULAN + PENUTUP + NEXT — override warna generic-* (dibuat
+   untuk background terang) supaya terbaca di atas tema gelap Slide 7.
+   --------------------------------------------------------------------- */
+.s7-conclusion {
+	margin: 0;
+	max-width: 62ch;
+	font-size: clamp(0.78rem, 1.3vw, 0.92rem);
+	line-height: 1.5;
+	color: #d7dbea;
+}
+
+.s7-scene .s7-end {
+	color: #c9a463;
+}
+
+/* NEXT — final patch: fixed di pojok kanan bawah viewport. Tidak
+   mengganggu layout panel/Earth karena keluar dari flow .s7-stage.
+   Behavior (id, class, click handler di js/slide7.js) TIDAK diubah. */
+.s7-scene .s7-next {
+	position: fixed;
+	right: clamp(20px, 3vw, 44px);
+	bottom: clamp(20px, 3vh, 44px);
+	z-index: 20;
+	margin: 0;
+	color: #f0ead9;
+	transition:
+		transform 0.2s,
+		color 0.2s,
+		opacity 0.3s ease;
+}
+
+.s7-scene .s7-next:hover {
+	color: #ffffff;
+}
+
+/* Sembunyikan NEXT begitu ending sequence dimulai (lihat
+   runEndingSequence() di js/slide7.js yang menambah "s7-is-ending"). */
+.s7-scene.s7-is-ending .s7-next {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   5. ENDING OVERLAY — typewriter "Thanks" / "Yupi". Posisi di area atas
+   (bukan center penuh) supaya tidak pernah menutupi Bumi 3D di tengah.
+   Murni opacity, tanpa render loop/Canvas baru.
+   --------------------------------------------------------------------- */
+.s7-ending {
+	position: absolute;
+	top: clamp(14px, 6vh, 64px);
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 2;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 400ms ease;
+}
+
+.s7-scene.s7-is-ending .s7-ending {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.s7-ending-text {
+	margin: 0;
+	font-family: var(--font-display, "Cormorant Garamond", serif);
+	font-weight: 500;
+	font-size: clamp(2rem, 6vw, 3.4rem);
+	letter-spacing: 0.04em;
+	color: #f5f2e8;
+	white-space: pre;
+}
+
+/* Karakter kursor typewriter (opsional, murni CSS blink) */
+.s7-ending-text::after {
+	content: "";
+	display: inline-block;
+	width: 0.05em;
+}
+
+/* "Kamera reveal" — Bumi 3D sedikit membesar/mendekat saat ending
+   sequence dimulai. Transform CSS pada wrapper saja: TIDAK menyentuh
+   camera/scene/renderer Three.js yang sudah ada (tidak ada tween 3D
+   baru), cukup untuk kesan "reveal" sinematik. */
+.s7-earth-wrap {
+	transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.s7-scene.s7-is-ending .s7-earth-wrap {
+	transform: scale(1.35);
+}
+
+/* ---------------------------------------------------------------------
+   6. REDUCED MOTION — panel langsung terlihat, tanpa animasi masuk;
+   earth-wrap reveal juga tanpa transisi.
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	.s7-panel {
+		opacity: 1;
+		transform: none;
+	}
+	.s7-scene.s7-is-revealing .s7-panel {
+		animation: none !important;
+	}
+	.s7-earth-wrap,
+	.s7-earth-canvas,
+	.s7-ending {
+		transition: none !important;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   7. RESPONSIVE — layar sempit/pendek: panel jadi 2 kolom, stage bisa
+   discroll vertikal (sudah di-set overflow-y: auto di .s7-stage).
+   --------------------------------------------------------------------- */
+@media (max-width: 760px) {
+	.s7-panels {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-height: 640px) {
+	.s7-earth-wrap {
+		width: clamp(110px, 16vw, 160px);
+		height: clamp(110px, 16vw, 160px);
+	}
+}
