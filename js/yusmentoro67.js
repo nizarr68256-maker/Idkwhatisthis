@@ -1,35 +1,18 @@
 /* ==========================================================================
    YUSMENTORO67 / LYNUXS — maskot global persistent.
 
-   ★ STEP 5.7 — Bigger headline + credits + extended fall.
-   ★ STEP 5.8 — Credits lifecycle: ENTER → HOLD → EXIT → CLEANUP.
-   ★ STEP 5.9 — INIT RELIABILITY:
-     - Single-start guarantee (arrivalStarted flag).
-     - isArrivalEligible() re-check di bootstrap + fire-time.
-     - bootstrapCinematic() dipanggil setelah DOM ready.
-     - Watchdog 22s: force cleanup jika cinematic stuck.
-     - Fail-safe: charEl selalu di-reveal jika cinematic di-skip/gagal.
-     - Debug log via `?y67debug=1` di URL.
-   ★ STEP 6.0 — NATURAL FREE-FALL BODY ANIMATION:
-     - Class `y67-anim-freefall` ditambahkan pada bodyEl selama lock
-       phase (8s). CSS keyframe di css/yusmentoro67.css memberi drift
-       halus, tilt, sway pada legs, flutter pada ears, tilt pada head.
-     - Class dihapus saat settle — keyframe 100% = identity, jadi
-       tidak ada lompatan visual.
-     - Tidak mengubah charEl (camera-follow), cinematicScale, atau
-       posisi world. Murni lokal pada sub-elements SVG.
+   ★ STEP 4.3 — Cinematic framing anchors.
+   ★ STEP 5.x — Arrival, cloud, headline, credits, reliability.
+   ★ STEP 6.1 — Dynamic free-fall choreography.
+   ★ STEP 7   — Feature menu integration.
+   ★ STEP 7.1 — Single-click Lynuxs menutup panel fitur (di onPointerUp).
 
-   Tidak ada perubahan pada: camera-follow, fall duration, cloud,
-   headline, credits, city, landing, get-up, glasses, responsive
-   framing, sessionStorage, cinematic init.
+   Tidak ada RAF baru, canvas, webgl, atau instance Lynuxs kedua.
    ========================================================================== */
 
 (function () {
 	"use strict";
 
-	/* ---------------------------------------------------------------------
-	   ★ STEP 5.9 — Debug helper. Enable via URL: ?y67debug=1
-	   --------------------------------------------------------------------- */
 	var Y67_DEBUG = (function () {
 		try {
 			return /[?&]y67debug=1(?:&|$)/.test(window.location.search);
@@ -40,9 +23,9 @@
 	function y67Log() {
 		if (!Y67_DEBUG) return;
 		try {
-			var args = Array.prototype.slice.call(arguments);
-			args.unshift("[Y67 CINEMATIC]");
-			console.log.apply(console, args);
+			var a = Array.prototype.slice.call(arguments);
+			a.unshift("[Y67 CINEMATIC]");
+			console.log.apply(console, a);
 		} catch (e) {}
 	}
 
@@ -82,23 +65,21 @@
 		"(prefers-reduced-motion: reduce)"
 	).matches;
 
-	var Y67_SKIN = "skin02";
 	var TOTAL_SLIDES = 8;
-
 	var currentLiftY = 0;
 	var currentTilt = 0;
 
 	var pointerId = null;
 	var pointerMode = "idle";
-	var pStartClientX = 0;
-	var pStartClientY = 0;
-	var pCharStartX = 0;
-	var pCharStartY = 0;
-	var pLastClientX = 0;
-	var pLastClientY = 0;
-	var pLastMoveTime = 0;
-	var pVelX = 0;
-	var pVelY = 0;
+	var pStartClientX = 0,
+		pStartClientY = 0,
+		pCharStartX = 0,
+		pCharStartY = 0;
+	var pLastClientX = 0,
+		pLastClientY = 0,
+		pLastMoveTime = 0;
+	var pVelX = 0,
+		pVelY = 0;
 	var lastTapUpTime = 0;
 
 	var throwState = null;
@@ -122,19 +103,15 @@
 	var CINEMATIC_FALL_MS = 10000;
 	var CINEMATIC_LOCK_PHASE_MS = 8000;
 	var CINEMATIC_SETTLE_MS = 2000;
-
 	var CINEMATIC_EASING_LOCK = "cubic-bezier(0.4, 0.0, 0.6, 1.0)";
 	var CINEMATIC_EASING_SETTLE = "cubic-bezier(0.3, 0.0, 0.7, 1.0)";
 
 	var CINEMATIC_LOCK_SCENE_START_PCT = 1100;
 	var CINEMATIC_LOCK_SCENE_END_PCT = 50;
-
 	var CINEMATIC_CLOUD_START_PCT = 900;
 	var CINEMATIC_CLOUD_LOCK_END_PCT = -1500;
-
 	var CINEMATIC_HEADLINE_START_PCT = 15;
 	var CINEMATIC_HEADLINE_LOCK_END_PCT = -10;
-
 	var CINEMATIC_HEADLINE_APPEAR_MS = 1000;
 	var CINEMATIC_CREDITS_APPEAR_MS = 1500;
 	var CINEMATIC_CREDITS_EXIT_MS = 4500;
@@ -144,8 +121,6 @@
 	var CINEMATIC_CLOSE_SCALE = 3;
 	var CINEMATIC_PULLBACK_MS = 1400;
 	var CINEMATIC_PULLBACK_EASING = "cubic-bezier(0.22, 0.68, 0.16, 1)";
-
-	/* Watchdog duration. Margin > total cinematic (~15.5s). */
 	var CINEMATIC_WATCHDOG_MS = 22000;
 
 	var cinematicScale = 1;
@@ -229,20 +204,18 @@
 	}
 
 	function resetSkyCredits() {
-		if (s1SkyHeadline) {
+		if (s1SkyHeadline)
 			s1SkyHeadline.classList.remove(
 				"is-visible",
 				"is-exiting",
 				"is-hidden"
 			);
-		}
-		if (s1SkyCredits) {
+		if (s1SkyCredits)
 			s1SkyCredits.classList.remove(
 				"is-visible",
 				"is-exiting",
 				"is-hidden"
 			);
-		}
 	}
 	function cleanupSkyCredits() {
 		if (s1SkyHeadline) {
@@ -254,37 +227,34 @@
 			s1SkyCredits.classList.add("is-hidden");
 		}
 	}
-
 	function ensureCharVisible() {
 		if (!charEl) return;
 		charEl.style.visibility = "";
 		charEl.style.opacity = "";
 	}
 
-	/* ---------------------------------------------------------------------
-	   1. KONTEN "Hmm?"
-	   --------------------------------------------------------------------- */
+	/* Legacy QA — dormant (openSequence STEP 7 delegasi ke LynuxsFeatures). */
 	var QA = {
 		1: [
 			{
 				q: "Apa itu globalisasi sosial?",
 				a: [
 					"Globalisasi sosial adalah proses meningkatnya keterhubungan dan ketergantungan antarmasyarakat di berbagai belahan dunia.",
-					"Proses ini didorong oleh kemajuan teknologi, transportasi, ekonomi, serta pertukaran budaya dan ide yang membuat jarak terasa semakin dekat."
+					"Proses ini didorong oleh kemajuan teknologi, transportasi, ekonomi, serta pertukaran budaya dan ide."
 				]
 			},
 			{
 				q: "Mengapa dunia semakin terhubung?",
 				a: [
-					"Kemajuan teknologi komunikasi dan transportasi membuat informasi, barang, dan manusia bisa berpindah antarnegara jauh lebih cepat dibanding sebelumnya.",
-					"Interaksi lintas negara yang dulu jarang terjadi kini menjadi bagian dari kehidupan sehari-hari, mulai dari perdagangan hingga pertemanan daring."
+					"Kemajuan teknologi komunikasi dan transportasi membuat informasi, barang, dan manusia bisa berpindah antarnegara jauh lebih cepat.",
+					"Interaksi lintas negara kini menjadi bagian dari kehidupan sehari-hari."
 				]
 			},
 			{
 				q: "Apa peran teknologi dalam globalisasi?",
 				a: [
-					"Teknologi, terutama internet dan media sosial, menjadi penggerak utama globalisasi karena memungkinkan pertukaran informasi dan budaya berlangsung hampir seketika.",
-					"Tanpa teknologi digital, keterhubungan lintas negara yang kita rasakan hari ini akan jauh lebih lambat dan terbatas."
+					"Teknologi, terutama internet dan media sosial, menjadi penggerak utama globalisasi karena memungkinkan pertukaran informasi hampir seketika.",
+					"Tanpa teknologi digital, keterhubungan lintas negara akan jauh lebih lambat."
 				]
 			}
 		],
@@ -293,21 +263,21 @@
 				q: "Mengapa pola interaksi berubah?",
 				a: [
 					"Kehadiran platform digital menggeser sebagian interaksi sosial dari ruang fisik ke ruang virtual.",
-					"Orang kini bisa membangun relasi, berdiskusi, dan berkolaborasi dengan orang di negara lain tanpa pernah bertemu langsung."
+					"Orang kini bisa membangun relasi dengan orang di negara lain tanpa bertemu langsung."
 				]
 			},
 			{
 				q: "Apa itu komunitas virtual?",
 				a: [
-					"Komunitas virtual adalah kelompok sosial yang terbentuk dan berinteraksi terutama melalui platform digital, bukan lewat pertemuan tatap muka.",
-					"Anggotanya bisa tersebar di berbagai negara namun tetap merasa terhubung karena minat atau tujuan yang sama."
+					"Komunitas virtual adalah kelompok sosial yang terbentuk dan berinteraksi terutama melalui platform digital.",
+					"Anggotanya bisa tersebar di berbagai negara namun tetap terhubung karena minat atau tujuan yang sama."
 				]
 			},
 			{
 				q: "Bagaimana informasi menyebar dengan cepat?",
 				a: [
-					"Media sosial dan platform berbagi konten memungkinkan sebuah informasi menjangkau jutaan orang di berbagai negara hanya dalam hitungan jam.",
-					"Kecepatan ini membawa manfaat besar, tapi juga membuat penyebaran informasi yang keliru lebih sulit dikendalikan."
+					"Media sosial dan platform berbagi konten memungkinkan sebuah informasi menjangkau jutaan orang hanya dalam hitungan jam.",
+					"Kecepatan ini membawa manfaat besar, tapi juga membuat informasi yang keliru lebih sulit dikendalikan."
 				]
 			}
 		],
@@ -315,29 +285,29 @@
 			{
 				q: "Apa itu difusi budaya?",
 				a: [
-					"Difusi budaya adalah proses penyebaran unsur budaya — seperti makanan, musik, bahasa, atau kebiasaan — dari satu kelompok masyarakat ke kelompok masyarakat lain.",
-					"Proses ini terjadi melalui migrasi, perdagangan, media, teknologi, dan interaksi sosial antarbangsa."
+					"Difusi budaya adalah proses penyebaran unsur budaya dari satu kelompok masyarakat ke kelompok masyarakat lain.",
+					"Terjadi melalui migrasi, perdagangan, media, teknologi, dan interaksi sosial."
 				]
 			},
 			{
 				q: "Apa itu glocalization?",
 				a: [
-					"Glocalization adalah proses ketika unsur global diadaptasi agar sesuai dengan kondisi, kebutuhan, atau budaya lokal.",
-					"Contohnya, sebuah merek atau konsep global sering menyesuaikan rasa dan gayanya dengan selera masyarakat setempat."
+					"Glocalization adalah proses ketika unsur global diadaptasi sesuai kondisi, kebutuhan, atau budaya lokal.",
+					"Contohnya, sebuah merek global sering menyesuaikan rasa dan gayanya dengan selera setempat."
 				]
 			},
 			{
 				q: "Apa itu hibridisasi budaya?",
 				a: [
-					"Hibridisasi budaya adalah proses bercampurnya unsur-unsur budaya yang berbeda hingga melahirkan bentuk budaya baru.",
-					"Musik, makanan, fesyen, atau seni yang menggabungkan beberapa unsur budaya adalah contoh nyata dari proses ini."
+					"Hibridisasi budaya adalah percampuran unsur budaya yang berbeda hingga melahirkan bentuk budaya baru.",
+					"Musik, makanan, fesyen, atau seni yang menggabungkan beberapa unsur budaya adalah contoh nyatanya."
 				]
 			},
 			{
 				q: "Apakah budaya lokal bisa hilang?",
 				a: [
-					"Budaya lokal tidak selalu hilang ketika bertemu budaya lain — ia bisa beradaptasi, berubah, atau justru bercampur menjadi sesuatu yang baru.",
-					"Yang menentukan kelangsungannya adalah seberapa aktif suatu masyarakat menjaga dan mengembangkan budayanya sendiri."
+					"Budaya lokal tidak selalu hilang ketika bertemu budaya lain — ia bisa beradaptasi, berubah, atau bercampur menjadi sesuatu yang baru.",
+					"Yang menentukan kelangsungannya adalah seberapa aktif masyarakat menjaga budayanya sendiri."
 				]
 			}
 		],
@@ -359,8 +329,8 @@
 			{
 				q: "Apakah dampaknya selalu sama bagi semua orang?",
 				a: [
-					"Tidak. Dampak globalisasi dirasakan berbeda-beda tergantung akses teknologi, ekonomi, dan pendidikan setiap individu atau daerah.",
-					"Kelompok dengan akses lebih besar umumnya lebih diuntungkan dibanding kelompok dengan keterbatasan akses."
+					"Tidak. Dampaknya berbeda-beda tergantung akses teknologi, ekonomi, dan pendidikan setiap individu atau daerah.",
+					"Kelompok dengan akses lebih besar umumnya lebih diuntungkan."
 				]
 			}
 		],
@@ -368,22 +338,22 @@
 			{
 				q: "Apa itu kesenjangan digital?",
 				a: [
-					"Kesenjangan digital adalah perbedaan akses terhadap teknologi informasi dan komunikasi antara satu kelompok masyarakat dengan kelompok lainnya.",
-					"Kesenjangan ini bisa terjadi antarnegara, antarwilayah, maupun antarindividu."
+					"Kesenjangan digital adalah perbedaan akses terhadap teknologi informasi dan komunikasi antara satu kelompok masyarakat dengan kelompok lain.",
+					"Bisa terjadi antarnegara, antarwilayah, maupun antarindividu."
 				]
 			},
 			{
 				q: "Mengapa akses teknologi tidak merata?",
 				a: [
-					"Faktor seperti infrastruktur, kondisi ekonomi, dan lokasi geografis membuat sebagian masyarakat lebih sulit mengakses internet dan perangkat digital dibanding yang lain.",
-					"Akibatnya, manfaat globalisasi tidak dirasakan secara merata oleh semua orang."
+					"Faktor seperti infrastruktur, kondisi ekonomi, dan lokasi geografis membuat sebagian masyarakat lebih sulit mengakses internet dan perangkat digital.",
+					"Akibatnya, manfaat globalisasi tidak dirasakan secara merata."
 				]
 			},
 			{
 				q: "Apa hubungannya dengan pendidikan?",
 				a: [
 					"Akses teknologi yang timpang berdampak langsung pada kesempatan belajar, terutama saat pembelajaran mengandalkan perangkat dan koneksi internet.",
-					"Siswa dengan akses terbatas berisiko tertinggal dari siswa yang memiliki akses lebih baik."
+					"Siswa dengan akses terbatas berisiko tertinggal."
 				]
 			}
 		],
@@ -391,36 +361,36 @@
 			{
 				q: "Apa itu Global Village?",
 				a: [
-					'Global Village adalah gagasan Marshall McLuhan yang menggambarkan dunia yang terasa semakin "kecil" karena media dan teknologi komunikasi menghubungkan manusia di berbagai belahan bumi seolah tinggal dalam satu desa.',
-					"Peristiwa di satu negara kini bisa langsung diketahui dan dirasakan dampaknya di negara lain."
+					"Global Village adalah gagasan Marshall McLuhan yang menggambarkan dunia yang terasa semakin kecil karena media dan teknologi komunikasi menghubungkan manusia di berbagai belahan bumi.",
+					"Peristiwa di satu negara bisa langsung diketahui dan dirasakan dampaknya di negara lain."
 				]
 			},
 			{
 				q: "Apa itu McDonaldization?",
 				a: [
-					"McDonaldization adalah konsep dari sosiolog George Ritzer yang menjelaskan bagaimana prinsip efisiensi, keterukuran, prediktabilitas, dan kontrol semakin memengaruhi berbagai bidang kehidupan.",
-					"Prinsip yang awalnya terlihat di restoran cepat saji ini kini meluas ke berbagai institusi dan layanan lain."
+					"McDonaldization adalah konsep George Ritzer tentang meluasnya prinsip efisiensi, keterukuran, prediktabilitas, dan kontrol ke berbagai bidang kehidupan.",
+					"Prinsip yang awalnya terlihat di restoran cepat saji kini meluas ke banyak institusi dan layanan."
 				]
 			},
 			{
 				q: "Apa itu Cultural Imperialism?",
 				a: [
-					"Cultural Imperialism menggambarkan penyebaran budaya dari kelompok atau negara yang lebih dominan sehingga dapat memengaruhi, bahkan menekan, budaya lokal.",
-					"Meski begitu, budaya lokal tetap bisa bertahan dengan cara beradaptasi, bukan sekadar tergantikan."
+					"Cultural Imperialism menggambarkan penyebaran budaya dari kelompok atau negara yang lebih dominan sehingga dapat memengaruhi bahkan menekan budaya lokal.",
+					"Meski begitu, budaya lokal tetap bisa bertahan dengan beradaptasi."
 				]
 			},
 			{
 				q: "Apa itu Glocalization?",
 				a: [
-					"Glocalization adalah proses ketika unsur global diadaptasi dengan kondisi dan budaya lokal, sehingga global dan lokal tidak selalu bertentangan.",
-					"Perpaduan keduanya justru sering menghasilkan bentuk baru yang lebih relevan bagi masyarakat setempat."
+					"Glocalization adalah proses ketika unsur global diadaptasi dengan kondisi dan budaya lokal.",
+					"Perpaduan keduanya sering menghasilkan bentuk baru yang lebih relevan bagi masyarakat setempat."
 				]
 			},
 			{
 				q: "Apa itu Network Society?",
 				a: [
-					"Network Society adalah konsep dari sosiolog Manuel Castells tentang masyarakat yang semakin terorganisasi melalui jaringan informasi dan komunikasi digital.",
-					"Media sosial, kerja jarak jauh, dan komunitas daring adalah wujud nyata dari masyarakat berjejaring ini."
+					"Network Society adalah konsep Manuel Castells tentang masyarakat yang semakin terorganisasi melalui jaringan informasi dan komunikasi digital.",
+					"Media sosial, kerja jarak jauh, dan komunitas daring adalah wujud nyatanya."
 				]
 			}
 		],
@@ -428,22 +398,22 @@
 			{
 				q: "Bagaimana cara menghadapi globalisasi?",
 				a: [
-					"Menghadapi globalisasi berarti bersikap terbuka terhadap pengetahuan baru, kritis dalam menyaring informasi, tetap berakar pada budaya sendiri, saling menghargai perbedaan, dan mendorong akses yang inklusif bagi semua orang.",
+					"Bersikap terbuka terhadap pengetahuan baru, kritis menyaring informasi, tetap berakar pada budaya sendiri, saling menghargai perbedaan, dan mendorong akses yang inklusif.",
 					"Kelima sikap ini membantu masyarakat mengambil manfaat globalisasi tanpa kehilangan arah."
 				]
 			},
 			{
 				q: "Mengapa literasi digital penting?",
 				a: [
-					"Literasi digital membantu seseorang memilah informasi yang benar dari yang menyesatkan di tengah derasnya arus informasi global.",
+					"Literasi digital membantu seseorang memilah informasi yang benar dari yang menyesatkan.",
 					"Tanpa literasi digital, masyarakat lebih rentan terhadap hoaks dan manipulasi informasi."
 				]
 			},
 			{
 				q: "Mengapa budaya lokal perlu dikembangkan?",
 				a: [
-					"Budaya lokal adalah identitas yang membedakan satu masyarakat dari masyarakat lain di tengah arus globalisasi yang menyeragamkan.",
-					"Dengan terus mengembangkan budaya sendiri, masyarakat tetap bisa terbuka pada dunia luar tanpa kehilangan jati diri."
+					"Budaya lokal adalah identitas yang membedakan satu masyarakat dari yang lain di tengah arus globalisasi yang menyeragamkan.",
+					"Dengan terus mengembangkan budaya sendiri, masyarakat tetap bisa terbuka tanpa kehilangan jati diri."
 				]
 			}
 		],
@@ -463,9 +433,6 @@
 		]
 	};
 
-	/* ---------------------------------------------------------------------
-	   2. KOMENTAR RANDOM
-	   --------------------------------------------------------------------- */
 	var GENERIC_COMMENTS = [
 		"Hmm...",
 		"Hmm?",
@@ -499,9 +466,6 @@
 		7: "lookup"
 	};
 
-	/* ---------------------------------------------------------------------
-	   3. JALUR AMAN
-	   --------------------------------------------------------------------- */
 	var DEFAULT_TRACK = { min: 4, max: 72 };
 	var SLIDE_TRACKS = { 4: { min: 4, max: 30 } };
 	var TIGHT_SIZE_SLIDES = {
@@ -511,7 +475,6 @@
 	function getTrack(slideNum) {
 		return SLIDE_TRACKS[slideNum] || DEFAULT_TRACK;
 	}
-
 	function applySizeForSlide(slideNum) {
 		var tight = TIGHT_SIZE_SLIDES[slideNum];
 		if (tight) {
@@ -523,9 +486,6 @@
 		}
 	}
 
-	/* ---------------------------------------------------------------------
-	   4. DETEKSI SLIDE AKTIF
-	   --------------------------------------------------------------------- */
 	function detectCurrentSlide() {
 		for (var i = 1; i <= TOTAL_SLIDES; i++) {
 			var el = document.getElementById("slide" + i + "Scene");
@@ -537,13 +497,10 @@
 	var currentSlide = detectCurrentSlide();
 	applySizeForSlide(currentSlide);
 
-	/* ---------------------------------------------------------------------
-	   5. STATE GERAKAN
-	   --------------------------------------------------------------------- */
 	var posPx = 0;
 	var dir = 1;
-	var boundsMinPx = 0;
-	var boundsMaxPx = 0;
+	var boundsMinPx = 0,
+		boundsMaxPx = 0;
 	var walkTimer = null;
 	var panelOpen = false;
 	var SPEED_PX_S = 24;
@@ -586,10 +543,6 @@
 			cinematicScale +
 			")";
 	}
-
-	/* ---------------------------------------------------------------------
-	   5b. CINEMATIC
-	   --------------------------------------------------------------------- */
 
 	function setCinematicScale(scale, durationSec, easing) {
 		cinematicScale = scale;
@@ -637,30 +590,26 @@
 		charEl.style.transform =
 			"translate3d(" + posPx + "px, " + currentLiftY + "px, 0) scale(1)";
 		var rect = charEl.getBoundingClientRect();
-		var naturalW = rect.width;
-		var naturalH = rect.height;
-		y67Log("natural size", naturalW, "x", naturalH);
-
+		var naturalW = rect.width,
+			naturalH = rect.height;
 		var S = computeResponsiveCinematicScale(naturalW, naturalH);
 		cinematicScale = S;
-		y67Log("computed scale", S);
 
 		var vw = window.innerWidth || document.documentElement.clientWidth;
 		var vh = window.innerHeight || document.documentElement.clientHeight;
-
 		var anchorXpct = readPctVar("--y67-cinematic-x", 35);
 		var anchorYpct = readPctVar("--y67-cinematic-y", 40);
 		var targetCenterX = (vw * anchorXpct) / 100;
 		var targetCenterY = (vh * anchorYpct) / 100;
 
-		var halfW = (naturalW * S) / 2;
-		var halfH = (naturalH * S) / 2;
-		var marginX = vw * 0.06;
-		var marginY = vh * 0.06;
-		var minCx = halfW + marginX;
-		var maxCx = vw - halfW - marginX;
-		var minCy = halfH + marginY;
-		var maxCy = vh - halfH - marginY;
+		var halfW = (naturalW * S) / 2,
+			halfH = (naturalH * S) / 2;
+		var marginX = vw * 0.06,
+			marginY = vh * 0.06;
+		var minCx = halfW + marginX,
+			maxCx = vw - halfW - marginX;
+		var minCy = halfH + marginY,
+			maxCy = vh - halfH - marginY;
 
 		if (maxCx < minCx) {
 			targetCenterX = vw / 2;
@@ -677,7 +626,6 @@
 
 		var curCenterX = rect.left + naturalW / 2;
 		var curCenterY = rect.top + naturalH / 2;
-
 		posPx += targetCenterX - curCenterX;
 		currentLiftY += targetCenterY - curCenterY;
 
@@ -729,7 +677,6 @@
 		}
 		var dur = CINEMATIC_LOCK_PHASE_MS / 1000;
 		var easing = CINEMATIC_EASING_LOCK;
-
 		if (slide1CityScene) {
 			void slide1CityScene.offsetWidth;
 			slide1CityScene.style.transition =
@@ -751,32 +698,24 @@
 			s1SkyHeadlineLayer.style.transform =
 				"translateY(" + CINEMATIC_HEADLINE_LOCK_END_PCT + "%)";
 		}
-		y67Log("fall started, duration", dur, "s");
 	}
 
 	function startCinematicSettle() {
 		if (!cinematicRunning) return;
-		/* ★ STEP 6.0 — freefall animation selesai (keyframe 100% = identity).
-		   Hapus class supaya settle murni menggerakkan charEl tanpa keyframe
-		   tambahan. */
 		bodyEl.classList.remove("y67-anim-freefall");
 		var dur = CINEMATIC_SETTLE_MS / 1000;
 		var easing = CINEMATIC_EASING_SETTLE;
 		var S = cinematicScale;
-
 		void charEl.offsetWidth;
 		if (slide1CityScene) void slide1CityScene.offsetWidth;
-
 		charEl.style.transition = "transform " + dur + "s " + easing;
 		charEl.style.transform =
 			"translate3d(" + posPx + "px, 0px, 0) scale(" + S + ")";
-
 		if (slide1CityScene) {
 			slide1CityScene.style.transition =
 				"transform " + dur + "s " + easing;
 			slide1CityScene.style.transform = "translateY(0%)";
 		}
-		y67Log("settle started");
 	}
 
 	function startCameraPullBack() {
@@ -807,14 +746,12 @@
 			CINEMATIC_PULLBACK_MS / 1000,
 			CINEMATIC_PULLBACK_EASING
 		);
-		y67Log("pull-back started");
 	}
 
 	function finishCinematic() {
 		cinematicRunning = false;
 		cinematicFrame = null;
 		clearCinematicWatchdog();
-		y67Log("cinematic finished");
 	}
 
 	function resetCinematicVisuals() {
@@ -823,7 +760,6 @@
 		clearCreditsTimer();
 		clearExitTimers();
 		clearCinematicWatchdog();
-
 		if (cinematicFrame) {
 			posPx = cinematicFrame.x;
 			currentLiftY = cinematicFrame.y;
@@ -832,11 +768,9 @@
 		cinematicRunning = false;
 		cinematicScale = 1;
 		arrivalStarted = false;
-
 		charEl.style.transition = "none";
 		charEl.style.transform =
 			"translate3d(" + posPx + "px, " + currentLiftY + "px, 0) scale(1)";
-
 		if (slide1CityScene) {
 			slide1CityScene.style.transition = "none";
 			slide1CityScene.style.opacity = "";
@@ -866,7 +800,6 @@
 		}
 		resetSkyCredits();
 		ensureCharVisible();
-		y67Log("resetCinematicVisuals done");
 	}
 
 	function applyFacing(newDir, transitionSec) {
@@ -880,9 +813,6 @@
 			"rotate(" + currentTilt + "deg) scaleX(" + dir + ")";
 	}
 
-	/* ---------------------------------------------------------------------
-	   6. PERILAKU RANDOM
-	   --------------------------------------------------------------------- */
 	function playAnim(className, duration, cb) {
 		bodyEl.classList.remove("is-walking");
 		bodyEl.classList.add(className);
@@ -1043,18 +973,16 @@
 	function pickBehaviorForSlide() {
 		var hint = SLIDE_BEHAVIOR_HINT[currentSlide];
 		if (hint && Math.random() < 0.35) {
-			for (var i = 0; i < BEHAVIORS.length; i++) {
+			for (var i = 0; i < BEHAVIORS.length; i++)
 				if (BEHAVIORS[i].name === hint) return BEHAVIORS[i];
-			}
 		}
 		return pickBehavior();
 	}
 
 	function pickCommentText() {
 		var slideList = SLIDE_COMMENTS[currentSlide] || [];
-		if (slideList.length && Math.random() < 0.5) {
+		if (slideList.length && Math.random() < 0.5)
 			return slideList[Math.floor(Math.random() * slideList.length)];
-		}
 		return GENERIC_COMMENTS[
 			Math.floor(Math.random() * GENERIC_COMMENTS.length)
 		];
@@ -1074,16 +1002,12 @@
 			if (cb) cb();
 		}, duration);
 	}
-
 	function maybeShowBubble(prob) {
 		if (panelOpen) return;
 		if (Math.random() > prob) return;
 		showBubble(pickCommentText());
 	}
 
-	/* ---------------------------------------------------------------------
-	   7. LOOP JALAN
-	   --------------------------------------------------------------------- */
 	function nextLeg() {
 		if (isBusy() || prefersReducedMotion) return;
 		recomputeBounds();
@@ -1092,31 +1016,27 @@
 			scheduleTimer(nextLeg, 2000);
 			return;
 		}
-
 		var goToBoundary = Math.random() < 0.35;
 		var target;
 		if (goToBoundary) {
 			target = dir === 1 ? boundsMaxPx : boundsMinPx;
 		} else {
-			var minStep = trackLen * 0.18;
-			var maxStep = trackLen * 0.5;
+			var minStep = trackLen * 0.18,
+				maxStep = trackLen * 0.5;
 			var step = minStep + Math.random() * (maxStep - minStep);
 			target =
 				dir === 1
 					? Math.min(boundsMaxPx, posPx + step)
 					: Math.max(boundsMinPx, posPx - step);
 		}
-
 		var distance = Math.abs(target - posPx);
 		var duration = Math.min(9, Math.max(0.9, distance / SPEED_PX_S));
-
 		bodyEl.classList.add("is-walking");
 		applyPosition(target, duration);
 		var arrivedAtBoundary =
 			Math.abs(target - boundsMaxPx) < 0.5 ||
 			Math.abs(target - boundsMinPx) < 0.5;
 		posPx = target;
-
 		scheduleTimer(function () {
 			bodyEl.classList.remove("is-walking");
 			if (isBusy()) return;
@@ -1161,9 +1081,6 @@
 		}
 	}
 
-	/* ---------------------------------------------------------------------
-	   7b. SPECIAL ANIMATION SYSTEM
-	   --------------------------------------------------------------------- */
 	function canRunSpecial() {
 		return (
 			!specialState &&
@@ -1175,7 +1092,6 @@
 	function cancelSpecial(reason) {
 		if (!specialState) return;
 		var wasArrival = specialState === "arrival";
-		y67Log("cancelSpecial:", reason, wasArrival ? "(was arrival)" : "");
 		clearScheduledTimer();
 		if (bubbleTimer) {
 			clearTimeout(bubbleTimer);
@@ -1199,54 +1115,25 @@
 		}, 900);
 	}
 
-	/* ---------------------------------------------------------------------
-	   ★ STEP 5.9 — Arrival eligibility check
-	   --------------------------------------------------------------------- */
 	function isArrivalEligible() {
-		if (prefersReducedMotion) {
-			y67Log("not eligible: prefers-reduced-motion");
-			return false;
-		}
-		if (arrivalStarted) {
-			y67Log("not eligible: arrivalStarted");
-			return false;
-		}
-		if (hasArrived()) {
-			y67Log("not eligible: sessionStorage arrived");
-			return false;
-		}
+		if (prefersReducedMotion) return false;
+		if (arrivalStarted) return false;
+		if (hasArrived()) return false;
 		var slideNum = detectCurrentSlide();
-		if (slideNum !== 1) {
-			y67Log("not eligible: slide", slideNum);
-			return false;
-		}
-		if (!charEl) {
-			y67Log("not eligible: charEl missing");
-			return false;
-		}
+		if (slideNum !== 1) return false;
+		if (!charEl) return false;
 		return true;
 	}
 
-	/* ---------------------------------------------------------------------
-	   ★ STEP 5.9 / 6.0 — startArrival dengan single-start guarantee,
-	   fail-safe, dan free-fall body animation.
-	   --------------------------------------------------------------------- */
 	function startArrival() {
-		if (arrivalStarted) {
-			y67Log("startArrival ignored: already started");
-			return;
-		}
+		if (arrivalStarted) return;
 		if (!isArrivalEligible()) {
-			y67Log(
-				"startArrival skipped: not eligible, falling back to walking"
-			);
 			ensureCharVisible();
 			scheduleTimer(nextLeg, 1600);
 			return;
 		}
 		arrivalStarted = true;
 		markArrived();
-		y67Log("arrival started");
 
 		specialState = "arrival";
 		clearScheduledTimer();
@@ -1257,7 +1144,6 @@
 		ensureCharVisible();
 		applyCinematicStart();
 		bodyEl.classList.add("y67-anim-arrival-airborne");
-		/* ★ STEP 6.0 — subtle free-fall body animation selama lock phase */
 		bodyEl.classList.add("y67-anim-freefall");
 		armCinematicWatchdog();
 
@@ -1266,73 +1152,53 @@
 		scheduleHeadline(function () {
 			if (!cinematicRunning) return;
 			if (s1SkyHeadline) s1SkyHeadline.classList.add("is-visible");
-			y67Log("headline appeared");
 		}, CINEMATIC_HEADLINE_APPEAR_MS);
-
 		scheduleCredits(function () {
 			if (!cinematicRunning) return;
 			if (s1SkyCredits) s1SkyCredits.classList.add("is-visible");
-			y67Log("credits appeared");
 		}, CINEMATIC_CREDITS_APPEAR_MS);
-
 		scheduleExit(function () {
 			if (!cinematicRunning) return;
 			if (s1SkyCredits) s1SkyCredits.classList.add("is-exiting");
-			y67Log("credits exiting");
 		}, CINEMATIC_CREDITS_EXIT_MS);
-
 		scheduleExit(function () {
 			if (!cinematicRunning) return;
 			if (s1SkyHeadline) s1SkyHeadline.classList.add("is-exiting");
-			y67Log("headline exiting");
 		}, CINEMATIC_HEADLINE_EXIT_MS);
-
 		scheduleExit(function () {
 			if (!cinematicRunning) return;
 			cleanupSkyCredits();
-			y67Log("sky credits cleanup");
 		}, CINEMATIC_CLEANUP_MS);
 
 		scheduleCinematic(function () {
 			if (!cinematicRunning) return;
 			startCinematicSettle();
-
 			scheduleCinematic(function () {
 				if (!cinematicRunning) return;
 				currentLiftY = 0;
 				bodyEl.classList.remove("y67-anim-arrival-airborne");
 				triggerDustBurst();
 				bodyEl.classList.add("y67-anim-arrival-lying");
-				y67Log("lying");
-
 				scheduleCinematic(function () {
 					if (!cinematicRunning) return;
 					bodyEl.classList.remove("y67-anim-arrival-lying");
 					bodyEl.classList.add("y67-anim-arrival-headlift");
-					y67Log("headlift");
-
 					scheduleCinematic(function () {
 						if (!cinematicRunning) return;
 						bodyEl.classList.remove("y67-anim-arrival-headlift");
 						bodyEl.classList.add("y67-anim-arrival-bodilift");
-						y67Log("bodilift");
-
 						scheduleCinematic(function () {
 							if (!cinematicRunning) return;
 							bodyEl.classList.remove(
 								"y67-anim-arrival-bodilift"
 							);
 							bodyEl.classList.add("y67-anim-arrival-stand");
-							y67Log("stand");
-
 							scheduleCinematic(function () {
 								if (!cinematicRunning) return;
 								bodyEl.classList.remove(
 									"y67-anim-arrival-stand"
 								);
 								bodyEl.classList.add("y67-anim-glasses");
-								y67Log("glasses");
-
 								scheduleCinematic(function () {
 									if (!cinematicRunning) return;
 									bodyEl.classList.remove("y67-anim-glasses");
@@ -1340,7 +1206,6 @@
 									bodyEl.classList.add(
 										"y67-anim-arrival-dust"
 									);
-
 									scheduleCinematic(function () {
 										bodyEl.classList.remove(
 											"y67-anim-arrival-dust"
@@ -1350,9 +1215,6 @@
 										specialCooldownUntil =
 											Date.now() + SPECIAL_COOLDOWN_MS;
 										scheduleTimer(nextLeg, 400);
-										y67Log(
-											"arrival complete, walking resumed"
-										);
 									}, CINEMATIC_PULLBACK_MS + 100);
 								}, 550);
 							}, 900);
@@ -1370,16 +1232,13 @@
 		bodyEl.classList.remove("is-walking");
 		bodyEl.classList.remove.apply(bodyEl.classList, ALL_ANIM_CLASSES);
 		bodyEl.classList.add("y67-anim-sleepy");
-
 		scheduleTimer(function () {
 			bodyEl.classList.remove("y67-anim-sleepy");
 			bodyEl.classList.add("y67-anim-sleep-deep");
 			showBubble("Zzz...", null, SLEEP_DURATION_MS - 1200);
-
 			scheduleTimer(function () {
 				bodyEl.classList.remove("y67-anim-sleep-deep");
 				bodyEl.classList.add("y67-anim-wake");
-
 				scheduleTimer(function () {
 					bodyEl.classList.remove("y67-anim-wake");
 					specialState = null;
@@ -1397,7 +1256,6 @@
 		bodyEl.classList.remove("is-walking");
 		bodyEl.classList.remove.apply(bodyEl.classList, ALL_ANIM_CLASSES);
 		bodyEl.classList.add("y67-anim-clean-glasses");
-
 		scheduleTimer(function () {
 			bodyEl.classList.remove("y67-anim-clean-glasses");
 			specialState = null;
@@ -1406,9 +1264,7 @@
 		}, 2100);
 	}
 
-	/* ---------------------------------------------------------------------
-	   8. PANEL "Hmm?"
-	   --------------------------------------------------------------------- */
+	/* Legacy Hmm? — dormant. Tetap ada agar tidak break referensi lama. */
 	function renderQuestionList(slideNum) {
 		var items = QA[slideNum] || QA[1];
 		panelTitleEl.textContent = "Hmm?";
@@ -1420,14 +1276,12 @@
 			var btn = document.createElement("button");
 			btn.type = "button";
 			btn.className = "yusmentoro67-qitem";
-
 			var label = document.createElement("span");
 			label.textContent = item.q;
 			var arrow = document.createElement("span");
 			arrow.className = "yusmentoro67-qitem__arrow";
 			arrow.setAttribute("aria-hidden", "true");
 			arrow.textContent = "→";
-
 			btn.appendChild(label);
 			btn.appendChild(arrow);
 			btn.addEventListener("click", function () {
@@ -1444,7 +1298,6 @@
 		var item = items[idx];
 		if (!item) return;
 		panelBodyEl.innerHTML = "";
-
 		var back = document.createElement("button");
 		back.type = "button";
 		back.className = "yusmentoro67-answer__back";
@@ -1452,14 +1305,11 @@
 		back.addEventListener("click", function () {
 			renderQuestionList(slideNum);
 		});
-
 		var title = document.createElement("h3");
 		title.className = "yusmentoro67-answer__title";
 		title.textContent = item.q;
-
 		panelBodyEl.appendChild(back);
 		panelBodyEl.appendChild(title);
-
 		item.a.forEach(function (para) {
 			var p = document.createElement("p");
 			p.className = "yusmentoro67-answer__text";
@@ -1467,18 +1317,37 @@
 			panelBodyEl.appendChild(p);
 		});
 	}
-
 	function openPanelUI() {
 		overlayEl.classList.add("is-open");
 		overlayEl.setAttribute("aria-hidden", "false");
-		closeBtn.focus();
 	}
 	function closePanelUI() {
 		overlayEl.classList.remove("is-open");
 		overlayEl.setAttribute("aria-hidden", "true");
 	}
+	function closePanel() {
+		if (!panelOpen) return;
+		panelOpen = false;
+		closePanelUI();
+		scheduleTimer(nextLeg, 400);
+	}
 
+	/* ★ STEP 7 — openSequence delegasi ke LynuxsFeatures */
 	function openSequence() {
+		if (
+			!window.LynuxsFeatures ||
+			typeof window.LynuxsFeatures.openMenu !== "function"
+		) {
+			y67Log("LynuxsFeatures not ready, openSequence aborted");
+			return;
+		}
+		if (
+			window.LynuxsFeatures.isAnyOpen &&
+			window.LynuxsFeatures.isAnyOpen()
+		) {
+			window.LynuxsFeatures.closeAll();
+			return;
+		}
 		if (panelOpen) return;
 		panelOpen = true;
 		clearScheduledTimer();
@@ -1486,33 +1355,23 @@
 		bodyEl.classList.remove("is-walking");
 
 		if (prefersReducedMotion) {
-			renderQuestionList(currentSlide);
-			openPanelUI();
+			window.LynuxsFeatures.openMenu();
 			return;
 		}
 
 		var CLICK_LOOK_MS = 480;
-		var CLICK_BUBBLE_MS = 750;
 		bodyEl.classList.add("y67-anim-click-look");
 		setTimeout(function () {
 			bodyEl.classList.remove("y67-anim-click-look");
-			showBubble(
-				"Hmm?",
-				function () {
-					renderQuestionList(currentSlide);
-					openPanelUI();
-				},
-				CLICK_BUBBLE_MS
-			);
+			window.LynuxsFeatures.openMenu();
 		}, CLICK_LOOK_MS);
 	}
 
-	function closePanel() {
+	window.addEventListener("lynuxs:menu-closed", function () {
 		if (!panelOpen) return;
 		panelOpen = false;
-		closePanelUI();
 		scheduleTimer(nextLeg, 400);
-	}
+	});
 
 	closeBtn.addEventListener("click", function (e) {
 		e.preventDefault();
@@ -1525,9 +1384,6 @@
 		if (e.key === "Escape" && panelOpen) closePanel();
 	});
 
-	/* ---------------------------------------------------------------------
-	   8b. POINTER SYSTEM
-	   --------------------------------------------------------------------- */
 	function stopAllBehaviors() {
 		clearScheduledTimer();
 		if (behaviorTimer) {
@@ -1545,8 +1401,8 @@
 	function viewportClampX(x) {
 		var vw = window.innerWidth || document.documentElement.clientWidth;
 		var cw = charEl.offsetWidth || 50;
-		var min = 0;
-		var max = vw - cw;
+		var min = 0,
+			max = vw - cw;
 		if (max < min) max = min;
 		if (x < min) x = min;
 		if (x > max) x = max;
@@ -1574,7 +1430,6 @@
 
 		pointerId = e.pointerId;
 		pointerMode = "pending";
-
 		pStartClientX = e.clientX;
 		pStartClientY = e.clientY;
 		pCharStartX = posPx;
@@ -1584,7 +1439,6 @@
 		pLastMoveTime = performance.now();
 		pVelX = 0;
 		pVelY = 0;
-
 		stopAllBehaviors();
 		try {
 			charEl.setPointerCapture(e.pointerId);
@@ -1594,11 +1448,9 @@
 	function onPointerMove(e) {
 		if (pointerId === null || e.pointerId !== pointerId) return;
 		if (pointerMode === "idle" || pointerMode === "throw") return;
-
 		var dx = e.clientX - pStartClientX;
 		var dy = e.clientY - pStartClientY;
 		var distSq = dx * dx + dy * dy;
-
 		if (pointerMode === "pending") {
 			if (distSq < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return;
 			pointerMode = "drag";
@@ -1609,13 +1461,11 @@
 			bodyEl.classList.add("is-held");
 			charEl.classList.add("is-grabbing");
 		}
-
 		var newX = viewportClampX(pCharStartX + dx);
 		var newY = pCharStartY + dy;
 		var maxLift = viewportMaxLift();
 		if (newY > 0) newY = 0;
 		if (newY < -maxLift) newY = -maxLift;
-
 		posPx = newX;
 		currentLiftY = newY;
 		setCharImmediate(posPx, currentLiftY);
@@ -1630,7 +1480,6 @@
 			pLastClientX = e.clientX;
 			pLastClientY = e.clientY;
 			pLastMoveTime = now;
-
 			if (Math.abs(pVelX) > 120) {
 				var nd = pVelX > 0 ? 1 : -1;
 				if (nd !== dir) {
@@ -1652,9 +1501,19 @@
 		try {
 			charEl.releasePointerCapture(e.pointerId);
 		} catch (err) {}
-
 		if (wasMode === "pending") {
 			pointerMode = "idle";
+			/* ★ STEP 7.1 — single tap Lynuxs saat panel fitur terbuka →
+			   tutup panel, jangan rekam untuk double-tap. */
+			if (
+				window.LynuxsFeatures &&
+				typeof window.LynuxsFeatures.isAnyOpen === "function" &&
+				window.LynuxsFeatures.isAnyOpen()
+			) {
+				window.LynuxsFeatures.closeAll();
+				lastTapUpTime = 0;
+				return;
+			}
 			var now = performance.now();
 			if (now - lastTapUpTime < DOUBLE_TAP_MS) {
 				lastTapUpTime = 0;
@@ -1665,7 +1524,6 @@
 			}
 			return;
 		}
-
 		if (wasMode === "drag") {
 			charEl.classList.remove("is-grabbing");
 			bodyEl.classList.remove("is-held");
@@ -1702,7 +1560,6 @@
 		pointerMode = "throw";
 		bodyEl.classList.remove.apply(bodyEl.classList, ALL_ANIM_CLASSES);
 		bodyEl.classList.remove("is-walking");
-
 		throwState = {
 			x: posPx,
 			y: currentLiftY,
@@ -1722,7 +1579,6 @@
 		throwState.lastTime = now;
 		if (dt > 0.05) dt = 0.05;
 		if (dt < 0) dt = 0;
-
 		throwState.vy += THROW_GRAVITY * dt;
 		throwState.vx *= Math.pow(THROW_AIR_DAMPING, dt);
 		throwState.x += throwState.vx * dt;
@@ -1766,7 +1622,6 @@
 				bodyEl.classList.remove("y67-anim-land");
 			}, 520);
 		}
-
 		var speedSq =
 			throwState.vx * throwState.vx + throwState.vy * throwState.vy;
 		var yStable = Math.abs(throwState.y) < 0.5;
@@ -1808,6 +1663,19 @@
 	});
 
 	charEl.addEventListener("click", function (e) {
+		/* ★ STEP 7.2 — satu-satunya cara menutup panel fitur (Calculator/
+		   AI/FAQ/menu): klik Lynuxs. Cek ini paling pertama, sebelum guard
+		   panelOpen di bawah (guard itu untuk panel "Hmm?" lama). */
+		if (
+			window.LynuxsFeatures &&
+			typeof window.LynuxsFeatures.isAnyOpen === "function" &&
+			window.LynuxsFeatures.isAnyOpen()
+		) {
+			e.preventDefault();
+			e.stopPropagation();
+			window.LynuxsFeatures.closeAll();
+			return;
+		}
 		if (panelOpen) return;
 		if (e.detail === 0) {
 			e.preventDefault();
@@ -1815,9 +1683,6 @@
 		}
 	});
 
-	/* ---------------------------------------------------------------------
-	   9. SINKRON SLIDE
-	   --------------------------------------------------------------------- */
 	var ALL_ANIM_CLASSES = [
 		"y67-anim-look",
 		"y67-anim-click-look",
@@ -1851,23 +1716,19 @@
 	function resyncForSlideChange() {
 		if (pointerMode !== "idle") return;
 		if (specialState) return;
-
 		var oldPos = posPx;
 		recomputeBounds();
 		var neededClamp = Math.abs(posPx - oldPos) > 0.5;
 		if (!neededClamp) return;
-
 		clearScheduledTimer();
 		if (behaviorTimer) {
 			clearTimeout(behaviorTimer);
 			behaviorTimer = null;
 		}
 		bodyEl.classList.remove.apply(bodyEl.classList, ALL_ANIM_CLASSES);
-
 		if (posPx <= boundsMinPx + 0.5) dir = 1;
 		if (posPx >= boundsMaxPx - 0.5) dir = -1;
 		applyFacing(dir, 0.3);
-
 		bodyEl.classList.add("is-walking");
 		applyPosition(posPx, 0.6);
 		scheduleTimer(function () {
@@ -1880,26 +1741,26 @@
 		var target = e && e.detail ? e.detail.slide : null;
 		if (typeof target !== "number" || target < 1 || target > TOTAL_SLIDES)
 			return;
-		y67Log("slide-changed:", target);
 		currentSlide = target;
 		applySizeForSlide(target);
-		if (panelOpen) {
-			closePanel();
-		} else if (!prefersReducedMotion) {
-			resyncForSlideChange();
+		if (
+			window.LynuxsFeatures &&
+			window.LynuxsFeatures.isAnyOpen &&
+			window.LynuxsFeatures.isAnyOpen()
+		) {
+			window.LynuxsFeatures.closeAll();
 		}
+		if (panelOpen) closePanel();
+		else if (!prefersReducedMotion) resyncForSlideChange();
 	});
 
 	window.addEventListener("resize", function () {
 		recomputeBounds();
 	});
 
-	/* ---------------------------------------------------------------------
-	   9b. LOOK AT CURSOR
-	   --------------------------------------------------------------------- */
 	if (!prefersReducedMotion) {
-		var lastCursorCheckAt = 0;
-		var lastCursorTriggerAt = 0;
+		var lastCursorCheckAt = 0,
+			lastCursorTriggerAt = 0;
 		var cursorLookBusy = false;
 		var CURSOR_CHECK_INTERVAL_MS = 400;
 		var CURSOR_COOLDOWN_MS = 9000;
@@ -1909,24 +1770,20 @@
 			if (cursorLookBusy) return;
 			if (isBusy()) return;
 			if (bodyEl.className.indexOf("y67-anim-") !== -1) return;
-
 			var now = Date.now();
 			if (now - lastCursorCheckAt < CURSOR_CHECK_INTERVAL_MS) return;
 			lastCursorCheckAt = now;
 			if (now - lastCursorTriggerAt < CURSOR_COOLDOWN_MS) return;
-
 			var rect = charEl.getBoundingClientRect();
 			var cx = rect.left + rect.width / 2;
 			var cy = rect.top + rect.height / 2;
 			var dx = clientX - cx;
 			var dy = clientY - cy;
 			if (Math.sqrt(dx * dx + dy * dy) > CURSOR_PROXIMITY_PX) return;
-
 			lastCursorTriggerAt = now;
 			cursorLookBusy = true;
 			clearScheduledTimer();
 			if (behaviorTimer) clearTimeout(behaviorTimer);
-
 			var faceTowards = dx < 0 ? -1 : 1;
 			var wasWalking = bodyEl.classList.contains("is-walking");
 			bodyEl.classList.remove("is-walking");
@@ -1957,18 +1814,11 @@
 		);
 	}
 
-	/* ---------------------------------------------------------------------
-	   ★ STEP 5.9 — BOOTSTRAP
-	   --------------------------------------------------------------------- */
 	function bootstrapCinematic() {
 		if (bootstrapDone) return;
 		bootstrapDone = true;
-
-		y67Log("init, readyState =", document.readyState);
-
 		currentSlide = detectCurrentSlide();
 		applySizeForSlide(currentSlide);
-		y67Log("current slide =", currentSlide);
 
 		recomputeBounds();
 		posPx = boundsMinPx + (boundsMaxPx - boundsMinPx) * 0.15;
@@ -1978,26 +1828,21 @@
 		applyFacing(dir, 0);
 
 		if (prefersReducedMotion) {
-			y67Log("reduced-motion, cinematic skipped");
 			ensureCharVisible();
 			return;
 		}
-
 		if (!isArrivalEligible()) {
-			y67Log("arrival not eligible at bootstrap, walking fallback");
 			ensureCharVisible();
 			scheduleTimer(nextLeg, 1600);
 			return;
 		}
 
-		y67Log("arrival eligible, scheduling start");
 		ensureCharVisible();
 		charEl.style.visibility = "hidden";
 		charEl.style.opacity = "0";
 
 		scheduleTimer(function () {
 			if (!isArrivalEligible()) {
-				y67Log("arrival not eligible at fire-time, walking fallback");
 				ensureCharVisible();
 				scheduleTimer(nextLeg, 1600);
 				return;

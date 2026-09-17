@@ -1042,3 +1042,56 @@ body.perf-test .s3-decor--pencil {
 body.perf-test .s3-illust {
 	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset !important;
 }
+/* ==========================================================================
+   PATCH — VISIBILITAS TOMBOL NEXT (Slide 3)
+   --------------------------------------------------------------------------
+   Base `.generic-slide-next` (css/present.css) hanya teks polos tanpa
+   border/background → di atas meja Slide 3 yang cream + penuh dekorasi
+   kertas, tombol jadi blend/hilang. Patch ini menambahkan:
+     - background cream semi-transparan (alpha 0.5) sebagai panel tipis
+     - border tipis kecoklatan sebagai visual separation
+     - soft shadow sangat halus
+   Disabled opacity dinaikkan 0.35 → 0.55 dengan border tetap tipis.
+   Tidak solid, tidak neon, tetap editorial. Hanya tampilan; fungsi
+   (data-goto="4") TIDAK diubah.
+   ========================================================================== */
+
+.s3-next-slide {
+	background: rgba(244, 238, 224, 0.5);
+	border: 1px solid rgba(60, 44, 26, 0.38);
+	border-radius: 2px;
+	padding: 10px 22px;
+	color: #241a11;
+	font-weight: 500;
+	box-shadow: 0 2px 6px rgba(25, 18, 10, 0.14);
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease,
+		transform 0.2s ease,
+		box-shadow 0.2s ease,
+		opacity 0.2s ease;
+}
+
+.s3-next-slide:hover:not(:disabled) {
+	background: rgba(244, 238, 224, 0.78);
+	border-color: rgba(60, 44, 26, 0.6);
+	box-shadow: 0 3px 10px rgba(25, 18, 10, 0.22);
+	color: #140d06;
+	transform: translateX(4px);
+}
+
+.s3-next-slide:active:not(:disabled) {
+	transform: scale(0.97);
+	background: rgba(244, 238, 224, 0.9);
+}
+
+/* Disabled: masih jelas "non-aktif" tapi tidak menghilang dari pandangan. */
+.s3-next-slide:disabled {
+	opacity: 0.55;
+	background: rgba(244, 238, 224, 0.3);
+	border-color: rgba(60, 44, 26, 0.22);
+	box-shadow: none;
+	cursor: not-allowed;
+	pointer-events: none;
+}

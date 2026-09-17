@@ -1,28 +1,19 @@
 /* ==========================================================================
    YUSMENTORO67 / LYNUXS — maskot global persistent.
 
-   Semua selector pakai namespace ".yusmentoro67-*" / ".y67-*".
-   Tidak menyentuh/bentrok dengan CSS slide mana pun.
-
-   ARSITEKTUR:
-   - SATU instance global (sibling semua slide).
-   - Walking/behavior/drag/throw dikelola js/yusmentoro67.js.
-   - Pose toggle (front/side/facedown) murni CSS via kelas di bodyEl.
-   - Skin toggle murni CSS via [data-skin].
-   - Special animation (Arrival/Sleep/Clean Glasses) juga murni CSS —
-     JS hanya menambah/menghapus class .y67-anim-*.
-   - Dust burst pakai 6 elemen .y67-dust__p + 1 keyframe.
-
    ★ STEP 4.3 — Cinematic framing anchors (--y67-cinematic-x/y).
    ★ STEP 5.x — Arrival cinematic + clouds + headline + credits + reliability.
-   ★ STEP 6.1 — LYNUXS DYNAMIC FREE-FALL CHOREOGRAPHY:
-     Satu continuous animation 8000ms, 8 phase + 5 layered sub-animations
-     (body, leg-back, leg-front, ears, head, vest).
-     Semua transform lokal pada SVG sub-elements. charEl dan camera-follow
-     TIDAK DISENTUH.
-
-   PERFORMANCE: hanya transform + opacity + filter drop-shadow.
-   Zero RAF untuk walking/behavior. Satu RAF hanya saat throw.
+   ★ STEP 6.1 — Lynuxs dynamic free-fall choreography (8 phase, 6 layer).
+   ★ STEP 7 / 7.1 — Feature menu + 3 panel (Calculator / AI / FAQ).
+   ★ STEP 7.2 — Lynuxs docked di atas panel + AI panel redesign.
+   ★ STEP 7.3 — Tombol close (X) reusable di tengah-bawah panel aktif.
+   ★ STEP 7.4 — Polishing: AI panel monochrome, Lynuxs panel-idle,
+                 thought bubble.
+   ★ STEP 7.4d — AI panel monochrome editorial background:
+                  - base radial-gradient grayscale multi-stop
+                  - pseudo ::before (grain + editorial grid + diagonal)
+                  - pseudo ::after (vignette lembut)
+                  Semua dekorasi pointer-events: none, z-index: -1.
    ========================================================================== */
 
 /* ---------------------------------------------------------------------
@@ -31,9 +22,6 @@
 .yusmentoro67-char {
 	--y67-size: clamp(40px, 3.6vw, 58px);
 	--y67-bottom: clamp(4px, 0.8vh, 10px);
-
-	/* Cinematic framing anchors (STEP 4.3). X di 35% vw supaya komposisi
-	   close-up tidak kaku dan drift horizontal saat pull-back lebih kecil. */
 	--y67-cinematic-x: 35;
 	--y67-cinematic-y: 40;
 
@@ -69,13 +57,11 @@
 
 	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
-
 .yusmentoro67-char:focus-visible {
 	outline: 2px solid #8b3a3a;
 	outline-offset: 5px;
 	border-radius: 10px;
 }
-
 .yusmentoro67-char.is-grabbing {
 	cursor: grabbing;
 }
@@ -89,14 +75,12 @@
 	transform-origin: 50% 50%;
 	transition: transform 260ms ease;
 }
-
 .yusmentoro67-body {
 	display: block;
 	width: 100%;
 	height: 100%;
 	transform-origin: 50% 88%;
 }
-
 .yusmentoro67-svg {
 	display: block;
 	width: 100%;
@@ -141,32 +125,26 @@
 	bottom: 100%;
 	transform: translate(-50%, 8px) scale(0.85);
 	margin-bottom: 8px;
-
 	max-width: min(46vw, 190px);
 	width: max-content;
 	padding: 6px 11px;
-
 	background: #f4ecd8;
 	color: #1c1611;
 	border: 1.5px solid rgba(20, 16, 10, 0.78);
 	border-radius: 10px;
-
 	font-family: var(--font-label, "Jost", sans-serif);
 	font-size: clamp(11px, 1vw, 13.5px);
 	line-height: 1.3;
 	text-align: center;
 	white-space: normal;
-
 	opacity: 0;
 	visibility: hidden;
 	pointer-events: none;
-
 	transition:
 		opacity 220ms ease,
 		transform 220ms ease,
 		visibility 0s linear 220ms;
 }
-
 .yusmentoro67-bubble::after {
 	content: "";
 	position: absolute;
@@ -178,7 +156,6 @@
 	border: 6px solid transparent;
 	border-top-color: #f4ecd8;
 }
-
 .yusmentoro67-bubble.is-visible {
 	opacity: 1;
 	visibility: visible;
@@ -195,7 +172,6 @@
 .yusmentoro67-body.is-walking {
 	animation: y67-bob 900ms ease-in-out infinite;
 }
-
 @keyframes y67-bob {
 	0%,
 	100% {
@@ -205,7 +181,6 @@
 		transform: translateY(-2.5px) rotate(-2deg);
 	}
 }
-
 .y67-anim-look {
 	animation: y67-look 900ms ease-in-out;
 }
@@ -223,7 +198,6 @@
 		transform: rotate(0deg);
 	}
 }
-
 .y67-anim-lookup {
 	animation: y67-lookup 1000ms ease-in-out;
 }
@@ -238,7 +212,6 @@
 		transform: rotate(0deg) translateY(0);
 	}
 }
-
 .y67-anim-hop {
 	animation: y67-hop 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -256,7 +229,6 @@
 		transform: translateY(0) scale(1, 1);
 	}
 }
-
 .y67-anim-confused {
 	animation: y67-confused 1100ms ease-in-out;
 }
@@ -277,7 +249,6 @@
 		transform: rotate(0deg);
 	}
 }
-
 .y67-anim-stumble {
 	animation: y67-stumble 620ms ease-in-out;
 }
@@ -298,7 +269,6 @@
 		transform: rotate(0deg) translateX(0);
 	}
 }
-
 .y67-anim-sleep {
 	animation: y67-sleep 1900ms ease-in-out;
 }
@@ -316,7 +286,6 @@
 		transform: rotate(0deg) translateY(0) scale(1, 1);
 	}
 }
-
 .y67-anim-lookback {
 	animation: y67-lookback 950ms ease-in-out;
 }
@@ -334,7 +303,6 @@
 		transform: rotate(0deg);
 	}
 }
-
 .y67-anim-lookdown {
 	animation: y67-lookdown 850ms ease-in-out;
 }
@@ -349,7 +317,6 @@
 		transform: rotate(0deg) translateY(0);
 	}
 }
-
 .y67-anim-bounce {
 	animation: y67-bounce 600ms ease-in-out;
 }
@@ -368,7 +335,6 @@
 		transform: translateY(-1.5px);
 	}
 }
-
 .y67-anim-glance {
 	animation: y67-glance 700ms ease-in-out;
 }
@@ -383,7 +349,6 @@
 		transform: rotate(0deg);
 	}
 }
-
 .y67-anim-quickturn {
 	animation: y67-quickturn 380ms ease-in-out;
 }
@@ -398,7 +363,6 @@
 		transform: rotate(0deg) scale(1, 1);
 	}
 }
-
 .y67-anim-brake {
 	animation: y67-brake 220ms ease-out;
 }
@@ -413,7 +377,6 @@
 		transform: rotate(0deg) translateX(0);
 	}
 }
-
 .y67-anim-click-look {
 	animation: y67-click-look 480ms ease-in-out;
 }
@@ -428,7 +391,6 @@
 		transform: rotate(0deg) scale(1, 1);
 	}
 }
-
 .y67-anim-glasses .y67-glasses {
 	animation: y67-glasses-move 480ms ease-in-out;
 	transform-origin: 50px 51px;
@@ -445,9 +407,9 @@
 	}
 }
 
-/* =====================================================================
-   3b. STATE INTERAKSI (held / drag / throw / land)
-   ===================================================================== */
+/* ---------------------------------------------------------------------
+   3b. STATE INTERAKSI
+   --------------------------------------------------------------------- */
 .yusmentoro67-body.is-held {
 	animation: y67-held-sway 1600ms ease-in-out infinite;
 }
@@ -458,7 +420,6 @@
 	animation: y67-leg-dangle 1400ms ease-in-out infinite;
 	animation-delay: -700ms;
 }
-
 @keyframes y67-held-sway {
 	0%,
 	100% {
@@ -468,7 +429,6 @@
 		transform: rotate(2.5deg) translateY(0.5px);
 	}
 }
-
 @keyframes y67-leg-dangle {
 	0%,
 	100% {
@@ -478,7 +438,6 @@
 		transform: rotate(4deg) translateX(0.5px);
 	}
 }
-
 .y67-anim-land {
 	animation: y67-land 520ms cubic-bezier(0.3, 1.5, 0.5, 1);
 }
@@ -500,13 +459,12 @@
 	}
 }
 
-/* =====================================================================
-   3c. ★ ARRIVAL — POSE FACE-DOWN
-   ===================================================================== */
+/* ---------------------------------------------------------------------
+   3c. ARRIVAL — POSE FACE-DOWN
+   --------------------------------------------------------------------- */
 .y67-pose--facedown {
 	opacity: 0;
 }
-
 .yusmentoro67-body.y67-anim-arrival-fall .y67-pose {
 	transition: none;
 }
@@ -529,7 +487,6 @@
 .yusmentoro67-body.y67-anim-arrival-bodilift .y67-pose--facedown {
 	opacity: 1;
 }
-
 .yusmentoro67-body.y67-anim-arrival-stand .y67-pose {
 	transition: opacity 500ms ease;
 }
@@ -539,8 +496,6 @@
 .yusmentoro67-body.y67-anim-arrival-stand .y67-pose--facedown {
 	opacity: 0;
 }
-
-/* Keyframe legacy y67-arrival-fall (tidak dipakai STEP 5+). */
 .y67-anim-arrival-fall {
 	transform-origin: 50% 88%;
 	animation: y67-arrival-fall 1500ms ease-in forwards;
@@ -569,7 +524,6 @@
 		transform: translateY(4px) rotate(0deg) scale(1.08, 0.9);
 	}
 }
-
 .y67-anim-arrival-lying {
 	transform-origin: 50% 88%;
 	animation: y67-arrival-lying 900ms ease-in-out forwards;
@@ -585,7 +539,6 @@
 		transform: translateY(4px) rotate(0deg) scale(1.06, 0.92);
 	}
 }
-
 .y67-anim-arrival-headlift {
 	transform-origin: 50% 88%;
 	animation: y67-arrival-headlift 700ms ease-out forwards;
@@ -598,7 +551,6 @@
 		transform: translateY(0) rotate(-4deg) scale(1.02, 0.95);
 	}
 }
-
 .y67-anim-arrival-bodilift {
 	transform-origin: 50% 88%;
 	animation: y67-arrival-bodilift 800ms ease-out forwards;
@@ -614,7 +566,6 @@
 		transform: translateY(-10px) rotate(-3deg) scale(0.98, 1.02);
 	}
 }
-
 .y67-anim-arrival-stand {
 	transform-origin: 50% 88%;
 	animation: y67-arrival-stand 900ms cubic-bezier(0.34, 1.3, 0.5, 1) forwards;
@@ -633,7 +584,6 @@
 		transform: translateY(0) rotate(0deg) scale(1, 1);
 	}
 }
-
 .y67-anim-arrival-dust {
 	animation: y67-arrival-dust 1100ms ease-in-out;
 }
@@ -666,71 +616,37 @@
 
 /* =====================================================================
    ★ STEP 6.1 — LYNUXS DYNAMIC FREE-FALL CHOREOGRAPHY
-   ---------------------------------------------------------------------
-   Satu continuous animation 8000ms (sync dengan CINEMATIC_LOCK_PHASE_MS).
-   Choreography (8 phase, % dari 8000ms):
-
-     0%      0.0s    neutral (mulai)
-     12%     1.0s    LOSS OF BALANCE — tilt kecil, imbalance
-     25%     2.0s    AIR RESISTANCE — body mekar, kaki terbuka
-     38%     3.0s    WIND PUSH LEFT  peak — body roll kanan (+9°)
-     52%     4.2s    WIND PUSH RIGHT peak — body roll kiri (-9°)
-     66%     5.3s    STABILIZE — kembali ke center
-     78%     6.2s    CLOUD PASSING — micro tilt
-     90%     7.2s    PREPARE LANDING — forward dip, kaki menutup
-     100%    8.0s    identity (siap untuk settle)
-
-   6 layer animasi paralel (timing berbeda, semua transform lokal):
-     - bodyEl       : roll + translate (whole-body choreography)
-     - leg--back    : swing (hip pivot)
-     - leg--front   : swing (hip pivot, fase berlawanan)
-     - ears         : flutter (efek angin)
-     - head         : counter-tilt halus
-     - vest         : jiggle (baca sebagai torso)
-
-   Semua transform lokal. charEl & camera-follow TIDAK DISENTUH.
-   Keyframe berakhir identity → siap untuk settle tanpa lompatan.
-
-   Batasan: SVG facedown tidak punya path lengan terpisah. "Arms open"
-   disimulasikan lewat body roll + legs spread + vest jiggle.
+   8000ms continuous animation. 8 phase + 6 layer.
    ===================================================================== */
-
 .y67-anim-freefall {
 	transform-origin: 50% 65%;
 	animation: y67-freefall-body 8000ms cubic-bezier(0.4, 0, 0.6, 1) both;
 }
-
 .y67-anim-freefall .y67-fd-leg--back {
 	transform-box: fill-box;
 	transform-origin: 50% 0%;
 	animation: y67-freefall-leg-back 8000ms ease-in-out both;
 }
-
 .y67-anim-freefall .y67-fd-leg--front {
 	transform-box: fill-box;
 	transform-origin: 50% 0%;
 	animation: y67-freefall-leg-front 8000ms ease-in-out both;
 }
-
 .y67-anim-freefall .y67-fd-ears {
 	transform-box: fill-box;
 	transform-origin: 50% 100%;
 	animation: y67-freefall-ears 8000ms ease-in-out both;
 }
-
 .y67-anim-freefall .y67-fd-head {
 	transform-box: fill-box;
 	transform-origin: 50% 90%;
 	animation: y67-freefall-head 8000ms ease-in-out both;
 }
-
 .y67-anim-freefall .y67-fd-vest {
 	transform-box: fill-box;
 	transform-origin: 50% 100%;
 	animation: y67-freefall-vest 8000ms ease-in-out both;
 }
-
-/* ---- BODY: choreography utama (roll + translate) ---- */
 @keyframes y67-freefall-body {
 	0% {
 		transform: translate3d(0, 0, 0) rotate(0deg);
@@ -760,8 +676,6 @@
 		transform: translate3d(0, 0, 0) rotate(0deg);
 	}
 }
-
-/* ---- LEG BACK: spread + wind push ---- */
 @keyframes y67-freefall-leg-back {
 	0% {
 		transform: rotate(0deg) translateX(0);
@@ -791,8 +705,6 @@
 		transform: rotate(0deg) translateX(0);
 	}
 }
-
-/* ---- LEG FRONT: fase berlawanan (bikin spread feel) ---- */
 @keyframes y67-freefall-leg-front {
 	0% {
 		transform: rotate(0deg) translateX(0);
@@ -822,8 +734,6 @@
 		transform: rotate(0deg) translateX(0);
 	}
 }
-
-/* ---- EARS: flutter angin ---- */
 @keyframes y67-freefall-ears {
 	0% {
 		transform: rotate(0deg);
@@ -847,8 +757,6 @@
 		transform: rotate(0deg);
 	}
 }
-
-/* ---- HEAD: counter-tilt halus (mengikuti ritme roll body) ---- */
 @keyframes y67-freefall-head {
 	0% {
 		transform: rotate(0deg);
@@ -872,8 +780,6 @@
 		transform: rotate(0deg);
 	}
 }
-
-/* ---- VEST: jiggle halus (baca sebagai torso) ---- */
 @keyframes y67-freefall-vest {
 	0% {
 		transform: rotate(0deg) translateY(0);
@@ -902,7 +808,7 @@
 }
 
 /* =====================================================================
-   3d. ★ DUST BURST
+   3d. DUST BURST
    ===================================================================== */
 .y67-dust {
 	position: absolute;
@@ -913,7 +819,6 @@
 	pointer-events: none;
 	z-index: 5;
 }
-
 .y67-dust__p {
 	position: absolute;
 	left: 0;
@@ -932,11 +837,9 @@
 	pointer-events: none;
 	will-change: transform, opacity;
 }
-
 .y67-dust.is-burst .y67-dust__p {
 	animation: y67-dust-puff 800ms ease-out forwards;
 }
-
 .y67-dust__p:nth-child(1) {
 	--dx: -22px;
 	--dy: -8px;
@@ -967,7 +870,6 @@
 	--dy: -7px;
 	animation-delay: 20ms;
 }
-
 @keyframes y67-dust-puff {
 	0% {
 		opacity: 0.85;
@@ -1000,7 +902,6 @@
 		transform: rotate(0deg) translateY(0);
 	}
 }
-
 .y67-anim-sleep-deep {
 	animation: y67-sleep-deep 8000ms ease-in-out;
 }
@@ -1021,7 +922,6 @@
 		transform: rotate(0deg) translateY(0) scale(1, 1);
 	}
 }
-
 .y67-anim-wake {
 	animation: y67-wake 600ms ease-out;
 }
@@ -1044,7 +944,6 @@
 .y67-side-glasses__frame {
 	transform-origin: 50px 51px;
 }
-
 .y67-anim-clean-glasses {
 	animation: y67-clean-glasses-body 2000ms ease-in-out;
 }
@@ -1065,7 +964,6 @@
 		transform: rotate(0deg) translateY(0);
 	}
 }
-
 .y67-anim-clean-glasses .y67-glasses__frame,
 .y67-anim-clean-glasses .y67-side-glasses__frame {
 	animation: y67-clean-glasses-frame 2000ms ease-in-out;
@@ -1100,9 +998,9 @@
 	}
 }
 
-/* ---------------------------------------------------------------------
-   5. PANEL "Hmm?"
-   --------------------------------------------------------------------- */
+/* =====================================================================
+   5. LEGACY PANEL "Hmm?" (dormant)
+   ===================================================================== */
 .yusmentoro67-overlay {
 	position: fixed;
 	inset: 0;
@@ -1112,7 +1010,6 @@
 	justify-content: center;
 	padding: clamp(16px, 4vw, 48px);
 	background: rgba(10, 9, 7, 0.55);
-
 	opacity: 0;
 	visibility: hidden;
 	pointer-events: none;
@@ -1120,7 +1017,6 @@
 		opacity 280ms ease,
 		visibility 0s linear 280ms;
 }
-
 .yusmentoro67-overlay.is-open {
 	opacity: 1;
 	visibility: visible;
@@ -1129,7 +1025,6 @@
 		opacity 280ms ease,
 		visibility 0s linear 0s;
 }
-
 .yusmentoro67-panel {
 	width: min(92vw, 640px);
 	max-height: 78vh;
@@ -1139,19 +1034,16 @@
 	border-radius: 14px;
 	padding: clamp(22px, 3.6vw, 40px);
 	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
-
 	transform: translateY(14px) scale(0.98);
 	opacity: 0;
 	transition:
 		transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
 		opacity 280ms ease;
 }
-
 .yusmentoro67-overlay.is-open .yusmentoro67-panel {
 	transform: translateY(0) scale(1);
 	opacity: 1;
 }
-
 .yusmentoro67-panel__head {
 	display: flex;
 	align-items: center;
@@ -1161,7 +1053,6 @@
 	padding-bottom: 14px;
 	border-bottom: 1px solid rgba(43, 36, 28, 0.2);
 }
-
 .yusmentoro67-panel__title {
 	margin: 0;
 	font-family: var(--font-display, "Cormorant Garamond", serif);
@@ -1169,7 +1060,6 @@
 	font-size: clamp(1.7rem, 3.6vw, 2.4rem);
 	color: #1c1611;
 }
-
 .yusmentoro67-panel__close {
 	appearance: none;
 	-webkit-appearance: none;
@@ -1188,16 +1078,13 @@
 	transition: background 160ms ease;
 	-webkit-tap-highlight-color: transparent;
 }
-
 .yusmentoro67-panel__close:hover {
 	background: rgba(43, 36, 28, 0.08);
 }
-
 .yusmentoro67-panel__close:focus-visible {
 	outline: 2px solid #8b3a3a;
 	outline-offset: 2px;
 }
-
 .yusmentoro67-qlist {
 	list-style: none;
 	margin: 0;
@@ -1206,7 +1093,6 @@
 	flex-direction: column;
 	gap: 4px;
 }
-
 .yusmentoro67-qitem {
 	display: flex;
 	align-items: center;
@@ -1225,18 +1111,15 @@
 	transition: background 160ms ease;
 	-webkit-tap-highlight-color: transparent;
 }
-
 .yusmentoro67-qitem:hover,
 .yusmentoro67-qitem:focus-visible {
 	background: rgba(139, 58, 58, 0.08);
 	outline: none;
 }
-
 .yusmentoro67-qitem__arrow {
 	opacity: 0.45;
 	flex-shrink: 0;
 }
-
 .yusmentoro67-answer__back {
 	appearance: none;
 	-webkit-appearance: none;
@@ -1252,11 +1135,9 @@
 	margin-bottom: 16px;
 	cursor: pointer;
 }
-
 .yusmentoro67-answer__back:hover {
 	text-decoration: underline;
 }
-
 .yusmentoro67-answer__title {
 	font-family: var(--font-display, "Cormorant Garamond", serif);
 	font-weight: 600;
@@ -1264,7 +1145,6 @@
 	margin: 0 0 12px;
 	color: #1c1611;
 }
-
 .yusmentoro67-answer__text {
 	font-family: var(--font-label, "Jost", sans-serif);
 	font-weight: 300;
@@ -1273,25 +1153,23 @@
 	color: #2b241c;
 	margin: 0 0 12px;
 }
-
 .yusmentoro67-answer__text:last-child {
 	margin-bottom: 0;
 }
 
 /* =====================================================================
-   ★ SKIN SYSTEM
+   6. SKIN
    ===================================================================== */
 .yusmentoro67-char[data-skin="skin01"] .y67-skin02-outfit,
 .yusmentoro67-char[data-skin="skin01"] .y67-side-outfit {
 	display: none;
 }
-
 .yusmentoro67-char[data-skin="skin02"] .y67-accessory {
 	display: none;
 }
 
 /* =====================================================================
-   ★ POSE SYSTEM — FRONT / SIDE / FACEDOWN
+   7. POSE SYSTEM
    ===================================================================== */
 .y67-pose {
 	transition: opacity 140ms ease;
@@ -1305,14 +1183,12 @@
 .y67-pose--facedown {
 	opacity: 0;
 }
-
 .yusmentoro67-body.is-walking .y67-pose--front {
 	opacity: 0;
 }
 .yusmentoro67-body.is-walking .y67-pose--side {
 	opacity: 1;
 }
-
 @keyframes y67-side-step-back {
 	0%,
 	100% {
@@ -1339,7 +1215,7 @@
 }
 
 /* =====================================================================
-   6. REDUCED MOTION
+   8. REDUCED MOTION
    ===================================================================== */
 @media (prefers-reduced-motion: reduce) {
 	.yusmentoro67-char,
@@ -1385,7 +1261,6 @@
 	.y67-anim-clean-glasses .y67-glasses__frame,
 	.y67-anim-clean-glasses .y67-side-glasses__frame,
 	.y67-dust__p,
-	/* ★ STEP 6.1 — freefall choreography respect reduced-motion */
 	.y67-anim-freefall,
 	.y67-anim-freefall .y67-fd-leg--back,
 	.y67-anim-freefall .y67-fd-leg--front,
@@ -1394,5 +1269,999 @@
 	.y67-anim-freefall .y67-fd-vest {
 		transition: none !important;
 		animation: none !important;
+	}
+}
+
+/* ==========================================================================
+   ★ STEP 7 / 7.1 / 7.2 / 7.3 / 7.4 / 7.4d — LYNUXS FEATURE MENU + PANELS
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------
+   7.1 MENU — 3 icon
+   --------------------------------------------------------------------- */
+.y67-menu {
+	position: fixed;
+	left: 0;
+	top: 0;
+	z-index: 200;
+	pointer-events: none;
+	transform: translate(-50%, -100%) translateY(-14px);
+	opacity: 0;
+	transition: opacity 240ms ease;
+}
+.y67-menu.is-open {
+	opacity: 1;
+	pointer-events: auto;
+}
+.y67-menu__row {
+	display: flex;
+	align-items: flex-end;
+	gap: clamp(8px, 1.2vw, 16px);
+	padding: 6px 10px;
+	background: #f5efe0;
+	border: 1px solid rgba(42, 40, 35, 0.28);
+	border-radius: 14px;
+	box-shadow:
+		0 10px 26px rgba(20, 16, 10, 0.22),
+		0 2px 6px rgba(20, 16, 10, 0.1);
+}
+.y67-menu__btn {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	width: clamp(58px, 6vw, 78px);
+	height: clamp(58px, 6vw, 78px);
+	padding: 6px;
+	border: 1px solid rgba(42, 40, 35, 0.2);
+	border-radius: 10px;
+	background: #fbf3e4;
+	color: #2a2823;
+	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+	-webkit-tap-highlight-color: transparent;
+	user-select: none;
+	-webkit-user-select: none;
+	transition:
+		background 160ms ease,
+		border-color 160ms ease,
+		transform 160ms ease;
+	transform: translateY(12px) scale(0.6);
+	opacity: 0;
+}
+.y67-menu.is-open .y67-menu__btn {
+	transform: translateY(0) scale(1);
+	opacity: 1;
+	transition:
+		transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1),
+		opacity 220ms ease,
+		background 160ms ease,
+		border-color 160ms ease;
+}
+.y67-menu.is-open .y67-menu__btn:nth-child(1) {
+	transition-delay: 0ms, 0ms, 0ms, 0ms;
+}
+.y67-menu.is-open .y67-menu__btn:nth-child(2) {
+	transition-delay: 60ms, 60ms, 0ms, 0ms;
+}
+.y67-menu.is-open .y67-menu__btn:nth-child(3) {
+	transition-delay: 120ms, 120ms, 0ms, 0ms;
+}
+.y67-menu__btn:hover,
+.y67-menu__btn:focus-visible {
+	background: #f0e5c9;
+	border-color: rgba(42, 40, 35, 0.5);
+	transform: translateY(-2px) scale(1.02);
+	outline: none;
+}
+.y67-menu__btn:active {
+	transform: translateY(0) scale(0.96);
+}
+.y67-menu__icon {
+	width: clamp(20px, 2vw, 26px);
+	height: clamp(20px, 2vw, 26px);
+	display: block;
+	color: #2a2823;
+}
+.y67-menu__label {
+	font-family: "Jost", sans-serif;
+	font-size: clamp(0.6rem, 0.75vw, 0.72rem);
+	letter-spacing: 0.06em;
+	color: #2a2823;
+	line-height: 1;
+}
+
+/* ---------------------------------------------------------------------
+   7.2 PANEL DASAR
+   --------------------------------------------------------------------- */
+.y67-panel {
+	position: fixed;
+	z-index: 300;
+	background: #f5efe0;
+	color: #2a2823;
+	border: 1px solid rgba(42, 40, 35, 0.32);
+	border-radius: 12px;
+	box-shadow:
+		0 22px 54px rgba(15, 12, 8, 0.42),
+		0 4px 12px rgba(15, 12, 8, 0.18);
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	transform: translateY(10px) scale(0.97);
+	transition:
+		opacity 240ms ease,
+		transform 280ms cubic-bezier(0.22, 0.68, 0.16, 1),
+		visibility 0s linear 240ms;
+}
+.y67-panel.is-open {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transform: translateY(0) scale(1);
+	transition:
+		opacity 240ms ease,
+		transform 280ms cubic-bezier(0.22, 0.68, 0.16, 1),
+		visibility 0s linear 0s;
+}
+.y67-panel__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 14px 10px;
+	border-bottom: 1px solid rgba(42, 40, 35, 0.16);
+}
+.y67-panel__title {
+	font-family: "Cormorant Garamond", serif;
+	font-weight: 600;
+	font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+	color: #1c1a16;
+	letter-spacing: 0.01em;
+}
+.y67-panel__hint {
+	font-family: "Jost", sans-serif;
+	font-size: 0.66rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: #8b7d5f;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* ---------------------------------------------------------------------
+   7.3 KALKULATOR (compact)
+   --------------------------------------------------------------------- */
+.y67-panel--calc {
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%) translateY(10px) scale(0.97);
+	width: min(74vw, 244px);
+}
+.y67-panel--calc.is-open {
+	transform: translate(-50%, -50%) translateY(0) scale(1);
+}
+.y67-calc {
+	padding: 8px 8px 10px;
+}
+.y67-calc__display {
+	font-family: "Jost", sans-serif;
+	font-weight: 500;
+	font-size: clamp(1.15rem, 2.4vw, 1.6rem);
+	letter-spacing: 0.02em;
+	text-align: right;
+	padding: 10px 12px;
+	margin-bottom: 8px;
+	color: #1c1a16;
+	background: #efe6d0;
+	border: 1px solid rgba(42, 40, 35, 0.22);
+	border-radius: 8px;
+	min-height: clamp(40px, 4.8vw, 50px);
+	overflow-x: auto;
+	overflow-y: hidden;
+	white-space: nowrap;
+	scrollbar-width: none;
+}
+.y67-calc__display::-webkit-scrollbar {
+	display: none;
+}
+.y67-calc__keys {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: clamp(4px, 0.6vw, 6px);
+}
+.y67-calc__key {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: clamp(32px, 4vw, 40px);
+	font-family: "Jost", sans-serif;
+	font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+	font-weight: 500;
+	color: #2a2823;
+	background: #fbf3e4;
+	border: 1px solid rgba(42, 40, 35, 0.2);
+	border-radius: 8px;
+	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+	-webkit-tap-highlight-color: transparent;
+	user-select: none;
+	-webkit-user-select: none;
+	transition:
+		background 120ms ease,
+		border-color 120ms ease,
+		transform 100ms ease;
+}
+.y67-calc__key svg {
+	width: 16px;
+	height: 16px;
+	display: block;
+}
+.y67-calc__key:hover,
+.y67-calc__key:focus-visible {
+	background: #f0e5c9;
+	border-color: rgba(42, 40, 35, 0.46);
+	outline: none;
+}
+.y67-calc__key:active {
+	transform: scale(0.95);
+}
+.y67-calc__key--fn {
+	color: #6b4a2a;
+	background: #f0e5c9;
+}
+.y67-calc__key--op {
+	color: #8b3a3a;
+	background: #f0dfc9;
+}
+.y67-calc__key--eq {
+	color: #fbf3e4;
+	background: #8b3a3a;
+	border-color: #6e2d2d;
+}
+.y67-calc__key--eq:hover {
+	background: #752f2f;
+}
+
+/* ---------------------------------------------------------------------
+   7.4 / 7.4d — LYNUXS AI (monochrome editorial)
+   --------------------------------------------------------------------- */
+.y67-panel--chat {
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%) translateY(10px) scale(0.97);
+	width: min(92vw, 520px);
+	max-height: min(82vh, 620px);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: radial-gradient(
+		140% 100% at 15% 0%,
+		#26282d 0%,
+		#1a1c1f 45%,
+		#121316 75%,
+		#0d0e11 100%
+	);
+	color: #e8e2d3;
+	border: 1px solid rgba(200, 190, 170, 0.18);
+	box-shadow:
+		0 26px 60px rgba(8, 10, 14, 0.55),
+		0 4px 14px rgba(8, 10, 14, 0.35);
+	/* isolation menjamin stacking context lokal supaya z-index: -1 pada
+	   pseudo-elements tidak keluar dari area panel. */
+	isolation: isolate;
+}
+.y67-panel--chat.is-open {
+	transform: translate(-50%, -50%) translateY(0) scale(1);
+}
+
+/* ★ STEP 7.4d — Lapisan dekoratif 1: grain + editorial grid + aksen
+   diagonal. absolute + z-index: -1 → di belakang semua konten, tidak
+   mengambil ruang flex (karena absolute), tidak menerima pointer. */
+.y67-panel--chat::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background-image:
+		/* grain halus (paper feel) */
+		radial-gradient(
+			circle at 1px 1px,
+			rgba(255, 255, 255, 0.045) 1px,
+			transparent 1.6px
+		),
+		/* editorial grid — garis vertikal tipis */
+		repeating-linear-gradient(
+				90deg,
+				rgba(255, 255, 255, 0.022) 0 1px,
+				transparent 1px 96px
+			),
+		/* editorial grid — garis horizontal tipis */
+		repeating-linear-gradient(
+				0deg,
+				rgba(255, 255, 255, 0.018) 0 1px,
+				transparent 1px 64px
+			),
+		/* aksen diagonal utama */
+		linear-gradient(
+				118deg,
+				transparent 0,
+				transparent 63.5%,
+				rgba(255, 255, 255, 0.035) 63.5%,
+				rgba(255, 255, 255, 0.035) 63.75%,
+				transparent 63.75%,
+				transparent 100%
+			),
+		/* aksen diagonal kedua, lebih samar */
+		linear-gradient(
+				62deg,
+				transparent 0,
+				transparent 22%,
+				rgba(255, 255, 255, 0.025) 22%,
+				rgba(255, 255, 255, 0.025) 22.15%,
+				transparent 22.15%,
+				transparent 100%
+			);
+	background-size:
+		3px 3px,
+		auto,
+		auto,
+		auto,
+		auto;
+	background-position:
+		0 0,
+		0 0,
+		0 0,
+		0 0,
+		0 0;
+	background-repeat: repeat, repeat, repeat, no-repeat, no-repeat;
+}
+
+/* ★ STEP 7.4d — Lapisan dekoratif 2: vignette lembut di tepi.
+   Membuat depth grayscale dari center terang → tepi gelap. */
+.y67-panel--chat::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background: radial-gradient(
+		130% 110% at 50% 45%,
+		transparent 38%,
+		rgba(0, 0, 0, 0.28) 72%,
+		rgba(0, 0, 0, 0.52) 100%
+	);
+}
+
+.y67-chat__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 18px 12px;
+	border-bottom: 1px solid rgba(200, 190, 170, 0.14);
+	flex-shrink: 0;
+}
+.y67-chat__brand {
+	font-family: "Jost", sans-serif;
+	font-weight: 600;
+	font-size: clamp(0.82rem, 1.1vw, 0.95rem);
+	letter-spacing: 0.22em;
+	color: #e8e2d3;
+}
+.y67-chat__status-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #b3874f;
+	box-shadow: 0 0 0 3px rgba(179, 135, 79, 0.18);
+	flex-shrink: 0;
+}
+.y67-chat__body {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 220px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+.y67-chat__feed {
+	position: relative;
+	z-index: 1;
+	flex: 1 1 auto;
+	overflow-y: auto;
+	padding: 16px 18px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(200, 190, 170, 0.28) transparent;
+}
+.y67-chat__feed::-webkit-scrollbar {
+	width: 6px;
+}
+.y67-chat__feed::-webkit-scrollbar-thumb {
+	background: rgba(200, 190, 170, 0.24);
+	border-radius: 3px;
+}
+.y67-chat__feed:empty {
+	align-items: center;
+	justify-content: center;
+}
+.y67-chat__feed:empty::before {
+	content: "// ketik pertanyaan tentang perubahan sosial";
+	font-family: "JetBrains Mono", "Courier New", monospace, "Jost", sans-serif;
+	font-size: 0.72rem;
+	letter-spacing: 0.02em;
+	color: #55595f;
+	text-align: center;
+	padding: 0 24px;
+}
+.y67-chat__msg {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-width: 100%;
+}
+.y67-chat__msg--user {
+	align-items: flex-end;
+}
+.y67-chat__msg--bot {
+	align-items: flex-start;
+}
+.y67-chat__msg--err {
+	align-items: flex-start;
+}
+.y67-chat__label {
+	font-family: "JetBrains Mono", "Courier New", monospace, "Jost", sans-serif;
+	font-size: 0.66rem;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+}
+.y67-chat__msg--user .y67-chat__label {
+	color: #c9a463;
+}
+.y67-chat__msg--bot .y67-chat__label {
+	color: #8b3a3a;
+}
+.y67-chat__msg--err .y67-chat__label {
+	color: #b04a44;
+}
+.y67-chat__text {
+	font-family: "Jost", sans-serif;
+	font-weight: 400;
+	font-size: 0.9rem;
+	line-height: 1.55;
+	word-wrap: break-word;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	padding: 8px 12px;
+	border-radius: 6px;
+	border: 1px solid rgba(200, 190, 170, 0.14);
+	background: rgba(255, 255, 255, 0.02);
+	color: #e8e2d3;
+	max-width: 92%;
+}
+.y67-chat__msg--user .y67-chat__text {
+	background: rgba(201, 164, 99, 0.1);
+	border-color: rgba(201, 164, 99, 0.28);
+	color: #f0e6cf;
+}
+.y67-chat__msg--bot .y67-chat__text {
+	background: rgba(58, 65, 82, 0.35);
+	border-color: rgba(139, 58, 58, 0.22);
+}
+.y67-chat__msg--err .y67-chat__text {
+	background: rgba(139, 58, 58, 0.14);
+	border-color: rgba(176, 74, 68, 0.42);
+	color: #f3d4d1;
+}
+.y67-chat__msg--typing .y67-chat__text {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 10px 14px;
+}
+.y67-chat__dot {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #8b8a82;
+	animation: y67-dot-blink 1200ms infinite ease-in-out;
+}
+.y67-chat__dot:nth-child(2) {
+	animation-delay: 160ms;
+}
+.y67-chat__dot:nth-child(3) {
+	animation-delay: 320ms;
+}
+@keyframes y67-dot-blink {
+	0%,
+	80%,
+	100% {
+		opacity: 0.25;
+		transform: translateY(0);
+	}
+	40% {
+		opacity: 1;
+		transform: translateY(-2px);
+	}
+}
+.y67-chat__form {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 14px;
+	border-top: 1px solid rgba(200, 190, 170, 0.14);
+	background: #161a22;
+}
+.y67-chat__prompt {
+	font-family: "JetBrains Mono", "Courier New", monospace, "Jost", sans-serif;
+	font-size: 0.95rem;
+	color: #c9a463;
+	line-height: 1;
+	flex-shrink: 0;
+	user-select: none;
+}
+.y67-chat__input {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 9px 10px;
+	font-family: "Jost", sans-serif;
+	font-size: 0.9rem;
+	color: #e8e2d3;
+	background: transparent;
+	border: none;
+	border-bottom: 1px solid rgba(200, 190, 170, 0.2);
+	outline: none;
+	transition: border-color 160ms ease;
+}
+.y67-chat__input::placeholder {
+	color: #6b6a63;
+}
+.y67-chat__input:focus {
+	border-bottom-color: #c9a463;
+}
+.y67-chat__input:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.y67-chat__send {
+	flex-shrink: 0;
+	width: 36px;
+	height: 36px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	color: #e8e2d3;
+	border: 1px solid rgba(200, 190, 170, 0.28);
+	border-radius: 8px;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	transition:
+		background 160ms ease,
+		border-color 160ms ease,
+		transform 100ms ease,
+		opacity 160ms ease;
+}
+.y67-chat__send svg {
+	width: 16px;
+	height: 16px;
+	display: block;
+}
+.y67-chat__send:hover:not(:disabled),
+.y67-chat__send:focus-visible:not(:disabled) {
+	background: rgba(139, 58, 58, 0.28);
+	border-color: #8b3a3a;
+	outline: none;
+}
+.y67-chat__send:active:not(:disabled) {
+	transform: scale(0.94);
+}
+.y67-chat__send:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------
+   7.5 FAQ
+   --------------------------------------------------------------------- */
+.y67-panel--faq {
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%) translateY(10px) scale(0.97);
+	width: min(92vw, 520px);
+	max-height: min(80vh, 640px);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+.y67-panel--faq.is-open {
+	transform: translate(-50%, -50%) translateY(0) scale(1);
+}
+.y67-faq__body {
+	overflow-y: auto;
+	padding: 8px 8px 14px;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(42, 40, 35, 0.36) transparent;
+}
+.y67-faq__body::-webkit-scrollbar {
+	width: 6px;
+}
+.y67-faq__body::-webkit-scrollbar-thumb {
+	background: rgba(42, 40, 35, 0.28);
+	border-radius: 3px;
+}
+.y67-faq__item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	text-align: left;
+	padding: 13px 14px;
+	margin: 4px 0;
+	background: #fbf3e4;
+	border: 1px solid rgba(42, 40, 35, 0.2);
+	border-radius: 8px;
+	font-family: "Jost", sans-serif;
+	font-size: clamp(0.88rem, 1.1vw, 0.98rem);
+	color: #2a2823;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	transition:
+		background 140ms ease,
+		border-color 140ms ease,
+		transform 100ms ease;
+}
+.y67-faq__item:hover,
+.y67-faq__item:focus-visible {
+	background: #f0e5c9;
+	border-color: rgba(42, 40, 35, 0.46);
+	outline: none;
+}
+.y67-faq__item:active {
+	transform: scale(0.99);
+}
+.y67-faq__item::after {
+	content: "→";
+	font-family: "Jost", sans-serif;
+	color: #8b3a3a;
+	flex-shrink: 0;
+}
+.y67-faq__answer {
+	padding: 6px 4px 12px;
+}
+.y67-faq__back {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 4px 0 10px;
+	font-family: "Jost", sans-serif;
+	font-size: 0.74rem;
+	font-weight: 500;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: #8b3a3a;
+	cursor: pointer;
+}
+.y67-faq__back:hover {
+	text-decoration: underline;
+}
+.y67-faq__q {
+	margin: 0 0 8px;
+	font-family: "Cormorant Garamond", serif;
+	font-weight: 600;
+	font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+	color: #1c1a16;
+}
+.y67-faq__a {
+	margin: 0;
+	font-family: "Jost", sans-serif;
+	font-weight: 400;
+	font-size: clamp(0.88rem, 1.1vw, 0.98rem);
+	line-height: 1.65;
+	color: #2a2823;
+}
+
+/* ---------------------------------------------------------------------
+   7.6 RESPONSIVE
+   --------------------------------------------------------------------- */
+@media (max-width: 560px) {
+	.y67-panel--chat {
+		width: min(94vw, 420px);
+		max-height: 74vh;
+	}
+	.y67-menu__label {
+		display: none;
+	}
+	.y67-menu__btn {
+		width: 52px;
+		height: 52px;
+	}
+	.y67-panel--calc {
+		width: min(78vw, 232px);
+	}
+	.y67-panel--faq {
+		width: min(94vw, 400px);
+	}
+	.y67-panel__hint {
+		font-size: 0.58rem;
+		letter-spacing: 0.1em;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   7.8 LYNUXS DOCKED DI ATAS PANEL
+   --------------------------------------------------------------------- */
+.yusmentoro67-char.y67-docked {
+	left: var(--y67-dock-left, 50%) !important;
+	top: var(--y67-dock-top, 14vh) !important;
+	bottom: auto !important;
+	transform: translate3d(-50%, -58%, 0) !important;
+	transition:
+		left 380ms cubic-bezier(0.22, 0.68, 0.16, 1),
+		top 380ms cubic-bezier(0.22, 0.68, 0.16, 1),
+		width 260ms ease,
+		height 260ms ease !important;
+	z-index: 310;
+	cursor: pointer;
+}
+.yusmentoro67-char.y67-docked--chat {
+	--y67-size: clamp(72px, 11vw, 108px);
+}
+.yusmentoro67-char.y67-docked--calc,
+.yusmentoro67-char.y67-docked--faq {
+	--y67-size: clamp(56px, 8vw, 78px);
+}
+
+/* ---------------------------------------------------------------------
+   ★ STEP 7.3 — CLOSE BUTTON (X) UNTUK PANEL FITUR
+   --------------------------------------------------------------------- */
+.y67-close {
+	position: fixed;
+	left: var(--y67-close-left, 50%);
+	top: var(--y67-close-top, 50%);
+	z-index: 320;
+
+	width: 44px;
+	height: 44px;
+	min-width: 44px;
+	min-height: 44px;
+	padding: 0;
+	margin: 0;
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	background: #f5efe0;
+	color: #2a2823;
+	border: 1px solid rgba(42, 40, 35, 0.34);
+	border-radius: 50%;
+
+	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+	-webkit-tap-highlight-color: transparent;
+	user-select: none;
+	-webkit-user-select: none;
+
+	box-shadow:
+		0 6px 18px rgba(15, 12, 8, 0.3),
+		0 2px 4px rgba(15, 12, 8, 0.18);
+
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	transform: translate(-50%, 0) scale(0.85);
+
+	transition:
+		opacity 200ms ease,
+		transform 240ms cubic-bezier(0.34, 1.4, 0.64, 1),
+		visibility 0s linear 200ms,
+		background 140ms ease,
+		border-color 140ms ease;
+}
+.y67-close.is-visible {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transform: translate(-50%, 0) scale(1);
+	transition:
+		opacity 200ms ease,
+		transform 240ms cubic-bezier(0.34, 1.4, 0.64, 1),
+		visibility 0s linear 0s,
+		background 140ms ease,
+		border-color 140ms ease;
+}
+.y67-close:hover,
+.y67-close:focus-visible {
+	background: #f0e5c9;
+	border-color: rgba(42, 40, 35, 0.52);
+	outline: none;
+}
+.y67-close:active {
+	transform: translate(-50%, 0) scale(0.92);
+}
+.y67-close svg {
+	width: 15px;
+	height: 15px;
+	display: block;
+	pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   ★ STEP 7.4b — LYNUXS PANEL-IDLE ANIMATION
+   Base bob aktif hanya ketika panel fitur terbuka (.y67-panel-active).
+   Discrete actions dari JS memakai .y67-panel-busy untuk menahan base.
+   --------------------------------------------------------------------- */
+.yusmentoro67-char.y67-panel-active:not(.y67-panel-busy) .yusmentoro67-body {
+	animation: y67-panel-idle-bob 3200ms ease-in-out infinite;
+}
+@keyframes y67-panel-idle-bob {
+	0%,
+	100% {
+		transform: translateY(0) rotate(0deg);
+	}
+	50% {
+		transform: translateY(-1.2px) rotate(-0.6deg);
+	}
+}
+
+.y67-anim-panel-notebook {
+	animation: y67-panel-notebook 2400ms ease-in-out;
+}
+@keyframes y67-panel-notebook {
+	0% {
+		transform: rotate(0deg) translateY(0);
+	}
+	18% {
+		transform: rotate(3deg) translateY(1px);
+	}
+	35% {
+		transform: rotate(4deg) translateY(1.5px);
+	}
+	70% {
+		transform: rotate(4deg) translateY(1.5px);
+	}
+	88% {
+		transform: rotate(1deg) translateY(0);
+	}
+	100% {
+		transform: rotate(0deg) translateY(0);
+	}
+}
+
+/* ---------------------------------------------------------------------
+   ★ STEP 7.4c — THINKING BUBBLE (monokrom, bukan emoji)
+   Muncul di atas-kanan kepala Lynuxs selama request Gemini berlangsung.
+   --------------------------------------------------------------------- */
+.y67-thinking {
+	position: absolute;
+	left: 60%;
+	bottom: calc(100% + 4px);
+	pointer-events: none;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(6px) scale(0.85);
+	transform-origin: 30% 100%;
+	transition:
+		opacity 220ms ease,
+		transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1),
+		visibility 0s linear 220ms;
+	z-index: 4;
+}
+.y67-thinking.is-visible {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0) scale(1);
+	transition:
+		opacity 220ms ease,
+		transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1),
+		visibility 0s linear 0s;
+}
+.y67-thinking__bubble {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	padding: 7px 11px;
+	background: #f5efe0;
+	border: 1.5px solid rgba(42, 40, 35, 0.62);
+	border-radius: 14px;
+	min-width: 40px;
+	min-height: 24px;
+	box-shadow:
+		0 4px 10px rgba(15, 12, 8, 0.24),
+		0 1px 2px rgba(15, 12, 8, 0.16);
+}
+.y67-thinking__dot {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: #2a2823;
+	opacity: 0.35;
+	animation: y67-think-dot 1400ms infinite ease-in-out;
+}
+.y67-thinking__dot:nth-child(2) {
+	animation-delay: 180ms;
+}
+.y67-thinking__dot:nth-child(3) {
+	animation-delay: 360ms;
+}
+@keyframes y67-think-dot {
+	0%,
+	65%,
+	100% {
+		opacity: 0.35;
+		transform: translateY(0);
+	}
+	30% {
+		opacity: 1;
+		transform: translateY(-1px);
+	}
+}
+.y67-thinking__trail {
+	position: absolute;
+	left: -1px;
+	bottom: -14px;
+	width: 18px;
+	height: 18px;
+	pointer-events: none;
+}
+.y67-thinking__trail > span {
+	position: absolute;
+	border-radius: 50%;
+	background: #f5efe0;
+	border: 1.5px solid rgba(42, 40, 35, 0.62);
+}
+.y67-thinking__trail > span:nth-child(1) {
+	width: 7px;
+	height: 7px;
+	left: 8px;
+	top: 6px;
+}
+.y67-thinking__trail > span:nth-child(2) {
+	width: 4px;
+	height: 4px;
+	left: 3px;
+	top: 12px;
+}
+
+/* ---------------------------------------------------------------------
+   7.7 REDUCED MOTION
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	.y67-menu,
+	.y67-menu__btn,
+	.y67-panel,
+	.y67-calc__key,
+	.y67-chat__send,
+	.y67-faq__item,
+	.yusmentoro67-char.y67-docked,
+	.y67-close,
+	.yusmentoro67-char.y67-panel-active .yusmentoro67-body,
+	.y67-anim-panel-notebook,
+	.y67-thinking__dot,
+	.y67-thinking {
+		transition: none !important;
+		animation: none !important;
+	}
+	.y67-chat__dot {
+		animation: none !important;
+	}
+	.y67-menu.is-open .y67-menu__btn {
+		transform: none;
+		opacity: 1;
 	}
 }

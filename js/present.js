@@ -6,12 +6,26 @@
    (tanpa menunggu event apa pun dari board), lalu navigasi antar slide
    berjalan normal di dalam halaman ini.
 
-   Tambahan: transisi khusus Slide 2 -> Slide 3 (movie frame terdorong
-   keluar + viewport turun). Tidak memengaruhi transisi lainnya.
+   Tambahan transisi khusus:
+   - Slide 2 → Slide 3: camera drop + subtle zoom + atmospheric blend.
+   - Slide 5 → Slide 6: "video app opening" overlay (play mark + bg netral).
 
    ★ STEP 3: indikator baca (satu bulat fixed di atas-tengah) mengikuti
    event psk:slide-changed yang sudah ada — tidak menambah sistem
    navigasi/state baru.
+
+   ★ PATCH: background clapperboard khusus transisi Slide 1 → Slide 2.
+   Hanya menambah/turunkan satu modifier class (.is-slide1-to-slide2) di
+   elemen paper transition yang SUDAH ADA. Keyframe, durasi, easing, arah
+   TIDAK diubah.
+
+   ★ PATCH: atmospheric layer khusus transisi Slide 2 → Slide 3. Hanya
+   menambah/turunkan modifier class (.is-s2-s3-atmo) di #paperTransition
+   selama animasi 2 → 3.
+
+   ★ PATCH: overlay "video app opening" khusus transisi Slide 5 → Slide 6.
+   Hanya menambah/turunkan class .is-active di #s5s6OpenOverlay selama
+   animasi 5 → 6. Slide 5, Slide 6, dan transisi lain tidak tersentuh.
    ========================================================================== */
 
 (function () {
@@ -49,8 +63,14 @@
 
 	   Khusus transisi Slide 2 → Slide 3, kita TIDAK menggunakan paper
 	   sweep. Sebagai gantinya, Slide 2 (movie frame) didorong keluar ke
-	   kanan atas dengan sedikit rotasi/asimetri, lalu Slide 3 muncul dari
-	   bawah. Detailnya ada di fungsi transition2To3().
+	   bawah + subtle zoom, lalu Slide 3 muncul dari bawah. Detailnya ada
+	   di fungsi transition2To3().
+
+	   Khusus transisi Slide 5 → Slide 6, kita juga TIDAK menggunakan paper
+	   sweep. Sebagai gantinya, overlay "video app opening" (#s5s6OpenOverlay)
+	   muncul di atas Slide 5, play mark di tengah beranimasi scale + fade,
+	   lalu Slide 6 di-swap di belakang overlay dan overlay memudar keluar.
+	   Detailnya ada di fungsi transition5To6().
 	   --------------------------------------------------------------------- */
 	var currentSlide = 1;
 	var isTransitioning = false;
@@ -241,9 +261,24 @@
 	}
 
 	/* ---------------------------------------------------------------------
-	   3. TRANSISI KHUSUS SLIDE 2 -> SLIDE 3
-	   Movie frame (Slide 2) keluar asimetris ke kanan atas,
-	   lalu Slide 3 direveal dari bawah.
+	   3. TRANSISI KHUSUS SLIDE 2 -> SLIDE 3 — CINEMATIC CAMERA DROP
+	   --------------------------------------------------------------------------
+	   Konsep:
+	     - Kamera terasa "turun". Film card bergerak ke BAWAH sambil sedikit
+	       membesar (subtle zoom) lalu melewati viewport bagian bawah.
+	     - Slide 3 (meja) masuk dari bawah dengan zoom-out halus, menyambung
+	       gerak "kamera turun" tadi, tapi mulai reveal setelah film card
+	       setengah keluar (lihat @keyframes s3-enter-fade di CSS).
+	     - Opacity film tetap 1 sampai 65% progress supaya tidak "teleport".
+	     - Motion dipecah jadi dua animasi paralel per elemen (transform +
+	       opacity) supaya tidak ada segmentasi easing yang bikin gerakan
+	       patah-patah.
+
+	   Tidak ada keyframe baru di luar yang didefinisikan di css/present.css.
+	   Tidak menyentuh paper sweep / clapperboard 1 → 2 / transisi lainnya.
+
+	   ★ PATCH: atmospheric layer pada #paperTransition (.is-s2-s3-atmo)
+	   supaya handoff film → meja tidak terasa seperti hard cut.
 	   --------------------------------------------------------------------- */
 	function transition2To3() {
 		var slide2 = getSlide(2);
@@ -271,11 +306,19 @@
 		slide2.classList.add("s2-exit");
 		slide3.classList.add("s3-enter");
 
-		var duration = 700; // harus sinkron dengan durasi animasi CSS
+		// ★ PATCH: aktifkan atmospheric layer pada #paperTransition selama
+		// transisi 2 → 3 saja. Class ini di-remove di cleanup.
+		if (paperEl) paperEl.classList.add("is-s2-s3-atmo");
+
+		var duration = 900; // harus sinkron dengan durasi animasi CSS
 		var cleanup = function () {
 			// Hapus class transisi
 			slide2.classList.remove("s2-exit");
 			slide3.classList.remove("s3-enter");
+
+			// ★ PATCH: matikan atmospheric layer.
+			if (paperEl) paperEl.classList.remove("is-s2-s3-atmo");
+
 			// Reset z-index dan inline style yang kita set
 			slide2.style.zIndex = "";
 			slide3.style.zIndex = "";
@@ -309,8 +352,73 @@
 	}
 
 	/* ---------------------------------------------------------------------
+	   3b. TRANSISI KHUSUS SLIDE 5 -> SLIDE 6 — "VIDEO APP OPENING"
+	   --------------------------------------------------------------------------
+	   Konsep: overlay netral (#s5s6OpenOverlay) menutupi Slide 5, play mark
+	   muncul di tengah dengan overshoot ringan, lalu overlay memudar dan
+	   Slide 6 yang sudah diswap di belakang overlay muncul sebagai destination.
+
+	   Timing (tidak sinkron dengan durasi CSS @keyframes s5-s6-bg/s5-s6-mark
+	   di css/present.css — kalau durasi CSS diubah, samakan angka di bawah):
+	     - 0ms      : is-active di-add, animasi CSS mulai
+	     - ~435ms   : overlay bg sudah opaque penuh (CSS 30% × 1450ms)
+	     - 520ms    : swap slide di belakang overlay (tidak terlihat)
+	     - 900ms    : CSS mulai fade out bg + scale out mark
+	     - 1450ms   : animasi CSS selesai (bg sudah full transparan)
+	     - 1480ms   : is-active di-remove, finishTransition(6)
+
+	   Tidak ada RAF, tidak ada interval. Hanya CSS @keyframes + setTimeout
+	   cleanup — sama polanya dengan transition2To3().
+	   --------------------------------------------------------------------- */
+	function transition5To6() {
+		var slide5 = getSlide(5);
+		var slide6 = getSlide(6);
+		var overlay = document.getElementById("s5s6OpenOverlay");
+
+		// Fallback: kalau elemen tidak ada, langsung swap tanpa animasi.
+		if (!slide5 || !slide6 || !overlay) {
+			if (slide5) hideSlide(slide5);
+			if (slide6) showSlide(slide6);
+			finishTransition(6);
+			return;
+		}
+
+		// Reduced motion: langsung tukar slide, tanpa overlay.
+		if (prefersReducedMotion) {
+			hideSlide(slide5);
+			showSlide(slide6);
+			finishTransition(6);
+			return;
+		}
+
+		// Aktifkan overlay. Animasi CSS mulai (bg + mark).
+		overlay.classList.add("is-active");
+
+		// Swap slide di belakang overlay — overlay sudah opaque pada ~30%
+		// (≈435ms), jadi swap di 520ms tidak akan terlihat.
+		var swapTimer = setTimeout(function () {
+			hideSlide(slide5);
+			showSlide(slide6);
+		}, 520);
+
+		// Cleanup: matikan overlay, bereskan state. Total animasi CSS 1450ms.
+		var endTimer = setTimeout(function () {
+			overlay.classList.remove("is-active");
+			clearTimeout(swapTimer);
+			clearTimeout(endTimer);
+			finishTransition(6);
+		}, 1480);
+	}
+
+	/* ---------------------------------------------------------------------
 	   4. FUNGSI TRANSISI UTAMA
-	   Paper sweep untuk semua transisi kecuali 2→3.
+	   Paper sweep untuk semua transisi kecuali 2→3 dan 5→6.
+
+	   ★ PATCH: saat currentSlide===1 && target===2, kita tambahkan
+	   modifier class .is-slide1-to-slide2 pada paperEl. CSS meng-override
+	   background-image-nya jadi clapperboard. Semua transisi lain tidak
+	   pernah menerima class ini, jadi tetap paper default. Keyframe,
+	   durasi, easing, arah tidak berubah sama sekali.
 	   --------------------------------------------------------------------- */
 	function transitionTo(target) {
 		if (
@@ -322,7 +430,7 @@
 			return;
 		}
 
-		/* BARU: cloud transition (3→4 / 4→5) sedang berjalan → jangan
+		/* Cloud transition (3→4 / 4→5) sedang berjalan → jangan
 		   jalankan paper sweep. Biarkan cloud transition menyelesaikan
 		   dirinya sendiri lalu mengirim psk:slide-changed (yang sudah
 		   disinkronkan di listener psk:slide-changed di atas). */
@@ -334,6 +442,13 @@
 		if (currentSlide === 2 && target === 3) {
 			isTransitioning = true;
 			transition2To3();
+			return;
+		}
+
+		// ★ PATCH: transisi khusus Slide 5 -> Slide 6 (video app opening).
+		if (currentSlide === 5 && target === 6) {
+			isTransitioning = true;
+			transition5To6();
 			return;
 		}
 
@@ -363,6 +478,15 @@
 		}
 		paperEl.classList.remove("is-sweeping");
 
+		// ★ PATCH: tandai transisi Slide 1 → Slide 2 agar CSS memakai
+		// background clapperboard. Dihapus lagi di dua titik cleanup
+		// (onSweepEnd & fallback timer) di bawah.
+		if (currentSlide === 1 && target === 2) {
+			paperEl.classList.add("is-slide1-to-slide2");
+		} else {
+			paperEl.classList.remove("is-slide1-to-slide2");
+		}
+
 		// Restart animasi dari awal secara aman (force reflow) walau
 		// transisi sebelumnya baru saja selesai.
 		// eslint-disable-next-line no-unused-expressions
@@ -382,6 +506,8 @@
 				paperSweepFallbackTimer = null;
 			}
 			paperEl.classList.remove("is-sweeping");
+			// ★ PATCH: bersihkan modifier background Slide 1 → Slide 2.
+			paperEl.classList.remove("is-slide1-to-slide2");
 			finishTransition(target);
 		}
 
@@ -391,6 +517,8 @@
 		paperSweepFallbackTimer = setTimeout(function () {
 			paperEl.removeEventListener("animationend", onSweepEnd);
 			paperEl.classList.remove("is-sweeping");
+			// ★ PATCH: bersihkan modifier background Slide 1 → Slide 2.
+			paperEl.classList.remove("is-slide1-to-slide2");
 			finishTransition(target);
 		}, PAPER_DURATION + 150);
 	}

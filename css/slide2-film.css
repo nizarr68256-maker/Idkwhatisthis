@@ -1,46 +1,31 @@
 /* ==========================================================================
-   SLIDE 2 — "PERUBAHAN POLA INTERAKSI DAN RELASI SOSIAL" (FILM / 5 SHOT)
-
-   File baru, terpisah dari css/slide2.css lama (punya board scene di
-   index.html). Hanya dipakai oleh #slide2Scene di present.html.
-
-   Arsitektur animasi:
-   - .s2-track berisi 5 .s2-shot berjejer (flex row, width:500%).
-   - Berpindah shot = satu transform: translateX() pada .s2-track SAJA.
-   - Letterbox bar & controls TIDAK ikut di dalam track (elemen statis,
-     tidak pernah dianimasikan) supaya tidak ikut di-repaint tiap geser.
-   - will-change hanya aktif selama class .is-moving menempel di track.
-
-   Polish kecil (ditambahkan): garis horizontal pada .s2-bar atas dan
-   bawah kini memiliki animasi pergeseran halus berupa pola garis-garis
-   tipis redup (1px) yang bergerak dari kiri ke kanan secara terus-
-   menerus. Animasi menggunakan transform: translateX, performa ringan,
-   tanpa JavaScript/RAF/WebGL, dan dihilangkan jika pengguna memilih
-   prefers-reduced-motion.
-
-   Revisi terakhir: border batas bar diredupkan drastis (0.25 -> 0.06)
-   karena border putih solid itulah yang terbaca sebagai "white film
-   strip", bukan background bar (background bar sudah #000 dari
-   revisi sebelumnya). Pola garis drift TIDAK dibuat lebih terang;
-   periode & lebar pola diperbesar (40px/2px -> 100px/4px) supaya
-   pergerakannya terlihat jelas tanpa menaikkan opacity/brightness.
+   SLIDE 2 — CINEMATIC FILM CARD CAROUSEL
+   --------------------------------------------------------------------------
+   Perubahan Revisi 4:
+   - Active card diperbesar ke ~84vw / ~84vh (hampir mepet viewport 16:9).
+   - Preview kiri/kanan dikecilkan (scale 0.62) dan didorong lebih keluar.
+   - Perforasi & tipografi di-scale naik proporsional mengikuti card.
    ========================================================================== */
 
-/* Override kuat untuk memastikan slide 2 benar-benar gelap. */
 #slide2Scene.generic-slide-scene {
 	background: #000;
 }
 
 .s2-film {
-	/* .generic-slide-scene sudah memberi position:fixed; inset:0; display
-	   (none/flex via is-active); z-index:70; align-items/justify-content:
-	   center (untuk slide generic biasa). Di sini kita override jadi
-	   kolom full-bleed (bar/viewport/bar) supaya anak-anaknya melebar
-	   penuh, bukan menyusut ke ukuran konten. */
+	/* ---- UKURAN CARD & PREVIEW (revisi 4: mepet viewport) ---- */
+	--s2-card-w: min(84vw, 152vh);
+	--s2-card-gap: min(28vw, 50vh);
+	--s2-preview-scale: 0.62;
+
+	/* ---- UKURAN PERFORASI per kartu (ikut membesar) ---- */
+	--s2-perf-h: clamp(14px, 2.2vh, 32px);
+	--s2-perf-gap: clamp(8px, 1.3vh, 18px);
+	--s2-perf-hole: clamp(10px, 1.6vh, 22px);
+
 	flex-direction: column;
-	align-items: stretch;
-	justify-content: flex-start;
-	background: #000; /* pastikan hitam pekat */
+	align-items: center;
+	justify-content: center;
+	background: #000;
 	overflow: hidden;
 	padding: 0;
 }
@@ -50,135 +35,197 @@
 }
 
 /* ---------------------------------------------------------------------
-   LETTERBOX BARS — statis, bukan bagian dari track yang dianimasikan.
-   --------------------------------------------------------------------- */
-.s2-bar {
-	flex: 0 0 auto;
-	height: clamp(28px, 6vh, 64px);
-	background: #000;
-	position: relative; /* untuk menempatkan pseudo-element animasi */
-	overflow: hidden; /* potong pseudo-element agar tidak bocor */
-}
-
-/* Garis batas atas/bawah dibuat SANGAT redup — hanya pemisah samar,
-   bukan lagi garis putih terang yang terbaca sebagai white film strip. */
-.s2-bar--top {
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.s2-bar--bottom {
-	border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Pola garis tipis yang bergerak horizontal (cinematic drift). Opacity
-   TIDAK dinaikkan (tetap 0.15) — yang diperbesar adalah periode/lebar
-   pola (40px -> 100px, 2px -> 4px) supaya pergeseran per detik lebih
-   jauh secara visual dan pergerakannya jelas terlihat tanpa membuat
-   bar lebih terang. */
-.s2-bar::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: calc(100% + 100px); /* periode pola 100px untuk loop mulus */
-	height: 100%;
-	background-image: repeating-linear-gradient(
-		90deg,
-		rgba(255, 255, 255, 0.15) 0px,
-		rgba(255, 255, 255, 0.15) 4px,
-		transparent 4px,
-		transparent 100px
-	);
-	animation: s2-bar-drift 4s linear infinite;
-	will-change: transform; /* dipromosikan ke layer GPU, tidak layout */
-	pointer-events: none; /* pastikan tidak mengganggu klik */
-}
-
-@keyframes s2-bar-drift {
-	from {
-		transform: translateX(0);
-	}
-	to {
-		transform: translateX(-100px);
-	}
-}
-
-/* Matikan animasi garis bagi pengguna yang memilih reduce motion. */
-@media (prefers-reduced-motion: reduce) {
-	.s2-bar::before {
-		animation: none;
-	}
-}
-
-/* ---------------------------------------------------------------------
-   VIEWPORT + TRACK
+   VIEWPORT — panggung carousel.
    --------------------------------------------------------------------- */
 .s2-viewport {
-	position: relative;
-	flex: 1 1 auto;
-	min-height: 0;
+	position: absolute;
+	inset: 0;
 	overflow: hidden;
+	opacity: 0;
+	transform: scale(0.97);
 }
 
-.s2-track {
-	display: flex;
-	width: 500%; /* 5 shot x 100% */
-	height: 100%;
-	transform: translateX(0%);
-	transition: transform 600ms cubic-bezier(0.65, 0, 0.35, 1);
+.s2-film.is-active .s2-viewport {
+	animation: s2-carousel-enter 800ms cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
-.s2-track.is-moving {
-	will-change: transform; /* hanya selagi animasi berjalan */
+@keyframes s2-carousel-enter {
+	from {
+		opacity: 0;
+		transform: scale(0.97);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.s2-track {
-		transition: none !important;
+	.s2-film.is-active .s2-viewport {
+		animation: none;
+		opacity: 1;
+		transform: none;
 	}
 }
 
 /* ---------------------------------------------------------------------
-   SATU SHOT
+   TRACK — wrapper (tidak dianimasikan).
    --------------------------------------------------------------------- */
-.s2-shot {
+.s2-track {
 	position: relative;
-	flex: 0 0 20%; /* 100% / 5 shot, relatif ke lebar track */
-	width: 20%;
+	width: 100%;
 	height: 100%;
-	overflow: hidden;
-	/* Placeholder gradasi hangat — tampak jika foto shot belum tersedia. */
-	background: linear-gradient(165deg, #322a22 0%, #241d17 55%, #171310 100%);
 }
 
-/* Label placeholder ("GANTI: img/slide2/shot-0X.jpg"). Otomatis tertutup
-   begitu <img> shot berhasil dimuat karena img berada di atasnya (z-index
-   lebih tinggi); tidak perlu JS untuk menyembunyikannya. */
+/* ---------------------------------------------------------------------
+   SHOT — slot carousel. Hanya ini yang dianimasikan.
+   --------------------------------------------------------------------- */
+.s2-shot {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: var(--s2-card-w);
+	aspect-ratio: 16 / 9;
+	transform: translate(-50%, -50%) scale(0);
+	opacity: 0;
+	z-index: 0;
+	pointer-events: none;
+	transition:
+		transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 500ms ease;
+	will-change: transform, opacity;
+}
+
 .s2-shot::before {
 	content: attr(data-placeholder);
 	position: absolute;
-	inset: auto auto 50% 50%;
-	transform: translate(-50%, 50%);
-	z-index: 1;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 0;
 	font-family: var(--font-label, "Jost", sans-serif);
-	font-size: 0.7rem;
+	font-size: 0.75rem;
 	letter-spacing: 0.08em;
 	color: rgba(239, 233, 220, 0.35);
 	white-space: nowrap;
 	pointer-events: none;
 }
 
+.s2-shot.is-active {
+	transform: translate(-50%, -50%) scale(1);
+	opacity: 1;
+	z-index: 3;
+	pointer-events: auto;
+}
+
+.s2-shot.is-prev {
+	transform: translate(-50%, -50%) translateX(calc(-1 * var(--s2-card-gap)))
+		scale(var(--s2-preview-scale));
+	opacity: 0.72;
+	z-index: 2;
+	filter: brightness(0.6) saturate(0.85);
+}
+
+.s2-shot.is-next {
+	transform: translate(-50%, -50%) translateX(var(--s2-card-gap))
+		scale(var(--s2-preview-scale));
+	opacity: 0.72;
+	z-index: 2;
+	filter: brightness(0.6) saturate(0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.s2-shot {
+		transition: opacity 250ms ease;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   FILM FRAME.
+   --------------------------------------------------------------------- */
+.s2-shot__film {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background: #050505;
+	border-radius: 2px;
+	overflow: hidden;
+	box-shadow:
+		0 50px 110px -32px rgba(0, 0, 0, 0.92),
+		0 0 0 1px rgba(255, 255, 255, 0.05),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+/* ---------------------------------------------------------------------
+   PERFORATION per kartu (anak .s2-shot__film → ikut transform).
+   --------------------------------------------------------------------- */
+.s2-perf {
+	flex: 0 0 auto;
+	position: relative;
+	width: 100%;
+	height: var(--s2-perf-h);
+	background-color: #050505;
+	overflow: hidden;
+	z-index: 4;
+}
+
+.s2-perf--top {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.s2-perf--bottom {
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.s2-perf::before {
+	content: "";
+	position: absolute;
+	top: 22%;
+	bottom: 22%;
+	left: 0;
+	right: 0;
+	background-image: repeating-linear-gradient(
+		90deg,
+		transparent 0,
+		transparent var(--s2-perf-gap),
+		rgba(240, 232, 216, 0.92) var(--s2-perf-gap),
+		rgba(240, 232, 216, 0.92) calc(var(--s2-perf-gap) + var(--s2-perf-hole)),
+		transparent calc(var(--s2-perf-gap) + var(--s2-perf-hole)),
+		transparent calc(var(--s2-perf-gap) * 2 + var(--s2-perf-hole))
+	);
+}
+
+/* ---------------------------------------------------------------------
+   PHOTO FRAME.
+   --------------------------------------------------------------------- */
+.s2-shot__frame {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+	background: linear-gradient(165deg, #322a22 0%, #241d17 55%, #171310 100%);
+}
+
+/* ---------------------------------------------------------------------
+   IMAGE — STATIC (dikunci !important).
+   --------------------------------------------------------------------- */
 .s2-shot__img {
 	position: absolute;
 	inset: 0;
-	z-index: 2;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	object-position: center;
+	z-index: 2;
+	transform: none !important;
+	animation: none !important;
+	transition: none !important;
+	will-change: auto !important;
 }
 
-/* Overlay gelap agar teks tetap terbaca di atas foto apa pun. */
 .s2-shot__overlay {
 	position: absolute;
 	inset: 0;
@@ -188,17 +235,19 @@
 		180deg,
 		rgba(5, 4, 3, 0) 35%,
 		rgba(5, 4, 3, 0.55) 75%,
-		rgba(5, 4, 3, 0.82) 100%
+		rgba(5, 4, 3, 0.85) 100%
 	);
 }
 
+/* ---------------------------------------------------------------------
+   BODY / TIPOGRAFI — di-scale naik mengikuti card yang membesar.
+   --------------------------------------------------------------------- */
 .s2-shot__body {
 	position: absolute;
 	z-index: 4;
-	left: clamp(20px, 4vw, 64px);
-	right: clamp(20px, 4vw, 64px);
-	bottom: clamp(20px, 4vh, 44px);
-	max-width: 640px;
+	left: clamp(20px, 3.5vw, 56px);
+	right: clamp(20px, 3.5vw, 56px);
+	bottom: clamp(20px, 3.5vh, 48px);
 	color: var(--paper, #efe9dd);
 }
 
@@ -206,137 +255,143 @@
 	display: inline-block;
 	font-family: var(--font-label, "Jost", sans-serif);
 	font-weight: 400;
-	/* PATCH TYPOGRAPHY: 0.85rem -> clamp lebih besar supaya terbaca dari
-	   jarak presentasi di layar besar/TV (1920x1080, 3840x2160). Layout/
-	   posisi/markup tidak diubah. */
-	font-size: clamp(0.9rem, 1.1vw, 1.15rem);
+	font-size: clamp(0.7rem, 0.9vw, 1.05rem);
 	letter-spacing: 0.3em;
 	color: #d98b6a;
-	margin-bottom: 0.6rem;
+	margin-bottom: 0.5em;
 }
 
 .s2-shot__title {
 	font-family: var(--font-display, "Cormorant Garamond", serif);
 	font-weight: 500;
-	/* PATCH TYPOGRAPHY: cap lama (2.8rem) tercapai lebih dulu di layar
-	   besar (mis. 4vw @1920px = 76.8px, jauh melebihi cap lama), sehingga
-	   judul tidak pernah tumbuh melebihi 2.8rem walau di TV 4K. Cap
-	   dinaikkan jadi 4.2rem, minimum juga dinaikkan supaya tetap nyaman
-	   di layar kecil. */
-	font-size: clamp(2.1rem, 4.6vw, 4.2rem);
+	font-size: clamp(1.3rem, 3vw, 3.2rem);
 	line-height: 1.12;
 	letter-spacing: 0.01em;
-	margin: 0 0 0.6rem;
+	margin: 0 0 0.55em;
 	color: #f4ecd8;
-	text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+	text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
 }
 
 .s2-shot__desc {
 	font-family: var(--font-label, "Jost", sans-serif);
 	font-weight: 300;
-	/* PATCH TYPOGRAPHY: cap lama (1.05rem) juga sudah tercapai jauh di
-	   bawah resolusi presentasi umum — dinaikkan jadi 1.6rem. */
-	font-size: clamp(1.05rem, 1.7vw, 1.6rem);
-	line-height: 1.55;
+	font-size: clamp(0.85rem, 1.25vw, 1.4rem);
+	line-height: 1.5;
 	color: rgba(239, 233, 220, 0.82);
-	max-width: 46ch;
+	max-width: 48ch;
 	margin: 0;
 }
 
-/* Catatan penutup — hanya ada di Shot 05, jadi bagian visual shot itu
-   (bukan slide/shot tersendiri) supaya animasi tetap 5-shot sederhana. */
 .s2-shot__note {
 	font-family: var(--font-display, "Cormorant Garamond", serif);
 	font-style: italic;
-	/* PATCH TYPOGRAPHY: cap lama (1rem) dinaikkan jadi 1.4rem, senada
-	   dengan .s2-shot__desc di atas. */
-	font-size: clamp(1rem, 1.5vw, 1.4rem);
-	line-height: 1.5;
+	font-size: clamp(0.78rem, 1.05vw, 1.2rem);
+	line-height: 1.45;
 	color: rgba(244, 236, 216, 0.75);
-	max-width: 42ch;
-	margin: 0.9rem 0 0;
-	padding-top: 0.75rem;
+	max-width: 44ch;
+	margin: 0.8em 0 0;
+	padding-top: 0.65em;
 	border-top: 1px solid rgba(239, 233, 220, 0.2);
 }
 
 /* ---------------------------------------------------------------------
-   SHOT COUNTER
+   FRAME TAG + COUNTER — pojok atas slide.
    --------------------------------------------------------------------- */
+.s2-frame-tag {
+	position: absolute;
+	top: clamp(16px, 3vh, 36px);
+	left: clamp(20px, 3vw, 48px);
+	z-index: 30;
+	font-family: var(--font-label, "Jost", sans-serif);
+	font-size: clamp(0.62rem, 0.85vw, 0.78rem);
+	letter-spacing: 0.28em;
+	color: rgba(232, 224, 208, 0.5);
+	text-transform: uppercase;
+	pointer-events: none;
+	user-select: none;
+}
+
 .s2-counter {
 	position: absolute;
-	top: clamp(14px, 3vh, 28px);
-	right: clamp(20px, 4vw, 64px);
-	z-index: 20;
+	top: clamp(16px, 3vh, 36px);
+	right: clamp(20px, 3vw, 48px);
+	z-index: 30;
 	font-family: var(--font-label, "Jost", sans-serif);
-	/* PATCH TYPOGRAPHY: sedikit dinaikkan supaya konsisten dengan teks
-	   utama yang diperbesar di atas. */
-	font-size: clamp(0.8rem, 1vw, 0.95rem);
-	letter-spacing: 0.2em;
-	color: rgba(239, 233, 220, 0.55);
+	font-size: clamp(0.75rem, 0.95vw, 0.92rem);
+	letter-spacing: 0.22em;
+	color: rgba(239, 233, 220, 0.6);
 	pointer-events: none;
 }
 
 /* ---------------------------------------------------------------------
-   CONTROLS — Next Shot & Next Slide berbagi satu slot visual (bottom
-   right), supaya tidak terlihat seperti dua sistem navigasi.
+   CONTROLS — pojok kanan bawah Slide 2.
    --------------------------------------------------------------------- */
 .s2-controls {
 	position: absolute;
-	right: clamp(16px, 3vw, 40px);
-	bottom: clamp(14px, 3vh, 28px);
-	z-index: 20;
+	right: clamp(20px, 3vw, 48px);
+	bottom: clamp(20px, 3vh, 48px);
+	z-index: 30;
 	display: flex;
 	align-items: center;
+	gap: 12px;
 }
 
 .s2-next-shot {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	background: none;
-	border: none;
-	padding: 12px 16px; /* hitbox nyaman untuk touchscreen */
-	min-height: 44px;
+	gap: 10px;
+	background: rgba(15, 12, 10, 0.55);
+	border: 1px solid rgba(232, 224, 208, 0.18);
+	padding: 14px 22px;
+	min-height: 48px;
+	border-radius: 2px;
 	color: #f4ecd8;
 	font-family: var(--font-label, "Jost", sans-serif);
 	font-weight: 400;
+	cursor: pointer;
+	backdrop-filter: blur(4px);
 	transition:
-		transform 0.2s,
-		opacity 0.2s,
-		color 0.2s;
+		transform 0.25s ease,
+		background 0.25s ease,
+		border-color 0.25s ease,
+		color 0.25s ease;
 }
 
 .s2-next-shot__icon {
 	font-family: var(--font-display, "Cormorant Garamond", serif);
-	font-size: 1.4rem;
+	font-size: 1.5rem;
 	line-height: 1;
 	color: #d98b6a;
+	transition: transform 0.25s ease;
 }
 
 .s2-next-shot__label {
 	font-size: 0.75rem;
-	letter-spacing: 0.2em;
+	letter-spacing: 0.24em;
+	text-transform: uppercase;
 }
 
 .s2-next-shot:hover {
-	transform: translateX(4px);
+	background: rgba(35, 25, 18, 0.75);
+	border-color: rgba(217, 139, 106, 0.5);
 	color: #fff;
 }
 
+.s2-next-shot:hover .s2-next-shot__icon {
+	transform: translateX(4px);
+}
+
 .s2-next-shot:active {
-	transform: scale(0.95);
+	transform: scale(0.96);
 }
 
 .s2-next-shot.is-hidden {
 	display: none;
 }
 
-/* Tombol Next Slide me-reuse reset .generic-slide-next (lihat
-   present.css) untuk appearance/tap-highlight/focus-visible; di sini
-   hanya override posisi & warna supaya cocok dengan panggung gelap. */
 .s2-next-slide {
 	display: none;
-	min-height: 44px;
+	min-height: 48px;
 	color: #f4ecd8;
 }
 
@@ -349,51 +404,157 @@
 	align-items: center;
 }
 
-@media (max-width: 640px) {
+/* ---------------------------------------------------------------------
+   RESPONSIVE — ponsel landscape (viewport pendek).
+   --------------------------------------------------------------------- */
+@media (max-height: 430px) {
+	.s2-film {
+		--s2-card-w: min(82vw, 150vh);
+		--s2-card-gap: min(28vw, 52vh);
+		--s2-preview-scale: 0.6;
+		--s2-perf-h: clamp(8px, 2vh, 16px);
+		--s2-perf-gap: clamp(4px, 1vh, 8px);
+		--s2-perf-hole: clamp(6px, 1.4vh, 12px);
+	}
 	.s2-shot__body {
-		max-width: none;
+		bottom: clamp(8px, 2vh, 16px);
+	}
+	.s2-shot__title {
+		font-size: clamp(0.9rem, 2.4vw, 1.5rem);
+	}
+	.s2-shot__desc {
+		font-size: clamp(0.6rem, 1vw, 0.8rem);
+		line-height: 1.35;
+	}
+	.s2-shot__note {
+		font-size: clamp(0.58rem, 0.9vw, 0.74rem);
+		margin-top: 0.4em;
+		padding-top: 0.35em;
+	}
+	.s2-frame-tag,
+	.s2-counter {
+		top: clamp(8px, 2vh, 16px);
+	}
+	.s2-controls {
+		bottom: clamp(8px, 2vh, 16px);
+	}
+	.s2-next-shot {
+		padding: 10px 16px;
+		min-height: 40px;
+	}
+}
+
+/* Layar sangat sempit (mobile portrait). */
+@media (max-width: 640px) {
+	.s2-film {
+		--s2-card-w: 90vw;
+		--s2-card-gap: 42vw;
+		--s2-preview-scale: 0.55;
 	}
 	.s2-shot__desc,
 	.s2-shot__note {
 		max-width: none;
 	}
 }
-
 /* ---------------------------------------------------------------------
-   RESPONSIVE — viewport pendek (ponsel landscape, mis. 568x320,
-   667x375). Letterbox bar + judul + deskripsi (+ catatan penutup di
-   Shot 5) bisa mendekati/melebihi tinggi viewport yang tersisa karena
-   .s2-viewport overflow:hidden. Perkecil bar & tipografi supaya seluruh
-   konten shot tetap terlihat penuh, tanpa menghapus teks apa pun.
+   VERTICAL FILM BORDER — dekorasi kiri & kanan Slide 2.
+   Hanya dekorasi: tanpa foto, tanpa teks, tanpa klik.
+   Diletakkan di DOM SEBELUM .s2-viewport → otomatis berada di bawah
+   carousel pada stacking order (keduanya z-index: auto, DOM order).
    --------------------------------------------------------------------- */
+
+/* Variabel lokal — ditambahkan pada .s2-film (section). */
+.s2-film {
+	--s2-border-w: clamp(20px, 2.2vw, 42px);
+	--s2-border-hole-w: clamp(8px, 0.9vw, 14px);
+	--s2-border-hole-h: clamp(10px, 1.2vh, 18px);
+	--s2-border-gap: clamp(14px, 1.8vh, 26px);
+	--s2-border-period: calc(
+		var(--s2-border-gap) * 2 + var(--s2-border-hole-h)
+	);
+	/* Kecepatan animasi border kiri/kanan.
+	   Angka lebih kecil = lebih cepat. */
+	--s2-border-speed: 7s;
+}
+
+.s2-border {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: var(--s2-border-w);
+	background: #050505;
+	overflow: hidden;
+	pointer-events: none;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.s2-border--left {
+	left: 0;
+	border-right: 1px solid rgba(255, 255, 255, 0.045);
+}
+
+.s2-border--right {
+	right: 0;
+	border-left: 1px solid rgba(255, 255, 255, 0.045);
+}
+
+/* Perforation strip: ::before lebih tinggi dari parent (100% + 1 period),
+   pola berulang setiap --s2-border-period px. Animasi menggeser tepat
+   1 period → loop seamless tanpa "teleport". */
+.s2-border::before {
+	content: "";
+	position: absolute;
+	left: calc(50% - var(--s2-border-hole-w) / 2);
+	top: 0;
+	width: var(--s2-border-hole-w);
+	height: calc(100% + var(--s2-border-period));
+	background-image: repeating-linear-gradient(
+		180deg,
+		transparent 0,
+		transparent var(--s2-border-gap),
+		rgba(240, 232, 216, 0.85) var(--s2-border-gap),
+		rgba(240, 232, 216, 0.85)
+			calc(var(--s2-border-gap) + var(--s2-border-hole-h)),
+		transparent calc(var(--s2-border-gap) + var(--s2-border-hole-h)),
+		transparent var(--s2-border-period)
+	);
+	animation: s2-border-move var(--s2-border-speed) linear infinite;
+	will-change: transform;
+	pointer-events: none;
+}
+
+/* Kiri: arah default (naik). Kanan: reverse → turun. */
+.s2-border--right::before {
+	animation-direction: reverse;
+}
+
+@keyframes s2-border-move {
+	from {
+		transform: translateY(0);
+	}
+	to {
+		transform: translateY(calc(-1 * var(--s2-border-period)));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.s2-border::before {
+		animation: none;
+	}
+}
+
+/* Layar kecil: perkecil border agar tidak mengambil ruang carousel. */
+@media (max-width: 900px) {
+	.s2-film {
+		--s2-border-w: clamp(16px, 3vw, 28px);
+		--s2-border-hole-w: clamp(6px, 1.1vw, 10px);
+		--s2-border-hole-h: clamp(8px, 1.4vh, 14px);
+		--s2-border-gap: clamp(10px, 1.6vh, 18px);
+	}
+}
+
 @media (max-height: 430px) {
-	.s2-bar {
-		height: clamp(18px, 5vh, 36px);
-	}
-	.s2-shot__body {
-		bottom: clamp(8px, 2vh, 18px);
-	}
-	.s2-shot__number {
-		margin-bottom: 0.3rem;
-	}
-	.s2-shot__title {
-		font-size: clamp(1.15rem, 3.2vw, 1.8rem);
-		margin-bottom: 0.35rem;
-	}
-	.s2-shot__desc {
-		font-size: clamp(0.72rem, 1.2vw, 0.88rem);
-		line-height: 1.4;
-	}
-	.s2-shot__note {
-		margin-top: 0.5rem;
-		padding-top: 0.4rem;
-		font-size: clamp(0.72rem, 1.1vw, 0.85rem);
-		line-height: 1.35;
-	}
-	.s2-counter {
-		top: clamp(6px, 2vh, 14px);
-	}
-	.s2-controls {
-		bottom: clamp(6px, 2vh, 14px);
+	.s2-film {
+		--s2-border-w: clamp(14px, 2.6vh, 22px);
 	}
 }

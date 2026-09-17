@@ -691,7 +691,7 @@ window.startTransition = function startTransition() {
 		{ src: "img/nizar.png", name: "(24)Nizar" },
 		{ src: "img/sesil.jpg", name: "(19)sisil" },
 		{ src: "img/alpin.jpg", name: "(25)alvin" },
-		{ src: "img/lynuxs.png", name: "Lynuxs" }
+		{ src: "img/lynuxs.jpg", name: "Lynuxs" }
 	];
 
 	// Posisi dihitung dari proyeksi kamera supaya kira-kira menempati area

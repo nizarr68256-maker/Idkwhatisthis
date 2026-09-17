@@ -38,12 +38,23 @@
 			id="presentFadeOverlay"
 			aria-hidden="true"
 		></div>
-
 		<div
 			class="paper-transition"
 			id="paperTransition"
 			aria-hidden="true"
 		></div>
+
+		<!-- ★ PATCH: overlay "video app opening" untuk transisi Slide 5 → Slide 6.
+		     Hanya aktif selama transisi 5 → 6. Tidak muncul di transisi lain. -->
+		<div class="s5-s6-open" id="s5s6OpenOverlay" aria-hidden="true">
+			<div class="s5-s6-open__bg"></div>
+			<div class="s5-s6-open__mark">
+				<svg viewBox="0 0 88 62" aria-hidden="true">
+					<rect x="2" y="2" width="84" height="58" rx="14" ry="14" />
+					<path d="M36 20 L62 31 L36 42 Z" />
+				</svg>
+			</div>
+		</div>
 
 		<button
 			type="button"
@@ -124,19 +135,35 @@
 			></button>
 		</nav>
 
-		<!-- ★ LYNUXS — maskot global persistent. Skin 02 — Mini Journalist. -->
+		<!-- LYNUXS -->
 		<button
 			type="button"
 			class="yusmentoro67-char"
 			id="yusmentoro67Char"
 			data-skin="skin02"
-			aria-label="Lynuxs — buka menu Hmm?"
+			aria-label="Lynuxs — buka menu fitur"
 		>
 			<span
 				class="yusmentoro67-bubble"
 				id="yusmentoro67Bubble"
 				aria-hidden="true"
 			></span>
+
+			<!-- ★ STEP 7.4 — THOUGHT BUBBLE (monokrom, bukan emoji).
+			     Muncul hanya saat request Gemini berlangsung.
+			     Trailing puffs di bawah-kiri mengarah ke kepala Lynuxs. -->
+			<span class="y67-thinking" id="y67Thinking" aria-hidden="true">
+				<span class="y67-thinking__trail">
+					<span></span>
+					<span></span>
+				</span>
+				<span class="y67-thinking__bubble">
+					<span class="y67-thinking__dot"></span>
+					<span class="y67-thinking__dot"></span>
+					<span class="y67-thinking__dot"></span>
+				</span>
+			</span>
+
 			<span class="yusmentoro67-flip" id="yusmentoro67Flip">
 				<span class="yusmentoro67-body" id="yusmentoro67Body">
 					<svg
@@ -1107,16 +1134,396 @@
 					</svg>
 				</span>
 				<span class="y67-dust" id="y67Dust" aria-hidden="true">
-					<span class="y67-dust__p"></span>
-					<span class="y67-dust__p"></span>
-					<span class="y67-dust__p"></span>
-					<span class="y67-dust__p"></span>
-					<span class="y67-dust__p"></span>
-					<span class="y67-dust__p"></span>
+					<span class="y67-dust__p"></span
+					><span class="y67-dust__p"></span>
+					<span class="y67-dust__p"></span
+					><span class="y67-dust__p"></span>
+					<span class="y67-dust__p"></span
+					><span class="y67-dust__p"></span>
 				</span>
 			</span>
 		</button>
 
+		<!-- LYNUXS FEATURE MENU -->
+		<div class="y67-menu" id="y67Menu" aria-hidden="true" role="menu">
+			<div class="y67-menu__row">
+				<button
+					class="y67-menu__btn y67-menu__btn--calc"
+					type="button"
+					data-feature="calc"
+					role="menuitem"
+					aria-label="Kalkulator"
+				>
+					<svg
+						class="y67-menu__icon"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<rect x="5" y="3" width="14" height="18" rx="2" />
+						<line x1="8" y1="7" x2="16" y2="7" />
+						<circle
+							cx="8.6"
+							cy="11.6"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="12"
+							cy="11.6"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="15.4"
+							cy="11.6"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="8.6"
+							cy="15"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="12"
+							cy="15"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="15.4"
+							cy="15"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="8.6"
+							cy="18.4"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="12"
+							cy="18.4"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+						<circle
+							cx="15.4"
+							cy="18.4"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+					</svg>
+					<span class="y67-menu__label">Kalkulator</span>
+				</button>
+
+				<button
+					class="y67-menu__btn y67-menu__btn--ai"
+					type="button"
+					data-feature="ai"
+					role="menuitem"
+					aria-label="AI Chat"
+				>
+					<svg
+						class="y67-menu__icon"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path
+							d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4V6a1 1 0 0 1 1-1z"
+						/>
+						<path
+							d="M12 8.2l0.9 2 2 0.9-2 0.9-0.9 2-0.9-2-2-0.9 2-0.9z"
+							fill="currentColor"
+							stroke="none"
+						/>
+					</svg>
+					<span class="y67-menu__label">AI</span>
+				</button>
+
+				<button
+					class="y67-menu__btn y67-menu__btn--faq"
+					type="button"
+					data-feature="faq"
+					role="menuitem"
+					aria-label="FAQ"
+				>
+					<svg
+						class="y67-menu__icon"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<circle cx="12" cy="12" r="9" />
+						<path
+							d="M9.6 9.2a2.5 2.5 0 0 1 4.9 0.8c0 1.6-2.4 2-2.4 3.6"
+						/>
+						<circle
+							cx="12"
+							cy="17.4"
+							r="0.7"
+							fill="currentColor"
+							stroke="none"
+						/>
+					</svg>
+					<span class="y67-menu__label">FAQ</span>
+				</button>
+			</div>
+		</div>
+
+		<!-- PANEL KALKULATOR -->
+		<div
+			class="y67-panel y67-panel--calc"
+			id="y67CalcPanel"
+			aria-hidden="true"
+			role="dialog"
+			aria-label="Kalkulator"
+		>
+			<div class="y67-panel__head">
+				<span class="y67-panel__title">Kalkulator</span>
+				<span class="y67-panel__hint">klik X untuk menutup</span>
+			</div>
+			<div class="y67-calc">
+				<div
+					class="y67-calc__display"
+					id="y67CalcDisplay"
+					aria-live="polite"
+				>
+					0
+				</div>
+				<div class="y67-calc__keys" id="y67CalcKeys">
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--fn"
+						data-key="C"
+					>
+						C
+					</button>
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--fn"
+						data-key="%"
+					>
+						%
+					</button>
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--fn"
+						data-key="back"
+						aria-label="Backspace"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.8"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<path
+								d="M21 6H9L3 12l6 6h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"
+							/>
+							<line x1="17" y1="10" x2="12" y2="15" />
+							<line x1="12" y1="10" x2="17" y2="15" />
+						</svg>
+					</button>
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--op"
+						data-key="÷"
+					>
+						÷
+					</button>
+
+					<button type="button" class="y67-calc__key" data-key="7">
+						7
+					</button>
+					<button type="button" class="y67-calc__key" data-key="8">
+						8
+					</button>
+					<button type="button" class="y67-calc__key" data-key="9">
+						9
+					</button>
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--op"
+						data-key="×"
+					>
+						×
+					</button>
+
+					<button type="button" class="y67-calc__key" data-key="4">
+						4
+					</button>
+					<button type="button" class="y67-calc__key" data-key="5">
+						5
+					</button>
+					<button type="button" class="y67-calc__key" data-key="6">
+						6
+					</button>
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--op"
+						data-key="−"
+					>
+						−
+					</button>
+
+					<button type="button" class="y67-calc__key" data-key="1">
+						1
+					</button>
+					<button type="button" class="y67-calc__key" data-key="2">
+						2
+					</button>
+					<button type="button" class="y67-calc__key" data-key="3">
+						3
+					</button>
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--op"
+						data-key="+"
+					>
+						+
+					</button>
+
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--zero"
+						data-key="0"
+					>
+						0
+					</button>
+					<button type="button" class="y67-calc__key" data-key=".">
+						.
+					</button>
+					<button
+						type="button"
+						class="y67-calc__key y67-calc__key--eq"
+						data-key="="
+						aria-label="Sama dengan"
+					>
+						=
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- PANEL LYNUXS AI -->
+		<div
+			class="y67-panel y67-panel--chat"
+			id="y67ChatPanel"
+			aria-hidden="true"
+			role="dialog"
+			aria-label="Lynuxs AI"
+		>
+			<div class="y67-chat__head">
+				<span class="y67-chat__brand">LYNUXS&nbsp;AI</span>
+				<span class="y67-chat__status-dot" aria-hidden="true"></span>
+			</div>
+
+			<div class="y67-chat__body">
+				<div
+					class="y67-chat__feed"
+					id="y67ChatFeed"
+					aria-live="polite"
+				></div>
+			</div>
+
+			<form class="y67-chat__form" id="y67ChatForm" autocomplete="off">
+				<span class="y67-chat__prompt" aria-hidden="true">&gt;</span>
+				<input
+					class="y67-chat__input"
+					id="y67ChatInput"
+					type="text"
+					name="message"
+					placeholder="Ketik pertanyaan…"
+					maxlength="800"
+					aria-label="Pesan untuk Lynuxs AI"
+				/>
+				<button
+					class="y67-chat__send"
+					type="submit"
+					id="y67ChatSend"
+					aria-label="Kirim pesan"
+				>
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M3 11l18-8-8 18-2-8-8-2z" />
+					</svg>
+				</button>
+			</form>
+		</div>
+
+		<!-- PANEL FAQ -->
+		<div
+			class="y67-panel y67-panel--faq"
+			id="y67FaqPanel"
+			aria-hidden="true"
+			role="dialog"
+			aria-label="FAQ"
+		>
+			<div class="y67-panel__head">
+				<span class="y67-panel__title">FAQ</span>
+				<span class="y67-panel__hint">klik X untuk menutup</span>
+			</div>
+			<div class="y67-faq__body" id="y67FaqBody"></div>
+		</div>
+
+		<!-- TOMBOL CLOSE (X) UNTUK PANEL FITUR -->
+		<button
+			type="button"
+			class="y67-close"
+			id="y67CloseBtn"
+			aria-hidden="true"
+			aria-label="Tutup panel"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2.2"
+				stroke-linecap="round"
+				aria-hidden="true"
+			>
+				<line x1="6" y1="6" x2="18" y2="18" />
+				<line x1="18" y1="6" x2="6" y2="18" />
+			</svg>
+		</button>
+
+		<!-- legacy Hmm? panel (dormant) -->
 		<div
 			class="yusmentoro67-overlay"
 			id="yusmentoro67Overlay"
@@ -1248,7 +1655,6 @@
 						<div class="city-sidewalk"></div>
 						<div class="city-road">
 							<div class="road-lane"></div>
-
 							<svg
 								class="city-car city-car--1"
 								viewBox="0 0 100 34"
@@ -1296,7 +1702,6 @@
 									fill="#7a7a7a"
 								/>
 							</svg>
-
 							<svg
 								class="city-car city-car--2"
 								viewBox="0 0 100 34"
@@ -1344,7 +1749,6 @@
 									fill="#7a7a7a"
 								/>
 							</svg>
-
 							<svg
 								class="city-car city-car--3"
 								viewBox="0 0 100 34"
@@ -1392,7 +1796,6 @@
 									fill="#7a7a7a"
 								/>
 							</svg>
-
 							<svg
 								class="city-car city-car--4"
 								viewBox="0 0 100 34"
@@ -1445,10 +1848,6 @@
 				</div>
 			</div>
 
-			<!-- ★ STEP 5.6 / 5.7 — Cinematic sky headline + group credits.
-			     World-space: sibling .slide1-city dan .slide1-cloud-world.
-			     Headline muncul +1s, credits +1.5s (via .is-visible).
-			     Layer bergerak naik bersama world → keluar frame natural. -->
 			<div
 				class="s1-sky-headline-layer"
 				id="s1SkyHeadlineLayer"
@@ -1477,8 +1876,6 @@
 				</div>
 			</div>
 
-			<!-- ★ STEP 5.4 / 5.7 — Cloud world. 18 cloud terdistribusi merata
-			     sepanjang extended fall 10s (top range -750% s/d +1400%). -->
 			<div
 				class="slide1-cloud-world"
 				id="slide1CloudWorld"
@@ -1496,7 +1893,6 @@
 					class="slide1-cloud slide1-cloud--near"
 					style="left: 30%; top: -500%; --w: 260px; --op: 0.9"
 				></div>
-
 				<div
 					class="slide1-cloud slide1-cloud--far"
 					style="left: 78%; top: -380%; --w: 130px; --op: 0.55"
@@ -1509,7 +1905,6 @@
 					class="slide1-cloud slide1-cloud--near"
 					style="left: 15%; top: -120%; --w: 270px; --op: 0.92"
 				></div>
-
 				<div
 					class="slide1-cloud slide1-cloud--far"
 					style="left: 70%; top: 0%; --w: 140px; --op: 0.55"
@@ -1522,7 +1917,6 @@
 					class="slide1-cloud slide1-cloud--near"
 					style="left: 55%; top: 240%; --w: 280px; --op: 0.9"
 				></div>
-
 				<div
 					class="slide1-cloud slide1-cloud--far"
 					style="left: 10%; top: 380%; --w: 140px; --op: 0.55"
@@ -1535,7 +1929,6 @@
 					class="slide1-cloud slide1-cloud--near"
 					style="left: 35%; top: 620%; --w: 250px; --op: 0.88"
 				></div>
-
 				<div
 					class="slide1-cloud slide1-cloud--far"
 					style="left: 65%; top: 760%; --w: 150px; --op: 0.6"
@@ -1603,148 +1996,244 @@
 
 			<button class="slide1-next" id="slide1Next">NEXT →</button>
 		</section>
-
 		<!-- ================= SLIDE 2 ================= -->
 		<section
 			id="slide2Scene"
 			class="generic-slide-scene s2-film"
 			aria-label="Slide 2: Perubahan Pola Interaksi dan Relasi Sosial"
 		>
-			<div class="s2-bar s2-bar--top" aria-hidden="true"></div>
+			<!-- VERTICAL FILM BORDER — dekorasi kiri & kanan (di belakang carousel) -->
+			<div class="s2-border s2-border--left" aria-hidden="true"></div>
+			<div class="s2-border s2-border--right" aria-hidden="true"></div>
+
 			<div class="s2-viewport">
 				<div class="s2-track" id="s2Track">
+					<!-- ====== SHOT 01 ====== -->
 					<div
 						class="s2-shot"
 						data-shot="1"
 						data-placeholder="GANTI: img/slide2/shot-01.jpg"
 					>
-						<img
-							class="s2-shot__img"
-							src="img/slide2/shot-01.webp"
-							alt="Seseorang melakukan panggilan video / komunikasi digital"
-							loading="eager"
-							onerror="this.style.display = 'none'"
-						/>
-						<div class="s2-shot__overlay" aria-hidden="true"></div>
-						<div class="s2-shot__body">
-							<span class="s2-shot__number">01</span>
-							<h1 class="s2-shot__title">
-								KOMUNIKASI LINTAS<br />RUANG &amp; WAKTU
-							</h1>
-							<p class="s2-shot__desc">
-								Teknologi memungkinkan manusia berkomunikasi
-								secara cepat tanpa harus berada di tempat yang
-								sama.
-							</p>
+						<div class="s2-shot__film">
+							<div
+								class="s2-perf s2-perf--top"
+								aria-hidden="true"
+							></div>
+							<div class="s2-shot__frame">
+								<img
+									class="s2-shot__img"
+									src="img/slide2/shot-01.webp"
+									alt="Seseorang melakukan panggilan video / komunikasi digital"
+									loading="eager"
+									onerror="this.style.display = 'none'"
+								/>
+								<div
+									class="s2-shot__overlay"
+									aria-hidden="true"
+								></div>
+								<div class="s2-shot__body">
+									<span class="s2-shot__number">01</span>
+									<h1 class="s2-shot__title">
+										KOMUNIKASI LINTAS<br />RUANG &amp; WAKTU
+									</h1>
+									<p class="s2-shot__desc">
+										Teknologi memungkinkan manusia
+										berkomunikasi secara cepat tanpa harus
+										berada di tempat yang sama.
+									</p>
+								</div>
+							</div>
+							<div
+								class="s2-perf s2-perf--bottom"
+								aria-hidden="true"
+							></div>
 						</div>
 					</div>
+
+					<!-- ====== SHOT 02 ====== -->
 					<div
 						class="s2-shot"
 						data-shot="2"
 						data-placeholder="GANTI: img/slide2/shot-02.jpg"
 					>
-						<img
-							class="s2-shot__img"
-							src="img/slide2/shot-02.webp"
-							alt="Orang dari latar belakang budaya berbeda sedang berdiskusi"
-							loading="lazy"
-							onerror="this.style.display = 'none'"
-						/>
-						<div class="s2-shot__overlay" aria-hidden="true"></div>
-						<div class="s2-shot__body">
-							<span class="s2-shot__number">02</span>
-							<h1 class="s2-shot__title">
-								INTERAKSI<br />ANTARBUDAYA
-							</h1>
-							<p class="s2-shot__desc">
-								Globalisasi mempertemukan masyarakat dari latar
-								belakang budaya berbeda sehingga terjadi
-								pertukaran pandangan, kebiasaan, dan pengalaman.
-							</p>
+						<div class="s2-shot__film">
+							<div
+								class="s2-perf s2-perf--top"
+								aria-hidden="true"
+							></div>
+							<div class="s2-shot__frame">
+								<img
+									class="s2-shot__img"
+									src="img/slide2/shot-02.webp"
+									alt="Orang dari latar belakang budaya berbeda sedang berdiskusi"
+									loading="lazy"
+									onerror="this.style.display = 'none'"
+								/>
+								<div
+									class="s2-shot__overlay"
+									aria-hidden="true"
+								></div>
+								<div class="s2-shot__body">
+									<span class="s2-shot__number">02</span>
+									<h1 class="s2-shot__title">
+										INTERAKSI<br />ANTARBUDAYA
+									</h1>
+									<p class="s2-shot__desc">
+										Globalisasi mempertemukan masyarakat
+										dari latar belakang budaya berbeda
+										sehingga terjadi pertukaran pandangan,
+										kebiasaan, dan pengalaman.
+									</p>
+								</div>
+							</div>
+							<div
+								class="s2-perf s2-perf--bottom"
+								aria-hidden="true"
+							></div>
 						</div>
 					</div>
+
+					<!-- ====== SHOT 03 ====== -->
 					<div
 						class="s2-shot"
 						data-shot="3"
 						data-placeholder="GANTI: img/slide2/shot-03.jpg"
 					>
-						<img
-							class="s2-shot__img"
-							src="img/slide2/shot-03.png"
-							alt="Orang-orang terhubung dalam komunitas/diskusi daring"
-							loading="lazy"
-							onerror="this.style.display = 'none'"
-						/>
-						<div class="s2-shot__overlay" aria-hidden="true"></div>
-						<div class="s2-shot__body">
-							<span class="s2-shot__number">03</span>
-							<h1 class="s2-shot__title">KOMUNITAS VIRTUAL</h1>
-							<p class="s2-shot__desc">
-								Masyarakat dapat membentuk komunitas berdasarkan
-								minat, tujuan, atau identitas meskipun
-								anggotanya berada di wilayah berbeda.
-							</p>
+						<div class="s2-shot__film">
+							<div
+								class="s2-perf s2-perf--top"
+								aria-hidden="true"
+							></div>
+							<div class="s2-shot__frame">
+								<img
+									class="s2-shot__img"
+									src="img/slide2/shot-03.png"
+									alt="Orang-orang terhubung dalam komunitas/diskusi daring"
+									loading="lazy"
+									onerror="this.style.display = 'none'"
+								/>
+								<div
+									class="s2-shot__overlay"
+									aria-hidden="true"
+								></div>
+								<div class="s2-shot__body">
+									<span class="s2-shot__number">03</span>
+									<h1 class="s2-shot__title">
+										KOMUNITAS VIRTUAL
+									</h1>
+									<p class="s2-shot__desc">
+										Masyarakat dapat membentuk komunitas
+										berdasarkan minat, tujuan, atau
+										identitas meskipun anggotanya berada di
+										wilayah berbeda.
+									</p>
+								</div>
+							</div>
+							<div
+								class="s2-perf s2-perf--bottom"
+								aria-hidden="true"
+							></div>
 						</div>
 					</div>
+
+					<!-- ====== SHOT 04 ====== -->
 					<div
 						class="s2-shot"
 						data-shot="4"
 						data-placeholder="GANTI: img/slide2/shot-04.jpg"
 					>
-						<img
-							class="s2-shot__img"
-							src="img/slide2/shot-04.png"
-							alt="Smartphone menampilkan percakapan digital"
-							loading="lazy"
-							onerror="this.style.display = 'none'"
-						/>
-						<div class="s2-shot__overlay" aria-hidden="true"></div>
-						<div class="s2-shot__body">
-							<span class="s2-shot__number">04</span>
-							<h1 class="s2-shot__title">
-								NORMA KOMUNIKASI BARU
-							</h1>
-							<p class="s2-shot__desc">
-								Emoji, stiker, bahasa campuran, serta etika
-								berkomunikasi di ruang digital menjadi bagian
-								dari pola interaksi sosial baru.
-							</p>
+						<div class="s2-shot__film">
+							<div
+								class="s2-perf s2-perf--top"
+								aria-hidden="true"
+							></div>
+							<div class="s2-shot__frame">
+								<img
+									class="s2-shot__img"
+									src="img/slide2/shot-04.png"
+									alt="Smartphone menampilkan percakapan digital"
+									loading="lazy"
+									onerror="this.style.display = 'none'"
+								/>
+								<div
+									class="s2-shot__overlay"
+									aria-hidden="true"
+								></div>
+								<div class="s2-shot__body">
+									<span class="s2-shot__number">04</span>
+									<h1 class="s2-shot__title">
+										NORMA KOMUNIKASI BARU
+									</h1>
+									<p class="s2-shot__desc">
+										Emoji, stiker, bahasa campuran, serta
+										etika berkomunikasi di ruang digital
+										menjadi bagian dari pola interaksi
+										sosial baru.
+									</p>
+								</div>
+							</div>
+							<div
+								class="s2-perf s2-perf--bottom"
+								aria-hidden="true"
+							></div>
 						</div>
 					</div>
+
+					<!-- ====== SHOT 05 ====== -->
 					<div
-						class="s2-shot s2-shot--closing"
+						class="s2-shot"
 						data-shot="5"
 						data-placeholder="GANTI: img/slide2/shot-05.jpg"
 					>
-						<img
-							class="s2-shot__img"
-							src="img/slide2/shot-05.png"
-							alt="Orang-orang menyebarkan informasi lewat smartphone"
-							loading="lazy"
-							onerror="this.style.display = 'none'"
-						/>
-						<div class="s2-shot__overlay" aria-hidden="true"></div>
-						<div class="s2-shot__body">
-							<span class="s2-shot__number">05</span>
-							<h1 class="s2-shot__title">DIFUSI INFORMASI</h1>
-							<p class="s2-shot__desc">
-								Informasi, gagasan, tren, dan gerakan sosial
-								dapat menyebar dengan cepat dari satu wilayah ke
-								wilayah lain.
-							</p>
-							<p class="s2-shot__note">
-								Globalisasi tidak otomatis membuat masyarakat
-								lebih individualis. Yang berubah terutama adalah
-								bentuk dan ruang interaksinya.
-							</p>
+						<div class="s2-shot__film">
+							<div
+								class="s2-perf s2-perf--top"
+								aria-hidden="true"
+							></div>
+							<div class="s2-shot__frame">
+								<img
+									class="s2-shot__img"
+									src="img/slide2/shot-05.png"
+									alt="Orang-orang menyebarkan informasi lewat smartphone"
+									loading="lazy"
+									onerror="this.style.display = 'none'"
+								/>
+								<div
+									class="s2-shot__overlay"
+									aria-hidden="true"
+								></div>
+								<div class="s2-shot__body">
+									<span class="s2-shot__number">05</span>
+									<h1 class="s2-shot__title">
+										DIFUSI INFORMASI
+									</h1>
+									<p class="s2-shot__desc">
+										Informasi, gagasan, tren, dan gerakan
+										sosial dapat menyebar dengan cepat dari
+										satu wilayah ke wilayah lain.
+									</p>
+									<p class="s2-shot__note">
+										Globalisasi tidak otomatis membuat
+										masyarakat lebih individualis. Yang
+										berubah terutama adalah bentuk dan ruang
+										interaksinya.
+									</p>
+								</div>
+							</div>
+							<div
+								class="s2-perf s2-perf--bottom"
+								aria-hidden="true"
+							></div>
 						</div>
 					</div>
 				</div>
 
+				<span class="s2-frame-tag" aria-hidden="true"
+					>K6 · S2 · CAROUSEL</span
+				>
 				<span class="s2-counter" id="s2Counter" aria-hidden="true"
 					>01 / 05</span
 				>
-
 				<div class="s2-controls">
 					<button
 						class="s2-next-shot"
@@ -1766,9 +2255,7 @@
 					</button>
 				</div>
 			</div>
-			<div class="s2-bar s2-bar--bottom" aria-hidden="true"></div>
 		</section>
-
 		<!-- ================= SLIDE 3 ================= -->
 		<section
 			id="slide3Scene"
@@ -1784,14 +2271,12 @@
 					onerror="this.style.display = 'none'"
 				/>
 			</div>
-
 			<div class="s3-content">
 				<div class="s3-title-paper">
 					<h1 class="s3-heading">
 						PERTUKARAN BUDAYA:<br />DARI DOMINASI KE HIBRIDISASI
 					</h1>
 				</div>
-
 				<div class="s3-stage">
 					<div class="s3-deck" id="s3Deck">
 						<div class="s3-paper" data-paper="1" data-role="0">
@@ -1823,7 +2308,6 @@
 							</p>
 						</div>
 					</div>
-
 					<div class="s3-illust-stack">
 						<div
 							class="s3-illustration"
@@ -1901,7 +2385,6 @@
 							</div>
 						</div>
 					</div>
-
 					<div class="s3-ci-paper">
 						<span class="s3-ci-docnum"
 							>DOC. 07 — ARSIP PERTUKARAN BUDAYA</span
@@ -1931,7 +2414,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="s3-decor s3-decor--pin" aria-hidden="true"></div>
 			<div class="s3-decor s3-decor--pin2" aria-hidden="true"></div>
 			<div class="s3-decor s3-decor--redline" aria-hidden="true"></div>
@@ -1961,7 +2443,6 @@
 			<div class="s3-decor s3-decor--archivetag" aria-hidden="true">
 				No. 042
 			</div>
-
 			<div class="s3-controls">
 				<button
 					class="s3-shuffle"
@@ -1969,8 +2450,8 @@
 					type="button"
 					aria-label="Geser kertas ke kertas berikutnya"
 				>
-					<span class="s3-shuffle__icon" aria-hidden="true">⟳</span>
-					<span class="s3-shuffle__label">GESER KERTAS</span>
+					<span class="s3-shuffle__icon" aria-hidden="true">⟳</span
+					><span class="s3-shuffle__label">GESER KERTAS</span>
 				</button>
 				<button
 					class="generic-slide-next s3-next-slide"
@@ -1995,17 +2476,16 @@
 			<div class="s4-sky" aria-hidden="true">
 				<div class="s4-sky__layer s4-sky__layer--day">
 					<div class="s4-kites">
-						<span class="s4-kite s4-kite--1"></span>
-						<span class="s4-kite s4-kite--2"></span>
-						<span class="s4-kite s4-kite--3"></span>
-						<span class="s4-kite s4-kite--4"></span>
+						<span class="s4-kite s4-kite--1"></span
+						><span class="s4-kite s4-kite--2"></span>
+						<span class="s4-kite s4-kite--3"></span
+						><span class="s4-kite s4-kite--4"></span>
 						<span class="s4-kite s4-kite--5"></span>
 					</div>
 				</div>
 				<div class="s4-sky__layer s4-sky__layer--night"></div>
 			</div>
 			<div class="s4-vignette" aria-hidden="true"></div>
-
 			<div class="s4-skyline" aria-hidden="true">
 				<div class="s4-building s4-building--a"></div>
 				<div class="s4-building s4-building--d"></div>
@@ -2022,16 +2502,13 @@
 				<div class="s4-building s4-building--e"></div>
 				<div class="s4-building s4-building--g"></div>
 			</div>
-
 			<div class="s4-kicker">
-				<span class="s4-kicker__num">04</span>
-				<span class="s4-kicker__title"
+				<span class="s4-kicker__num">04</span
+				><span class="s4-kicker__title"
 					>Dampak Sosial: Peluang dan Tantangan</span
 				>
 			</div>
-
 			<div class="s4-cloud" aria-hidden="true"></div>
-
 			<div class="s4-character" id="s4Character" aria-hidden="true">
 				<div class="s4-character__inner" id="s4CharacterInner">
 					<img
@@ -2048,7 +2525,6 @@
 					/>
 				</div>
 			</div>
-
 			<div class="s4-panel s4-panel--peluang" data-panel="peluang">
 				<h2 class="s4-panel__title">PELUANG</h2>
 				<ul class="s4-panel__list">
@@ -2081,7 +2557,6 @@
 					aria-hidden="true"
 				></span>
 			</div>
-
 			<div class="s4-panel s4-panel--tantangan" data-panel="tantangan">
 				<h2 class="s4-panel__title">TANTANGAN</h2>
 				<ul class="s4-panel__list">
@@ -2115,7 +2590,6 @@
 					aria-hidden="true"
 				></span>
 			</div>
-
 			<div class="s4-footer">
 				<div class="s4-footer-left">
 					<span class="s4-label">DAMPAK SOSIAL</span>
@@ -2160,7 +2634,6 @@
 			<div class="s5-deco s5-deco--3" aria-hidden="true"></div>
 			<div class="s5-deco s5-deco--4" aria-hidden="true"></div>
 			<div class="s5-deco s5-deco--5" aria-hidden="true"></div>
-
 			<div class="s5-stage">
 				<header class="s5-masthead">
 					<span class="s5-masthead__meta">Digital Divide</span>
@@ -2169,14 +2642,12 @@
 						>05 / 07 — Field Report</span
 					>
 				</header>
-
 				<div class="s5-intro">
 					<h2 class="s5-intro__title">News</h2>
 					<p class="s5-intro__subtitle">
 						Tidak Semua Orang Terhubung Secara Setara
 					</p>
 				</div>
-
 				<div class="s5-reports" id="s5Reports">
 					<article
 						class="s5-report"
@@ -2185,8 +2656,8 @@
 					>
 						<div class="s5-report__inner">
 							<div class="s5-report__topline">
-								<span>News</span>
-								<span><em>Report 01</em> · Field Notes</span>
+								<span>News</span
+								><span><em>Report 01</em> · Field Notes</span>
 							</div>
 							<div class="s5-report__body">
 								<div class="s5-report__text">
@@ -2231,7 +2702,6 @@
 							></div>
 						</div>
 					</article>
-
 					<article
 						class="s5-report"
 						data-report="2"
@@ -2239,8 +2709,8 @@
 					>
 						<div class="s5-report__inner">
 							<div class="s5-report__topline">
-								<span>Nangnang news</span>
-								<span><em>Report 02</em> · Field Notes</span>
+								<span>Nangnang news</span
+								><span><em>Report 02</em> · Field Notes</span>
 							</div>
 							<div class="s5-report__body">
 								<div class="s5-report__text">
@@ -2285,7 +2755,6 @@
 							></div>
 						</div>
 					</article>
-
 					<article
 						class="s5-report"
 						data-report="3"
@@ -2293,8 +2762,8 @@
 					>
 						<div class="s5-report__inner">
 							<div class="s5-report__topline">
-								<span>Nangnang news</span>
-								<span><em>Report 03</em> · Field Notes</span>
+								<span>Nangnang news</span
+								><span><em>Report 03</em> · Field Notes</span>
 							</div>
 							<div class="s5-report__body">
 								<div class="s5-report__text">
@@ -2341,7 +2810,6 @@
 							></div>
 						</div>
 					</article>
-
 					<article
 						class="s5-report"
 						data-report="4"
@@ -2349,8 +2817,8 @@
 					>
 						<div class="s5-report__inner">
 							<div class="s5-report__topline">
-								<span>Nangnang news</span>
-								<span><em>Report 04</em> · Field Notes</span>
+								<span>Nangnang news</span
+								><span><em>Report 04</em> · Field Notes</span>
 							</div>
 							<div class="s5-report__body">
 								<div class="s5-report__text">
@@ -2406,7 +2874,6 @@
 						</div>
 					</article>
 				</div>
-
 				<div class="s5-controls">
 					<button
 						type="button"
@@ -2432,7 +2899,7 @@
 						<figure class="s6-thumb">
 							<img
 								class="s6-thumb__img"
-								src="img/slide6/profiles/thumbnail.jpg"
+								src="img/slide6/thumbnail.jpg"
 								alt=""
 								loading="eager"
 								onerror="this.style.display = 'none'"
@@ -2441,7 +2908,6 @@
 								class="s6-thumb__scrim"
 								aria-hidden="true"
 							></div>
-
 							<button
 								type="button"
 								class="s6-thumb__play"
@@ -2460,13 +2926,7 @@
 										height="14"
 										rx="0.8"
 									/>
-									<rect
-										x="14"
-										y="5"
-										width="4"
-										height="14"
-										rx="0.8"
-									/>
+									<rect x="14" y="5" 4 height="14" rx="0.8" />
 								</svg>
 								<svg
 									class="s6-thumb__play-icon s6-thumb__play-icon--play"
@@ -2476,10 +2936,12 @@
 									<path d="M7 4.5v15l13-7.5-13-7.5z" />
 								</svg>
 							</button>
-
 							<div class="s6-thumb__controls" aria-hidden="true">
-								<span class="s6-thumb__volume">
-									<svg viewBox="0 0 24 24" aria-hidden="true">
+								<span class="s6-thumb__volume"
+									><svg
+										viewBox="0 0 24 24"
+										aria-hidden="true"
+									>
 										<path
 											d="M4 9.5v5h3.6L13 19V5L7.6 9.5H4z"
 										/>
@@ -2489,53 +2951,45 @@
 											stroke="currentColor"
 											stroke-width="1.6"
 											stroke-linecap="round"
-										/>
-									</svg>
-								</span>
+										/></svg
+								></span>
 								<span class="s6-thumb__duration">12:48</span>
 							</div>
-
 							<span class="s6-thumb__kicker"
 								>06 / 07 • GLOBALIZATION • SOCIOLOGY</span
 							>
 							<h2 class="s6-thumb__title">
-								<span>PERSPEKTIF</span>
-								<span>SOSIOLOGIS</span>
-								<span class="s6-thumb__title-sm"
+								<span>PERSPEKTIF</span><span>SOSIOLOGIS</span
+								><span class="s6-thumb__title-sm"
 									>TENTANG GLOBALISASI</span
 								>
 							</h2>
 						</figure>
-
 						<div class="s6-meta">
 							<h1 class="s6-meta__title">
 								Perspektif Sosiologis tentang Globalisasi
 							</h1>
-
 							<div class="s6-meta__creator">
-								<span class="s6-meta__creator-avatar">
-									<img
+								<span class="s6-meta__creator-avatar"
+									><img
 										src="img/slide6/profiles/chanel.jpg"
 										alt=""
 										loading="lazy"
 										onerror="this.style.display = 'none'"
-									/>
-									<span
+									/><span
 										class="s6-meta__creator-fallback"
 										aria-hidden="true"
 										>N</span
-									>
-								</span>
-								<span class="s6-meta__creator-info">
-									<span class="s6-meta__creator-name"
+									></span
+								>
+								<span class="s6-meta__creator-info"
+									><span class="s6-meta__creator-name"
 										>Nangnang Sociology</span
-									>
-									<span class="s6-meta__creator-sub"
+									><span class="s6-meta__creator-sub"
 										>Sociology / Globalization</span
-									>
-								</span>
+									></span
+								>
 							</div>
-
 							<div class="s6-meta__actions">
 								<button
 									type="button"
@@ -2546,8 +3000,7 @@
 										class="s6-meta__like-icon"
 										aria-hidden="true"
 										>♡</span
-									>
-									<span>1.4K</span>
+									><span>1.4K</span>
 								</button>
 								<button
 									type="button"
@@ -2561,9 +3014,8 @@
 											stroke-width="1.7"
 											stroke-linecap="round"
 											stroke-linejoin="round"
-										/>
-									</svg>
-									<span>Share</span>
+										/></svg
+									><span>Share</span>
 								</button>
 								<button
 									type="button"
@@ -2575,14 +3027,12 @@
 							</div>
 						</div>
 					</div>
-
 					<div class="s6-right">
 						<div class="s6-comments">
 							<div class="s6-comments__header">
-								<span class="s6-comments__count">5</span>
-								COMMENTS
+								<span class="s6-comments__count">5</span
+								>COMMENTS
 							</div>
-
 							<div
 								class="s6-comments__feed"
 								tabindex="0"
@@ -2590,27 +3040,25 @@
 								aria-label="Daftar perspektif sosiologis tentang globalisasi"
 							>
 								<article class="s6-comment" role="listitem">
-									<span class="s6-comment__avatar">
-										<img
+									<span class="s6-comment__avatar"
+										><img
 											src="img/slide6/profiles/01.jpg"
 											alt=""
 											loading="lazy"
 											onerror="
 												this.style.display = 'none'
 											"
-										/>
-										<span
+										/><span
 											class="s6-comment__avatar-fallback"
 											aria-hidden="true"
 											>M</span
-										>
-									</span>
+										></span
+									>
 									<div class="s6-comment__body">
 										<div class="s6-comment__top">
 											<span class="s6-comment__author"
 												>Marshall McLuhan</span
-											>
-											<span class="s6-comment__theory"
+											><span class="s6-comment__theory"
 												>Global Village</span
 											>
 										</div>
@@ -2622,36 +3070,32 @@
 										<div class="s6-comment__foot">
 											<span class="s6-comment__like"
 												>♡ 1.2K</span
-											>
-											<span class="s6-comment__reply"
+											><span class="s6-comment__reply"
 												>Reply</span
 											>
 										</div>
 									</div>
 								</article>
-
 								<article class="s6-comment" role="listitem">
-									<span class="s6-comment__avatar">
-										<img
+									<span class="s6-comment__avatar"
+										><img
 											src="img/slide6/profiles/02.jpg"
 											alt=""
 											loading="lazy"
 											onerror="
 												this.style.display = 'none'
 											"
-										/>
-										<span
+										/><span
 											class="s6-comment__avatar-fallback"
 											aria-hidden="true"
 											>G</span
-										>
-									</span>
+										></span
+									>
 									<div class="s6-comment__body">
 										<div class="s6-comment__top">
 											<span class="s6-comment__author"
 												>George Ritzer</span
-											>
-											<span class="s6-comment__theory"
+											><span class="s6-comment__theory"
 												>McDonaldization</span
 											>
 										</div>
@@ -2663,36 +3107,32 @@
 										<div class="s6-comment__foot">
 											<span class="s6-comment__like"
 												>♡ 842</span
-											>
-											<span class="s6-comment__reply"
+											><span class="s6-comment__reply"
 												>Reply</span
 											>
 										</div>
 									</div>
 								</article>
-
 								<article class="s6-comment" role="listitem">
-									<span class="s6-comment__avatar">
-										<img
+									<span class="s6-comment__avatar"
+										><img
 											src="img/slide6/profiles/03.jpg"
 											alt=""
 											loading="lazy"
 											onerror="
 												this.style.display = 'none'
 											"
-										/>
-										<span
+										/><span
 											class="s6-comment__avatar-fallback"
 											aria-hidden="true"
 											>S</span
-										>
-									</span>
+										></span
+									>
 									<div class="s6-comment__body">
 										<div class="s6-comment__top">
 											<span class="s6-comment__author"
 												>Sociology Archive</span
-											>
-											<span class="s6-comment__theory"
+											><span class="s6-comment__theory"
 												>Cultural Imperialism</span
 											>
 										</div>
@@ -2708,29 +3148,26 @@
 										</div>
 									</div>
 								</article>
-
 								<article class="s6-comment" role="listitem">
-									<span class="s6-comment__avatar">
-										<img
+									<span class="s6-comment__avatar"
+										><img
 											src="img/slide6/profiles/04.jpg"
 											alt=""
 											loading="lazy"
 											onerror="
 												this.style.display = 'none'
 											"
-										/>
-										<span
+										/><span
 											class="s6-comment__avatar-fallback"
 											aria-hidden="true"
 											>R</span
-										>
-									</span>
+										></span
+									>
 									<div class="s6-comment__body">
 										<div class="s6-comment__top">
 											<span class="s6-comment__author"
 												>Roland Robertson</span
-											>
-											<span class="s6-comment__theory"
+											><span class="s6-comment__theory"
 												>Glocalization</span
 											>
 										</div>
@@ -2746,29 +3183,26 @@
 										</div>
 									</div>
 								</article>
-
 								<article class="s6-comment" role="listitem">
-									<span class="s6-comment__avatar">
-										<img
+									<span class="s6-comment__avatar"
+										><img
 											src="img/slide6/profiles/05.jpg"
 											alt=""
 											loading="lazy"
 											onerror="
 												this.style.display = 'none'
 											"
-										/>
-										<span
+										/><span
 											class="s6-comment__avatar-fallback"
 											aria-hidden="true"
 											>C</span
-										>
-									</span>
+										></span
+									>
 									<div class="s6-comment__body">
 										<div class="s6-comment__top">
 											<span class="s6-comment__author"
 												>Manuel Castells</span
-											>
-											<span class="s6-comment__theory"
+											><span class="s6-comment__theory"
 												>Network Society</span
 											>
 										</div>
@@ -2786,7 +3220,6 @@
 								</article>
 							</div>
 						</div>
-
 						<button
 							type="button"
 							id="s6NextSlide"
@@ -2808,7 +3241,6 @@
 			aria-label="Slide 7 — Menghadapi Globalisasi: Kritis, Terbuka, dan Berakar"
 		>
 			<div class="s7-stars" aria-hidden="true"></div>
-
 			<div class="s7-stage">
 				<header class="s7-header">
 					<p class="s7-quote">
@@ -2819,13 +3251,11 @@
 					<h1 class="s7-title">MENGHADAPI GLOBALISASI</h1>
 					<p class="s7-subtitle">Kritis, Terbuka, dan Berakar</p>
 				</header>
-
 				<div class="s7-earth-wrap" id="s7EarthWrap" aria-hidden="true">
 					<div class="s7-earth-glow"></div>
 					<canvas class="s7-earth-canvas" id="s7EarthCanvas"></canvas>
 					<div class="s7-earth-fallback-sphere"></div>
 				</div>
-
 				<div class="s7-panels" role="list">
 					<article class="s7-panel s7-panel--1" role="listitem">
 						<div class="s7-panel__inner">
@@ -2875,14 +3305,12 @@
 						</div>
 					</article>
 				</div>
-
 				<p class="s7-conclusion">
 					Globalisasi sosial adalah realitas yang tidak dapat
 					dihindari. Tantangannya bukan bagaimana menghindarinya,
 					tetapi bagaimana menghadapinya secara terbuka, kritis, dan
 					tetap memiliki identitas.
 				</p>
-
 				<button
 					type="button"
 					id="s7NextBtn"
@@ -3165,5 +3593,6 @@
 		<script defer src="js/slide7.js"></script>
 		<script defer src="js/slide8.js"></script>
 		<script defer src="js/yusmentoro67.js"></script>
+		<script defer src="js/lynuxs-features.js"></script>
 	</body>
 </html>

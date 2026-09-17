@@ -218,57 +218,131 @@
 		transition: none !important;
 	}
 }
-
 /* ==========================================================================
-   TRANSISI KHUSUS SLIDE 2 -> SLIDE 3 (MOVIE FRAME KELUAR ASIMETRIS +
-   SLIDE 3 MASUK DARI BAWAH)
+   TRANSISI KHUSUS SLIDE 2 -> SLIDE 3 — CINEMATIC CAMERA DROP (SMOOTH)
+   --------------------------------------------------------------------------
+   Perbaikan dari versi sebelumnya:
+   - SEBELUM: 6 keyframe stop + satu easing per segmen => motion patah-patah.
+   - SEKARANG: setiap elemen pakai DUA animasi paralel:
+       (a) transform  → 2 keyframe  = 1 kurva kontinu (tanpa stop internal)
+       (b) opacity    → fade-in hold lalu fade-out, terpisah dari transform
+     Karena transform dan opacity jalan sebagai animasi terpisah, tidak ada
+     segmentasi velocity di tengah gerakan. Hasilnya: satu continuous shot.
+
+   Timing 900ms. Easing transform = cubic-bezier(0.5, 0.05, 0.15, 1):
+   soft acceleration di awal, long smooth deceleration di akhir (feel kamera
+   yang "jatuh" dengan momentum lalu settle).
+
+   Tidak mengubah paper sweep, tidak mengubah transisi 1 → 2, tidak
+   mengubah slide manapun. overflow: hidden sebagai pengaman scrollbar.
    ========================================================================== */
 
-/* Slide 2 keluar: terdorong ke kanan atas dengan sedikit rotasi & skew */
+/* Slide 2 keluar: translate + scale dalam SATU kurva, fade terpisah. */
 .s2-exit {
-	animation: s2-exit 700ms cubic-bezier(0.55, 0, 0.2, 1) both;
+	animation:
+		s2-exit-transform 900ms cubic-bezier(0.5, 0.05, 0.15, 1) both,
+		s2-exit-fade 900ms ease-in-out both;
 	will-change: transform, opacity;
-	/* Pastikan slide 2 tetap terlihat selama animasi berjalan */
 	pointer-events: none;
-}
-
-@keyframes s2-exit {
-	0% {
-		transform: translate(0, 0) rotate(0deg) skewX(0deg);
-		opacity: 1;
-	}
-	100% {
-		transform: translate(115%, -22%) rotate(2.5deg) skewX(2deg);
-		opacity: 0;
-	}
-}
-
-/* Slide 3 masuk: muncul dari bawah */
-.s3-enter {
-	animation: s3-enter 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
-	will-change: transform, opacity;
-	/* Nonaktifkan transisi default .generic-slide-scene agar tidak konflik */
+	overflow: hidden;
+	transform-origin: 50% 40%;
 	transition: none !important;
-	/* Pastikan slide 3 tidak menghalangi klik sampai animasi selesai */
-	pointer-events: auto;
 }
 
-@keyframes s3-enter {
+/* 2 keyframe saja → satu kurva kontinu, tanpa micro-jump di tengah. */
+@keyframes s2-exit-transform {
 	0% {
-		transform: translateY(100%);
+		transform: translate3d(0, 0, 0) scale(1);
+	}
+	100% {
+		transform: translate3d(0, 135%, 0) scale(1.13);
+	}
+}
+
+/* Opacity ditahan di 1 sampai 65% — film baru mulai menghilang setelah
+   benar-benar melewati tepi bawah viewport. */
+@keyframes s2-exit-fade {
+	0%,
+	65% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+/* Slide 3 masuk: meja naik dari bawah dengan zoom-out halus. */
+.s3-enter {
+	animation:
+		s3-enter-transform 900ms cubic-bezier(0.5, 0.05, 0.15, 1) both,
+		s3-enter-fade 900ms ease-in-out both;
+	will-change: transform, opacity;
+	transition: none !important;
+	pointer-events: auto;
+	overflow: hidden;
+	transform-origin: 50% 60%;
+}
+
+@keyframes s3-enter-transform {
+	0% {
+		transform: translate3d(0, 24%, 0) scale(1.06);
+	}
+	100% {
+		transform: translate3d(0, 0, 0) scale(1);
+	}
+}
+
+/* Meja baru mulai reveal di 45% — setelah film card lewat tepi bawah. */
+@keyframes s3-enter-fade {
+	0%,
+	45% {
 		opacity: 0;
 	}
 	100% {
-		transform: translateY(0);
 		opacity: 1;
 	}
 }
 
-/* Jika pengguna memilih reduce motion, semua animasi khusus dimatikan */
+/* --------------------------------------------------------------------------
+   ATMOSPHERIC LAYER (blend film → meja)
+   Memakai elemen transisi yang SUDAH ADA (#paperTransition). Modifier
+   class .is-s2-s3-atmo hanya di-add oleh transition2To3() dan di-remove
+   di cleanup — tidak pernah muncul di transisi lain.
+   -------------------------------------------------------------------------- */
+#paperTransition.is-s2-s3-atmo {
+	transform: translateX(0);
+	background: radial-gradient(
+		ellipse 85% 70% at 50% 55%,
+		rgba(0, 0, 0, 0) 28%,
+		rgba(0, 0, 0, 0.14) 68%,
+		rgba(0, 0, 0, 0.3) 100%
+	);
+	box-shadow: none;
+	pointer-events: none;
+	animation: s2-s3-atmo-pulse 900ms ease-in-out both;
+}
+
+@keyframes s2-s3-atmo-pulse {
+	0% {
+		opacity: 0;
+	}
+	55% {
+		opacity: 0.95;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+/* Jika pengguna memilih reduce motion, semua animasi khusus dimatikan. */
 @media (prefers-reduced-motion: reduce) {
 	.s2-exit,
 	.s3-enter {
 		animation: none !important;
+	}
+	#paperTransition.is-s2-s3-atmo {
+		animation: none !important;
+		opacity: 0 !important;
 	}
 }
 
@@ -499,5 +573,159 @@
 @media (prefers-reduced-motion: reduce) {
 	.present-reader-indicator {
 		transition: none !important;
+	}
+}
+/* ==========================================================================
+   PATCH — BACKGROUND KHUSUS TRANSISI SLIDE 1 → SLIDE 2
+   --------------------------------------------------------------------------
+   Modifier class ini HANYA ditambahkan oleh js/present.js saat
+   currentSlide === 1 && target === 2. Semua transisi lain tidak pernah
+   mendapat class ini, jadi tetap memakai background paper default.
+   Keyframe paper-sweep, durasi, easing, dan arah TIDAK diubah — hanya
+   background-image/background-color yang di-override.
+
+   GANTI path di bawah dengan lokasi file clapperboard kamu.
+   Contoh: taruh file di img/transition/clapperboard.jpg
+   ========================================================================== */
+
+.paper-transition.is-slide1-to-slide2 {
+	background-color: #0a0a0a;
+	background-image: url("../img/transition/clapperboard.jpg");
+	background-size: cover;
+	background-position: center center;
+	background-repeat: no-repeat;
+	/* Override shadow "kertas" agar tidak mengganggu foto clapperboard. */
+	box-shadow: 6px 0 24px rgba(0, 0, 0, 0.45);
+}
+/* ==========================================================================
+   PATCH — OVERLAY "VIDEO APP OPENING" untuk TRANSISI SLIDE 5 → SLIDE 6
+   --------------------------------------------------------------------------
+   Terinspirasi *feel* aplikasi video modern: layar meredup → mark play
+   muncul di tengah → settle → memudar → slide 6 muncul di belakangnya.
+
+   Prinsip:
+   - Overlay fixed inset:0, opacity dikendalikan via animasi CSS murni.
+   - Hanya berjalan saat .is-active ditambahkan oleh transition5To6().
+   - Tidak menyentuh paper sweep, tidak menyentuh .is-slide1-to-slide2,
+     tidak menyentuh .is-s2-s3-atmo, tidak menyentuh .s2-exit/.s3-enter.
+   - Hanya transform + opacity. Tidak ada RAF, tidak ada loop.
+   - Warna: cream off-white (#f4eee0) senada dengan tema Slide 6,
+     aksen maroon (#8b3a3a) menyatu dengan tipografi Slide 6.
+   ========================================================================== */
+
+.s5-s6-open {
+	position: fixed;
+	inset: 0;
+	z-index: 250; /* di atas nav/refresh (200) & paper (150), di bawah fade (300) */
+	display: none;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+.s5-s6-open.is-active {
+	display: block;
+}
+
+/* ---- Background netral yang "mengambil alih" dari Slide 5 ---- */
+.s5-s6-open__bg {
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(
+		120% 100% at 50% 50%,
+		rgba(244, 238, 224, 1) 0%,
+		rgba(240, 232, 214, 0.98) 55%,
+		rgba(230, 221, 201, 1) 100%
+	);
+	opacity: 0;
+	will-change: opacity;
+}
+
+.s5-s6-open.is-active .s5-s6-open__bg {
+	animation: s5-s6-bg 1450ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes s5-s6-bg {
+	0% {
+		opacity: 0;
+	}
+	30% {
+		opacity: 1;
+	}
+	62% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+/* ---- Play mark di tengah: scale + opacity, dengan overshoot subtle ---- */
+.s5-s6-open__mark {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: clamp(72px, 8vw, 128px);
+	height: auto;
+	color: #8b3a3a;
+	opacity: 0;
+	transform: translate(-50%, -50%) scale(0.5);
+	transform-origin: 50% 50%;
+	will-change: transform, opacity;
+}
+
+.s5-s6-open__mark svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	overflow: visible;
+}
+
+.s5-s6-open__mark svg rect {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 3.5;
+	stroke-linejoin: round;
+}
+
+.s5-s6-open__mark svg path {
+	fill: currentColor;
+	stroke: none;
+}
+
+.s5-s6-open.is-active .s5-s6-open__mark {
+	animation: s5-s6-mark 1450ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes s5-s6-mark {
+	0%,
+	18% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.5);
+	}
+	38% {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1.08);
+	}
+	48% {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1);
+	}
+	62% {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1);
+	}
+	88% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.68);
+	}
+	100% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.68);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.s5-s6-open {
+		display: none !important;
 	}
 }

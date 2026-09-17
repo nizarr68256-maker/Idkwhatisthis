@@ -158,6 +158,41 @@
 				border: 1.2px solid rgba(188, 188, 192, 0.9);
 				border-radius: 50% / 40%;
 			}
+
+			/* ==============================================================
+	   PARENTAL ADVISORY — hanya muncul pada opening index.html.
+	   Dekoratif, tidak interaktif. Ikut memudar saat .opening-exit
+	   ditambahkan ke <main class="scene"> oleh js/main.js, dan otomatis
+	   hilang ketika <main> di-display:none pada akhir transition.
+	   ============================================================== */
+			.parental-advisory {
+				position: absolute;
+				top: clamp(14px, 2.4vh, 32px);
+				left: clamp(14px, 2.4vw, 32px);
+				width: clamp(84px, 8.4vw, 148px);
+				height: auto;
+				z-index: 3;
+				pointer-events: none;
+				user-select: none;
+				-webkit-user-select: none;
+				-webkit-user-drag: none;
+				opacity: 1;
+				transition: opacity 500ms ease;
+				filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+			}
+
+			/* Ikut memudar bersama elemen opening lainnya saat transisi
+			   menuju Detective Board dimulai (lifecycle existing di
+			   js/main.js → pushThroughLens()). */
+			.opening-exit .parental-advisory {
+				opacity: 0;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.parental-advisory {
+					transition: none !important;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -174,6 +209,16 @@
 			</div>
 
 			<div class="overlay">
+				<!-- PARENTAL ADVISORY — hanya pada opening index.html.
+				     Hilang otomatis saat scene opening di-display:none.
+				     Ganti src jika nama file berbeda. -->
+				<img
+					class="parental-advisory"
+					src="img/parental-advisory.png"
+					alt=""
+					aria-hidden="true"
+				/>
+
 				<div class="title-block" id="titleBlock">
 					<h1 class="title">
 						Globalisasi Ditinjau<br />Dari Aspek Sosial

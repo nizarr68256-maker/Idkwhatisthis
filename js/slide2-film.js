@@ -1,15 +1,17 @@
 /* ==========================================================================
-   SLIDE 2 — FILMSTRIP (5 SHOT) — logic navigasi shot SAJA.
+   SLIDE 2 — CAROUSEL LOGIC.
 
-   File ini TIDAK membuat sistem navigasi slide baru: perpindahan
-   Slide 2 -> Slide 3 tetap lewat #s2NextSlide, yang memakai atribut
-   [data-goto="3"] yang sudah otomatis dikaitkan oleh init() di
-   js/present.js (lihat querySelectorAll("[data-goto]")). Di sini kita
-   hanya mengatur KAPAN tombol itu boleh terlihat/diklik.
+   Tanggung jawab file ini HANYA:
+   - Menentukan shot mana yang aktif / prev / next (toggle class CSS).
+   - Menampilkan / menyembunyikan tombol "NEXT SHOT" dan "NEXT →".
+   - Reset ke shot 1 saat Slide 2 diaktifkan.
 
-   State shot (currentShot / isShotTransitioning) sengaja terpisah dari
-   state slide (currentSlide / isTransitioning) di present.js — dua
-   lapis independen, bukan duplikat.
+   BUKAN tugas file ini:
+   - Membuat sistem navigasi slide (itu di present.js via [data-goto]).
+   - Mengatur animasi (itu di CSS transitions).
+   - Mengubah foto (foto static, dikunci CSS !important).
+
+   Tidak ada RAF, tidak ada render loop, tidak ada per-frame DOM.
    ========================================================================== */
 
 (function () {
@@ -22,7 +24,6 @@
 		"(prefers-reduced-motion: reduce)"
 	).matches;
 
-	var track = document.getElementById("s2Track");
 	var shots = section.querySelectorAll(".s2-shot");
 	var TOTAL_SHOTS = shots.length || 5;
 
@@ -30,8 +31,8 @@
 	var nextShotBtn = document.getElementById("s2NextShot");
 	var nextSlideBtn = document.getElementById("s2NextSlide");
 
-	// Harus sinkron dengan durasi transition di css/slide2-film.css (.s2-track).
-	var SHOT_DURATION = 600; // ms
+	// Harus sinkron dengan durasi transition CSS .s2-shot.
+	var SHOT_DURATION = 700; // ms
 
 	var currentShot = 1;
 	var isShotTransitioning = false;
@@ -46,30 +47,26 @@
 		counterEl.textContent = pad2(currentShot) + " / " + pad2(TOTAL_SHOTS);
 	}
 
-	// Dipanggil setelah animasi (atau langsung, jika reduced motion) —
-	// supaya tombol Next Slide baru bisa diklik SETELAH benar-benar
-	// berhenti di Shot terakhir, bukan saat masih bergeser ke sana.
 	function updateControlsSettled() {
 		var atLast = currentShot === TOTAL_SHOTS;
 		if (nextShotBtn) nextShotBtn.classList.toggle("is-hidden", atLast);
 		if (nextSlideBtn) nextSlideBtn.classList.toggle("is-visible", atLast);
 	}
 
-	function setTrackPosition(n, animate) {
-		if (!track) return;
-		if (!animate) {
-			// Pindah instan tanpa transisi (init/reduced-motion/reset).
-			var prevTransition = track.style.transition;
-			track.style.transition = "none";
-			track.style.transform =
-				"translateX(-" + (n - 1) * (100 / TOTAL_SHOTS) + "%)";
-			// Paksa reflow lalu kembalikan transition supaya perpindahan
-			// shot BERIKUTNYA tetap animasi seperti biasa.
-			void track.offsetWidth;
-			track.style.transition = prevTransition || "";
-		} else {
-			track.style.transform =
-				"translateX(-" + (n - 1) * (100 / TOTAL_SHOTS) + "%)";
+	/* Toggle class per shot: satu .is-active, satu .is-prev (jika ada),
+	   satu .is-next (jika ada). Sisanya tanpa class → hidden (scale 0). */
+	function updateCarousel() {
+		for (var i = 0; i < shots.length; i++) {
+			var shotIndex = i + 1;
+			var el = shots[i];
+			el.classList.remove("is-active", "is-prev", "is-next");
+			if (shotIndex === currentShot) {
+				el.classList.add("is-active");
+			} else if (shotIndex === currentShot - 1) {
+				el.classList.add("is-prev");
+			} else if (shotIndex === currentShot + 1) {
+				el.classList.add("is-next");
+			}
 		}
 	}
 
@@ -85,50 +82,35 @@
 
 		currentShot = n;
 		updateCounter();
+		updateCarousel();
 
-		if (prefersReducedMotion || !track) {
-			setTrackPosition(currentShot, false);
+		if (prefersReducedMotion) {
 			updateControlsSettled();
 			return;
 		}
 
 		isShotTransitioning = true;
-		track.classList.add("is-moving");
-		setTrackPosition(currentShot, true);
-
-		function onMoveEnd(e) {
-			if (e && e.target !== track) return;
-			cleanup();
-		}
-
-		function cleanup() {
-			track.removeEventListener("transitionend", onMoveEnd);
-			if (shotFallbackTimer) {
-				clearTimeout(shotFallbackTimer);
-				shotFallbackTimer = null;
-			}
-			track.classList.remove("is-moving");
+		if (shotFallbackTimer) clearTimeout(shotFallbackTimer);
+		shotFallbackTimer = setTimeout(function () {
+			shotFallbackTimer = null;
 			isShotTransitioning = false;
 			updateControlsSettled();
-		}
-
-		track.addEventListener("transitionend", onMoveEnd);
-		// Fallback: kalau transitionend tidak terpicu, tetap bersihkan
-		// state agar tombol tidak pernah terkunci.
-		shotFallbackTimer = setTimeout(cleanup, SHOT_DURATION + 150);
+		}, SHOT_DURATION);
 	}
 
-	// Reset ke Shot 01 setiap kali Slide 2 diaktifkan dari awal (misalnya
-	// nanti ada navigasi mundur ke Slide 2 lagi), tanpa animasi supaya
-	// tidak ada sweep shot yang tidak diminta saat slide baru muncul.
+	// Reset ke Shot 1 setiap kali Slide 2 diaktifkan.
 	document.addEventListener("psk:slide-changed", function (e) {
 		var target = e && e.detail ? e.detail.slide : null;
 		if (target !== 2) return;
-		if (currentShot !== 1) {
-			currentShot = 1;
-			setTrackPosition(currentShot, false);
-			updateCounter();
+
+		if (shotFallbackTimer) {
+			clearTimeout(shotFallbackTimer);
+			shotFallbackTimer = null;
 		}
+		isShotTransitioning = false;
+		currentShot = 1;
+		updateCounter();
+		updateCarousel();
 		updateControlsSettled();
 	});
 
@@ -139,9 +121,8 @@
 		});
 	}
 
-	// Inisialisasi tampilan awal (Shot 01, Next Shot terlihat, Next
-	// Slide tersembunyi) — tidak menunggu event apa pun.
-	setTrackPosition(currentShot, false);
+	// Inisialisasi awal (state Shot 1).
 	updateCounter();
+	updateCarousel();
 	updateControlsSettled();
 })();
